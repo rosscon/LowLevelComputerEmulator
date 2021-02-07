@@ -54,7 +54,7 @@ public class Bus {
         if (initValue.length * 8 != busWidth) throw new InvalidBusWidthException(INVALID_BUS_WIDTH_INIT_MISMATCH_MSG);
 
         this.busWidth = busWidth;
-        this.data = Arrays.copyOf(data, data.length);
+        this.data = Arrays.copyOf(initValue, initValue.length);
     }
 
     /**
@@ -81,7 +81,7 @@ public class Bus {
      * Used to obtain a copy of the data currently being represented on the bus
      * @return copy of the data held on the bus
      */
-    private byte[] readDataFromBus() {
+    public byte[] readDataFromBus() {
         return Arrays.copyOf(this.data, this.data.length);
     }
 
@@ -90,7 +90,7 @@ public class Bus {
      * @param data input data
      * @throws InvalidBusDataException
      */
-    private void writeDataToBus(byte[] data) throws InvalidBusDataException {
+    public void writeDataToBus(byte[] data) throws InvalidBusDataException {
         if ( data.length != this.data.length ) throw new InvalidBusDataException(INVALID_DATA_SIZE_MSG);        
         this.data = Arrays.copyOf(data, data.length);
     }
