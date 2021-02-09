@@ -2,7 +2,6 @@ package com.rosscon.llce.components.memory;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
-import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteArrayWrapper;
@@ -37,7 +36,7 @@ public class ReadOnlyMemory extends Memory {
      * Instantiate read only memory with empty contents
      * @param addressBus address bus to attach to
      * @param dataBus data bus to attach to
-     * @param clock clock to listen for ticks
+     * @param rwFlag flag to listen to R/W status and indicate when to write data to data bus
      */
     public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag) {
         super(addressBus, dataBus, rwFlag);
@@ -48,20 +47,18 @@ public class ReadOnlyMemory extends Memory {
      * Instantiate read only memory with some initial data that is pre-mapped to memory locations
      * @param addressBus address bus to attach to
      * @param dataBus data bus to attach to
-     * @param clock clock to listen for ticks
-     * @param init
+     * @param rwFlag flag to listen to R/W status and indicate when to write data to data bus
+     * @param init initial memory mapping
      */
-    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag flag, Map<ByteArrayWrapper, byte[]> init) throws MemoryException {
-        super(addressBus, dataBus, flag);
+    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag, Map<ByteArrayWrapper, byte[]> init) throws MemoryException {
+        super(addressBus, dataBus, rwFlag);
 
         int addressWidth = addressBus.readDataFromBus().length;
         int dataWidth = addressBus.readDataFromBus().length;
 
         Iterator initIt = init.entrySet().iterator();
 
-        /**
-         * Check that the input data matches the busses widths
-         */
+        // Check that the input data matches the busses widths
         while (initIt.hasNext()){
             Map.Entry element = (Map.Entry)initIt.next();
             if (((ByteArrayWrapper)element.getKey()).getLength() != addressWidth ||
@@ -78,7 +75,7 @@ public class ReadOnlyMemory extends Memory {
      * If data is larger than the address range then throws an exception.
      * @param addressBus address bus to attach to
      * @param dataBus data bus to attach to
-     * @param rwFlag R/W flag
+     * @param rwFlag flag to listen to R/W status and indicate when to write data to data bus
      * @param startAddress address of beginning of memory
      * @param endAddress address of last memory location
      * @param data data to write to memory.
@@ -88,7 +85,7 @@ public class ReadOnlyMemory extends Memory {
         super(addressBus, dataBus, rwFlag);
 
         Queue<Byte> dataQueue = new ArrayDeque<>(){{
-            for(int i = 0; i < data.length; i++) add(data[i]);
+            for (byte datum : data) add(datum);
         }};
 
         for (byte[] index = startAddress;
@@ -110,7 +107,7 @@ public class ReadOnlyMemory extends Memory {
     }
 
     /**
-     * On notify of flag change write to data bus if flag is set to high and has valid address on assdress bus
+     * On notify of flag change write to data bus if flag is set to high and has valid address on address bus
      * @param newValue flag value
      * @param flag which flag fired the event
      * @throws MemoryException might throw memory exception if error with busses
@@ -119,7 +116,7 @@ public class ReadOnlyMemory extends Memory {
     public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
 
         // On R/W flag being set to true write contents at address on address bus to data bus if within range
-        if (flag == rwFlag && flag.getFlagValue() == true){
+        if (flag == rwFlag && newValue){
 
             byte[] key = this.addressBus.readDataFromBus();
             ByteArrayWrapper wrappedKey = new ByteArrayWrapper(key);
@@ -131,8 +128,6 @@ public class ReadOnlyMemory extends Memory {
                     throw new MemoryException(ex.getMessage());
                 }
             }
-
-            return;
         }
 
     }
