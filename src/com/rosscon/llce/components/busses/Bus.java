@@ -88,7 +88,7 @@ public class Bus {
     /**
      * Sets the data currently being represented on the bus
      * @param data input data
-     * @throws InvalidBusDataException
+     * @throws InvalidBusDataException thrown when trying to write data to the bus of wrong size
      */
     public void writeDataToBus(byte[] data) throws InvalidBusDataException {
         if ( data.length != this.data.length ) throw new InvalidBusDataException(INVALID_DATA_SIZE_MSG);        

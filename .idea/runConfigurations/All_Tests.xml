@@ -4,7 +4,7 @@
     <option name="PACKAGE_NAME" value="com.rosscon.llce" />
     <option name="MAIN_CLASS_NAME" value="" />
     <option name="METHOD_NAME" value="" />
-    <option name="TEST_OBJECT" value="pattern" />
+    <option name="TEST_OBJECT" value="package" />
     <dir value="$ContentRoot$/test/" />
     <patterns>
       <pattern testClass="com.rosscon.llce.*Test" />

@@ -69,7 +69,7 @@ public class BusTest {
         Bus tmpBus = new Bus();
         assertThrows(InvalidBusDataException.class, () -> {
             tmpBus.writeDataToBus("ABC".getBytes(StandardCharsets.UTF_8));
-        })
+        });
     }
 
 }
