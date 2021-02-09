@@ -14,11 +14,6 @@ import java.util.*;
 public class ReadOnlyMemory extends Memory {
 
     /**
-     * Contents of the memory <address, data>
-     */
-    private Map<ByteArrayWrapper, byte[]> contents = new HashMap<>();
-
-    /**
      * Error message when provided data does not match address size
      */
     private final String DATA_SIZE_ADDRESS_MISMATCH =

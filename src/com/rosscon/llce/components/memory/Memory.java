@@ -5,6 +5,10 @@ import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockListener;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagListener;
+import com.rosscon.llce.utils.ByteArrayWrapper;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -21,6 +25,11 @@ public abstract class Memory implements FlagListener {
      * Data bus
      */
     protected Bus dataBus;
+
+    /**
+     * Contents of the memory <address, data>
+     */
+    protected Map<ByteArrayWrapper, byte[]> contents = new HashMap<>();
 
     /**
      * R/W flag, high = read, low = write
