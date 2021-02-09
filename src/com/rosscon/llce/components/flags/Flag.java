@@ -1,6 +1,8 @@
 package com.rosscon.llce.components.flags;
 
 
+import com.rosscon.llce.components.memory.MemoryException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,11 +48,11 @@ public class Flag {
      * Sets the flag value
      * @param flagValue value to set flag to
      */
-    public void setFlagValue (boolean flagValue){
+    public void setFlagValue (boolean flagValue) throws MemoryException {
         this.flagValue = flagValue;
 
         for (FlagListener fl : listeners){
-            fl.onFlagChange(flagValue == true);
+            fl.onFlagChange(flagValue == true, this);
         }
     }
 

@@ -3,6 +3,7 @@ package com.rosscon.llce.components.memory;
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.clocks.Clock;
+import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteArrayWrapper;
 
@@ -38,8 +39,8 @@ public class ReadOnlyMemory extends Memory {
      * @param dataBus data bus to attach to
      * @param clock clock to listen for ticks
      */
-    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Clock clock) {
-        super(addressBus, dataBus, clock);
+    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag) {
+        super(addressBus, dataBus, rwFlag);
     }
 
 
@@ -50,8 +51,8 @@ public class ReadOnlyMemory extends Memory {
      * @param clock clock to listen for ticks
      * @param init
      */
-    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Clock clock, Map<ByteArrayWrapper, byte[]> init) throws MemoryException {
-        super(addressBus, dataBus, clock);
+    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag flag, Map<ByteArrayWrapper, byte[]> init) throws MemoryException {
+        super(addressBus, dataBus, flag);
 
         int addressWidth = addressBus.readDataFromBus().length;
         int dataWidth = addressBus.readDataFromBus().length;
@@ -77,14 +78,14 @@ public class ReadOnlyMemory extends Memory {
      * If data is larger than the address range then throws an exception.
      * @param addressBus address bus to attach to
      * @param dataBus data bus to attach to
-     * @param clock clock to listen for ticks
+     * @param rwFlag R/W flag
      * @param startAddress address of beginning of memory
      * @param endAddress address of last memory location
      * @param data data to write to memory.
      */
-    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Clock clock,
+    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag,
                           byte[] startAddress, byte[] endAddress, byte[] data) throws MemoryException {
-        super(addressBus, dataBus, clock);
+        super(addressBus, dataBus, rwFlag);
 
         Queue<Byte> dataQueue = new ArrayDeque<>(){{
             for(int i = 0; i < data.length; i++) add(data[i]);
@@ -108,22 +109,31 @@ public class ReadOnlyMemory extends Memory {
         if (dataQueue.size() > 0) throw new MemoryException(DATA_SIZE_ADDRESS_MISMATCH);
     }
 
-
     /**
-     * If the value of the address bus is in range of the ROM address space then write to bus
+     * On notify of flag change write to data bus if flag is set to high and has valid address on assdress bus
+     * @param newValue flag value
+     * @param flag which flag fired the event
+     * @throws MemoryException might throw memory exception if error with busses
      */
     @Override
-    public void onTick() throws MemoryException {
+    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
 
-        byte[] key = this.addressBus.readDataFromBus();
-        ByteArrayWrapper wrappedKey = new ByteArrayWrapper(key);
+        // On R/W flag being set to true write contents at address on address bus to data bus if within range
+        if (flag == rwFlag && flag.getFlagValue() == true){
 
-        if(this.contents.containsKey(wrappedKey)) {
-            try {
-                this.dataBus.writeDataToBus(contents.get(wrappedKey));
-            } catch (InvalidBusDataException ex) {
-                throw new MemoryException(ex.getMessage());
+            byte[] key = this.addressBus.readDataFromBus();
+            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(key);
+
+            if(this.contents.containsKey(wrappedKey)) {
+                try {
+                    this.dataBus.writeDataToBus(contents.get(wrappedKey));
+                } catch (InvalidBusDataException ex) {
+                    throw new MemoryException(ex.getMessage());
+                }
             }
+
+            return;
         }
+
     }
 }
