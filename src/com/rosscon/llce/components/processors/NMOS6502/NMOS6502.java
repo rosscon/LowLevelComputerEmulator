@@ -161,106 +161,129 @@ public class NMOS6502 extends Processor {
                     break;
 
                 case ZERO_PAGE:     // Move to next address in memory, read contents, build zero page address from it
-                    if (this.cycles == 2) {         // On first cycle read next address in memory
-                        this.addr[1] = this.fetch();
-                        this.addr[0] = 0x00;
-                    } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        addressBus.writeDataToBus(addr);
+                    switch(this.cycles){
+                        case 2:
+                            this.addr[1] = this.fetch();
+                            this.addr[0] = 0x00;
+                            break;
+                        case 1:
+                            addressBus.writeDataToBus(addr);
+                            break;
                     }
-                    break;
 
                 case ZERO_PAGE_X:
-                    if (this.cycles == 3) {         // On first cycle read next address in memory
-                        this.addr[1] = this.fetch();
-                    } else if(this.cycles == 2){
-                        this.addr[1] = (byte)(this.addr[1] + this.inx);
-                        this.addr[0] = 0x00;
-                    } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        addressBus.writeDataToBus(addr);
+                    switch(this.cycles){
+                        case 3:
+                            this.addr[1] = this.fetch();
+                            break;
+                        case 2:
+                            this.addr[1] = (byte)(this.addr[1] + this.inx);
+                            this.addr[0] = 0x00;
+                            break;
+                        case 1:
+                            addressBus.writeDataToBus(addr);
+                            break;
                     }
                     break;
 
                 case ZERO_PAGE_Y:
-                    if (this.cycles == 3) {         // On first cycle read next address in memory
-                        this.addr[1] = this.fetch();
-                    } else if(this.cycles == 2){
-                        this.addr[1] = (byte)(this.addr[1] + this.iny);
-                        this.addr[0] = 0x00;
-                    } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        addressBus.writeDataToBus(addr);
+                    switch(this.cycles){
+                        case 3:
+                            this.addr[1] = this.fetch();
+                            break;
+                        case 2:
+                            this.addr[1] = (byte)(this.addr[1] + this.iny);
+                            this.addr[0] = 0x00;
+                            break;
+                        case 1:
+                            addressBus.writeDataToBus(addr);
+                            break;
                     }
                     break;
 
                 case ABSOLUTE:
-                    if (this.cycles == 3) {         // On first cycle read next address in memory
-                        this.addr[1] = this.fetch();
-                    } else if (this.cycles == 2) {         // On first cycle read next address in memory
-                        this.addr[0] = this.fetch();
-                    } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        addressBus.writeDataToBus(addr);
+                    switch(this.cycles){
+                        case 3:
+                            this.addr[1] = this.fetch();
+                            break;
+                        case 2:
+                            this.addr[0] = this.fetch();
+                            break;
+                        case 1:
+                            addressBus.writeDataToBus(addr);
+                            break;
                     }
                     break;
 
                 case ABSOLUTE_X:
-
-                    if (this.cycles == 3) {         // On first cycle read next address in memory
-                        this.addr[1] = this.fetch();
-                    } else if (this.cycles == 2) {         // On first cycle read next address in memory
-                        this.addr[0] = this.fetch();
-                    } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        if (!this.carry){
-                            // Extra cycle required on carry
-                            if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.inx)) {
-                                this.carry = true;
-                                this.cycles ++;
+                    switch (this.cycles){
+                        case 3:
+                            this.addr[1] = this.fetch();
+                            break;
+                        case 2:
+                            this.addr[0] = this.fetch();
+                            break;
+                        case 1:
+                            if (!this.carry){
+                                // Extra cycle required on carry
+                                if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.inx)) {
+                                    this.carry = true;
+                                    this.cycles ++;
+                                }
+                                this.addr[1] = (byte)(this.addr[1] + this.inx);
+                            } else {
+                                this.carry = false;
+                                this.addr[0] = (byte)(this.addr[0] + 0x01);
                             }
-                            this.addr[1] = (byte)(this.addr[1] + this.inx);
-                        } else {
-                            this.carry = false;
-                            this.addr[0] = (byte)(this.addr[0] + 0x01);
-                        }
-
-                        addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(addr);
                     }
                     break;
 
                 case ABSOLUTE_Y:
-                    if (this.cycles == 3) {         // On first cycle read next address in memory
-                        this.addr[1] = this.fetch();
-                    } else if (this.cycles == 2) {         // On first cycle read next address in memory
-                        this.addr[0] = this.fetch();
-                    } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        if (!this.carry){
-                            // Extra cycle required on carry
-                            if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.iny)) {
-                                this.carry = true;
-                                this.cycles ++;
+                    switch (this.cycles){
+                        case 3:
+                            this.addr[1] = this.fetch();
+                            break;
+                        case 2:
+                            this.addr[0] = this.fetch();
+                            break;
+                        case 1:
+                            if (!this.carry){
+                                // Extra cycle required on carry
+                                if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.iny)) {
+                                    this.carry = true;
+                                    this.cycles ++;
+                                }
+                                this.addr[1] = (byte)(this.addr[1] + this.iny);
+                            } else {
+                                this.carry = false;
+                                this.addr[0] = (byte)(this.addr[0] + 0x01);
                             }
-                            this.addr[1] = (byte)(this.addr[1] + this.iny);
-                        } else {
-                            this.carry = false;
-                            this.addr[0] = (byte)(this.addr[0] + 0x01);
-                        }
-
-                        addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(addr);
                     }
                     break;
 
                 case INDIRECT:
-                    if (this.cycles == 4) {
-                        this.addr[1] = this.fetch();
-                    } else if (this.cycles == 3) {
-                        this.addr[0] = this.fetch();
-                        addressBus.writeDataToBus(addr);
-                    } else if (this.cycles == 2) {
-                        rwFlag.setFlagValue(true);
-                        this.addr[1] = dataBus.readDataFromBus()[0];
-                    } else if (this.cycles == 1) {
-                        addressBus.writeDataToBus(ByteArrayUtils.increment(addressBus.readDataFromBus()));
-                        rwFlag.setFlagValue(true);
-                        this.addr[0] = dataBus.readDataFromBus()[0];
-                        addressBus.writeDataToBus(this.addr);
+                    switch (this.cycles){
+                        case 4:
+                            this.addr[1] = this.fetch();
+                            break;
+                        case 3:
+                            this.addr[0] = this.fetch();
+                            addressBus.writeDataToBus(addr);
+                            break;
+                        case 2:
+                            rwFlag.setFlagValue(true);
+                            this.addr[1] = dataBus.readDataFromBus()[0];
+                            break;
+                        case 1:
+                            addressBus.writeDataToBus(ByteArrayUtils.increment(addressBus.readDataFromBus()));
+                            rwFlag.setFlagValue(true);
+                            this.addr[0] = dataBus.readDataFromBus()[0];
+                            addressBus.writeDataToBus(this.addr);
+                            break;
                     }
+                    break;
 
                 case INDEXED_INDIRECT_X:
                     switch (this.cycles){
