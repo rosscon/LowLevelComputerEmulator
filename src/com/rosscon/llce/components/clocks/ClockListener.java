@@ -1,8 +1,7 @@
 package com.rosscon.llce.components.clocks;
 
-import com.rosscon.llce.components.busses.InvalidBusDataException;
-import com.rosscon.llce.components.memory.MemoryException;
+import com.rosscon.llce.components.processors.ProcessorException;
 
 public interface ClockListener {
-    void onTick() throws InvalidBusDataException, MemoryException;
+    void onTick() throws ProcessorException;
 }

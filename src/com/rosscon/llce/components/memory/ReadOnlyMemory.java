@@ -49,7 +49,7 @@ public class ReadOnlyMemory extends Memory {
         super(addressBus, dataBus, rwFlag);
 
         int addressWidth = addressBus.readDataFromBus().length;
-        int dataWidth = addressBus.readDataFromBus().length;
+        int dataWidth = dataBus.readDataFromBus().length;
 
         Iterator initIt = init.entrySet().iterator();
 
