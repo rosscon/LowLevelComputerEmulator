@@ -30,40 +30,40 @@ public class NMOS6502 extends Processor {
     /**
      * Registers
      */
-    private byte[]  pc;     // Program Counter
-    private byte[]  sp;     // Stack Pointer
-    private byte    acc;    // Accumulator;
-    private byte    inx;    // Index Register X
-    private byte    iny;    // Index Register Y
-    private byte    status; // Processor Status [C][Z][I][D][B][V][N]
-    private byte[]  addr;   // A custom register used for building addresses over multiple cycles
-    private boolean carry;  // A custom carry register for handling ABS X,Y
+    private byte[]  regPC;      // Program Counter
+    private byte[]  regSP;      // Stack Pointer
+    private byte    regACC;     // Accumulator;
+    private byte    regX;       // Index Register X
+    private byte    regY;       // Index Register Y
+    private byte    regStatus;  // Processor Status [C][Z][I][D][B][V][N]
+    private byte[]  regIntAddr; // Custom register used for building addresses over multiple cycles
+    private boolean regIntCarry;// Custom carry register for handling ABS X,Y
 
     /**
      * Getters for unit testing
      */
-    public byte[] getPc() {
-        return pc;
+    public byte[] getRegPC() {
+        return regPC;
     }
 
-    public byte[] getSp() {
-        return sp;
+    public byte[] getRegSP() {
+        return regSP;
     }
 
-    public byte getAcc() {
-        return acc;
+    public byte getRegACC() {
+        return regACC;
     }
 
-    public byte getInx() {
-        return inx;
+    public byte getRegX() {
+        return regX;
     }
 
-    public byte getIny() {
-        return iny;
+    public byte getRegY() {
+        return regY;
     }
 
-    public byte getStatus() {
-        return status;
+    public byte getRegStatus() {
+        return regStatus;
     }
 
     /**
@@ -106,14 +106,14 @@ public class NMOS6502 extends Processor {
      * Reset/Initialise registers
      */
     private void reset(){
-        pc      = new byte[]{ (byte)0xFF, (byte) 0xFC };
-        sp      = new byte[]{ (byte)0x01, (byte) 0x00 };
-        acc     = (byte) 0x00;
-        inx     = (byte) 0x00;
-        iny     = (byte) 0x00;
-        status  = (byte) 0x00;
-        cycles  = 0;
-        addr    = new byte[2];
+        regPC       = new byte[]{ (byte)0xFF, (byte) 0xFC };
+        regSP       = new byte[]{ (byte)0x01, (byte) 0x00 };
+        regACC      = (byte) 0x00;
+        regX        = (byte) 0x00;
+        regY        = (byte) 0x00;
+        regStatus   = (byte) 0x00;
+        cycles      = 0;
+        regIntAddr  = new byte[2];
 
         instructionMapping = new NMOS6502InstructionMapping();
     }
@@ -126,14 +126,14 @@ public class NMOS6502 extends Processor {
         byte fetchedData;
 
         try{
-            addressBus.writeDataToBus(pc);
+            addressBus.writeDataToBus(regPC);
             rwFlag.setFlagValue(true);
             fetchedData = dataBus.readDataFromBus()[0];
             if (PRINT_TRACE)
-                System.out.print("Fetch : [" + String.format("%02X", this.pc[0]) +
-                    String.format("%02X", this.pc[1]) + "] ");
+                System.out.print("Fetch : [" + String.format("%02X", this.regPC[0]) +
+                    String.format("%02X", this.regPC[1]) + "] ");
 
-            pc = ByteArrayUtils.increment(pc);
+            regPC = ByteArrayUtils.increment(regPC);
         } catch ( Exception ex){
             throw new ProcessorException(ex.getMessage());
         }
@@ -163,25 +163,25 @@ public class NMOS6502 extends Processor {
                 case ZERO_PAGE:     // Move to next address in memory, read contents, build zero page address from it
                     switch(this.cycles){
                         case 2:
-                            this.addr[1] = this.fetch();
-                            this.addr[0] = 0x00;
+                            this.regIntAddr[1] = this.fetch();
+                            this.regIntAddr[0] = 0x00;
                             break;
                         case 1:
-                            addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(regIntAddr);
                             break;
                     }
 
                 case ZERO_PAGE_X:
                     switch(this.cycles){
                         case 3:
-                            this.addr[1] = this.fetch();
+                            this.regIntAddr[1] = this.fetch();
                             break;
                         case 2:
-                            this.addr[1] = (byte)(this.addr[1] + this.inx);
-                            this.addr[0] = 0x00;
+                            this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regX);
+                            this.regIntAddr[0] = 0x00;
                             break;
                         case 1:
-                            addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(regIntAddr);
                             break;
                     }
                     break;
@@ -189,14 +189,14 @@ public class NMOS6502 extends Processor {
                 case ZERO_PAGE_Y:
                     switch(this.cycles){
                         case 3:
-                            this.addr[1] = this.fetch();
+                            this.regIntAddr[1] = this.fetch();
                             break;
                         case 2:
-                            this.addr[1] = (byte)(this.addr[1] + this.iny);
-                            this.addr[0] = 0x00;
+                            this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regY);
+                            this.regIntAddr[0] = 0x00;
                             break;
                         case 1:
-                            addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(regIntAddr);
                             break;
                     }
                     break;
@@ -204,13 +204,13 @@ public class NMOS6502 extends Processor {
                 case ABSOLUTE:
                     switch(this.cycles){
                         case 3:
-                            this.addr[1] = this.fetch();
+                            this.regIntAddr[1] = this.fetch();
                             break;
                         case 2:
-                            this.addr[0] = this.fetch();
+                            this.regIntAddr[0] = this.fetch();
                             break;
                         case 1:
-                            addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(regIntAddr);
                             break;
                     }
                     break;
@@ -218,69 +218,69 @@ public class NMOS6502 extends Processor {
                 case ABSOLUTE_X:
                     switch (this.cycles){
                         case 3:
-                            this.addr[1] = this.fetch();
+                            this.regIntAddr[1] = this.fetch();
                             break;
                         case 2:
-                            this.addr[0] = this.fetch();
+                            this.regIntAddr[0] = this.fetch();
                             break;
                         case 1:
-                            if (!this.carry){
+                            if (!this.regIntCarry){
                                 // Extra cycle required on carry
-                                if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.inx)) {
-                                    this.carry = true;
+                                if (ByteArrayUtils.willCarryOnAddition(this.regIntAddr[1], this.regX)) {
+                                    this.regIntCarry = true;
                                     this.cycles ++;
                                 }
-                                this.addr[1] = (byte)(this.addr[1] + this.inx);
+                                this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regX);
                             } else {
-                                this.carry = false;
-                                this.addr[0] = (byte)(this.addr[0] + 0x01);
+                                this.regIntCarry = false;
+                                this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
                             }
-                            addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(regIntAddr);
                     }
                     break;
 
                 case ABSOLUTE_Y:
                     switch (this.cycles){
                         case 3:
-                            this.addr[1] = this.fetch();
+                            this.regIntAddr[1] = this.fetch();
                             break;
                         case 2:
-                            this.addr[0] = this.fetch();
+                            this.regIntAddr[0] = this.fetch();
                             break;
                         case 1:
-                            if (!this.carry){
+                            if (!this.regIntCarry){
                                 // Extra cycle required on carry
-                                if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.iny)) {
-                                    this.carry = true;
+                                if (ByteArrayUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
+                                    this.regIntCarry = true;
                                     this.cycles ++;
                                 }
-                                this.addr[1] = (byte)(this.addr[1] + this.iny);
+                                this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regY);
                             } else {
-                                this.carry = false;
-                                this.addr[0] = (byte)(this.addr[0] + 0x01);
+                                this.regIntCarry = false;
+                                this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
                             }
-                            addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(regIntAddr);
                     }
                     break;
 
                 case INDIRECT:
                     switch (this.cycles){
                         case 4:
-                            this.addr[1] = this.fetch();
+                            this.regIntAddr[1] = this.fetch();
                             break;
                         case 3:
-                            this.addr[0] = this.fetch();
-                            addressBus.writeDataToBus(addr);
+                            this.regIntAddr[0] = this.fetch();
+                            addressBus.writeDataToBus(regIntAddr);
                             break;
                         case 2:
                             rwFlag.setFlagValue(true);
-                            this.addr[1] = dataBus.readDataFromBus()[0];
+                            this.regIntAddr[1] = dataBus.readDataFromBus()[0];
                             break;
                         case 1:
                             addressBus.writeDataToBus(ByteArrayUtils.increment(addressBus.readDataFromBus()));
                             rwFlag.setFlagValue(true);
-                            this.addr[0] = dataBus.readDataFromBus()[0];
-                            addressBus.writeDataToBus(this.addr);
+                            this.regIntAddr[0] = dataBus.readDataFromBus()[0];
+                            addressBus.writeDataToBus(this.regIntAddr);
                             break;
                     }
                     break;
@@ -288,16 +288,16 @@ public class NMOS6502 extends Processor {
                 case INDEXED_INDIRECT_X:
                     switch (this.cycles){
                         case 5:
-                            this.addr[1] = this.fetch();
-                            this.addr[1] = (byte)(this.addr[1] + this.inx);
+                            this.regIntAddr[1] = this.fetch();
+                            this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regX);
                             break;
                         case 4:
-                            this.addr[0] = 0x00;
-                            this.addressBus.writeDataToBus(this.addr);
+                            this.regIntAddr[0] = 0x00;
+                            this.addressBus.writeDataToBus(this.regIntAddr);
                             break;
                         case 3:
                             this.rwFlag.setFlagValue(true);
-                            this.addr[1] = dataBus.readDataFromBus()[0];
+                            this.regIntAddr[1] = dataBus.readDataFromBus()[0];
                             break;
                         case 2:
                             byte[] next = addressBus.readDataFromBus();
@@ -306,8 +306,8 @@ public class NMOS6502 extends Processor {
                             break;
                         case 1:
                             this.rwFlag.setFlagValue(true);
-                            this.addr[0] = dataBus.readDataFromBus()[0];
-                            this.addressBus.writeDataToBus(this.addr);
+                            this.regIntAddr[0] = dataBus.readDataFromBus()[0];
+                            this.addressBus.writeDataToBus(this.regIntAddr);
                             break;
                     }
                     break;
@@ -315,13 +315,13 @@ public class NMOS6502 extends Processor {
                 case INDIRECT_INDEXED_Y:
                     switch (this.cycles){
                         case 4:
-                            this.addr[0] = 0x00;
-                            this.addr[1] = this.fetch();
-                            this.addressBus.writeDataToBus(this.addr);
+                            this.regIntAddr[0] = 0x00;
+                            this.regIntAddr[1] = this.fetch();
+                            this.addressBus.writeDataToBus(this.regIntAddr);
                             break;
                         case 3:
                             this.rwFlag.setFlagValue(true);
-                            this.addr[1] = dataBus.readDataFromBus()[0];
+                            this.regIntAddr[1] = dataBus.readDataFromBus()[0];
                             break;
                         case 2:
                             byte[] next = addressBus.readDataFromBus();
@@ -330,20 +330,20 @@ public class NMOS6502 extends Processor {
                             break;
                         case 1:
                             this.rwFlag.setFlagValue(true);
-                            this.addr[0] = dataBus.readDataFromBus()[0];
+                            this.regIntAddr[0] = dataBus.readDataFromBus()[0];
 
-                            if (!this.carry){
-                                if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.iny)) {
-                                    this.carry = true;
+                            if (!this.regIntCarry){
+                                if (ByteArrayUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
+                                    this.regIntCarry = true;
                                     this.cycles ++;
                                 }
-                                this.addr[1] = (byte)(this.addr[1] + this.iny);
+                                this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regY);
                             }
                             else {
-                                this.carry = false;
-                                this.addr[0] = (byte)(this.addr[0] + 0x01);
+                                this.regIntCarry = false;
+                                this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
                             }
-                            addressBus.writeDataToBus(addr);
+                            addressBus.writeDataToBus(regIntAddr);
 
                             break;
                     }
@@ -457,7 +457,7 @@ public class NMOS6502 extends Processor {
      * @param flag flag to enable
      */
     private void enableFlag(byte flag) {
-        this.status = (byte)(this.status | flag);
+        this.regStatus = (byte)(this.regStatus | flag);
     }
 
     /**
@@ -465,8 +465,8 @@ public class NMOS6502 extends Processor {
      * @param flag flag to disable
      */
     private void disableFlag(byte flag) {
-        if ((this.status & flag) == flag){
-            this.status = (byte)(this.status - flag);
+        if ((this.regStatus & flag) == flag){
+            this.regStatus = (byte)(this.regStatus - flag);
         }
     }
 
@@ -491,19 +491,19 @@ public class NMOS6502 extends Processor {
         byte value = dataBus.readDataFromBus()[0];
         byte result = 0x00;
 
-        if ((this.status & NMOS6502Flags.DECIMAL_MODE) == NMOS6502Flags.DECIMAL_MODE){
+        if ((this.regStatus & NMOS6502Flags.DECIMAL_MODE) == NMOS6502Flags.DECIMAL_MODE){
             // BCD addition
             //TODO BCD addition
         } else {
             // Binary addition
-            result = (byte)(value + this.acc);
+            result = (byte)(value + this.regACC);
         }
 
         /**
          * Set Flags
          */
         // Carry Flag
-        if (ByteArrayUtils.willCarryOnAddition(value, this.acc))
+        if (ByteArrayUtils.willCarryOnAddition(value, this.regACC))
             enableFlag(NMOS6502Flags.CARRY_FLAG);
 
         // Zero Flag
@@ -511,7 +511,7 @@ public class NMOS6502 extends Processor {
             enableFlag(NMOS6502Flags.ZERO_FLAG);
 
         // Overflow Flag
-        if ((this.acc & 0b10000000) == 0b00000000 && (result & 0b10000000) == 0b10000000)
+        if ((this.regACC & 0b10000000) == 0b00000000 && (result & 0b10000000) == 0b10000000)
             enableFlag(NMOS6502Flags.OVERFLOW_FLAG);
 
         // Negative Flag
@@ -519,9 +519,9 @@ public class NMOS6502 extends Processor {
             enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
 
         // Finally set accumulator with new value
-        this.acc = result;
+        this.regACC = result;
         if (PRINT_TRACE)
-            System.out.println("ADC : " + String.format("%02X", this.acc));
+            System.out.println("ADC : " + String.format("%02X", this.regACC));
     }
 
     /**
@@ -529,9 +529,9 @@ public class NMOS6502 extends Processor {
      * @throws ProcessorException
      */
     private void JMP() throws ProcessorException {
-        this.pc = this.addressBus.readDataFromBus();
+        this.regPC = this.addressBus.readDataFromBus();
         if (PRINT_TRACE)
-            System.out.println("JMP : " + String.format("%02X", this.pc[0]) + String.format("%02X", this.pc[1]));
+            System.out.println("JMP : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
     }
 
     /**
@@ -555,10 +555,10 @@ public class NMOS6502 extends Processor {
         if ((value & 0b10000000) == 0b10000000)
             enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
 
-        this.acc = value;
+        this.regACC = value;
 
         if (PRINT_TRACE)
-            System.out.println("LDA : " + String.format("%02X", this.acc));
+            System.out.println("LDA : " + String.format("%02X", this.regACC));
     }
 
     /**
@@ -582,10 +582,10 @@ public class NMOS6502 extends Processor {
         if ((value & 0b10000000) == 0b10000000)
             enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
 
-        this.inx = value;
+        this.regX = value;
 
         if (PRINT_TRACE)
-            System.out.println("LDX : " + String.format("%02X", this.inx));
+            System.out.println("LDX : " + String.format("%02X", this.regX));
     }
 
     /**
@@ -609,10 +609,10 @@ public class NMOS6502 extends Processor {
         if ((value & 0b10000000) == 0b10000000)
             enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
 
-        this.iny = value;
+        this.regY = value;
 
         if (PRINT_TRACE)
-            System.out.println("LDY : " + String.format("%02X", this.iny));
+            System.out.println("LDY : " + String.format("%02X", this.regY));
     }
 
 }

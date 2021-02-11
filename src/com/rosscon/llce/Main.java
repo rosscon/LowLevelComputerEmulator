@@ -69,22 +69,7 @@ public class Main {
         ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
-        clock.tick();
+        clock.tick(12);
     }
 }
 

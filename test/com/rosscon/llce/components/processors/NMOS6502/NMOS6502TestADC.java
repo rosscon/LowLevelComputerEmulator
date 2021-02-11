@@ -43,7 +43,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(2);
-        assertEquals((byte)0x42, cpu.getAcc());
+        assertEquals((byte)0x42, cpu.getRegACC());
     }
 
     @Test
@@ -70,8 +70,8 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(4);
-        assertEquals((byte)0b10000000, cpu.getAcc());
-        assertEquals(NMOS6502Flags.OVERFLOW_FLAG, (cpu.getStatus() & NMOS6502Flags.OVERFLOW_FLAG));
+        assertEquals((byte)0b10000000, cpu.getRegACC());
+        assertEquals(NMOS6502Flags.OVERFLOW_FLAG, (cpu.getRegStatus() & NMOS6502Flags.OVERFLOW_FLAG));
     }
 
     @Test
@@ -94,8 +94,8 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(2);
-        assertEquals((byte)0b00000000, cpu.getAcc());
-        assertEquals(NMOS6502Flags.ZERO_FLAG, (cpu.getStatus() & NMOS6502Flags.ZERO_FLAG));
+        assertEquals((byte)0b00000000, cpu.getRegACC());
+        assertEquals(NMOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & NMOS6502Flags.ZERO_FLAG));
     }
 
     @Test
@@ -118,8 +118,8 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(2);
-        assertEquals((byte)0b10000000, cpu.getAcc());
-        assertEquals(NMOS6502Flags.NEGATIVE_FLAG, (cpu.getStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals((byte)0b10000000, cpu.getRegACC());
+        assertEquals(NMOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
     }
 
     @Test
@@ -146,8 +146,8 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(4);
-        assertEquals((byte)0b00000000, cpu.getAcc());
-        assertEquals(NMOS6502Flags.CARRY_FLAG, (cpu.getStatus() & NMOS6502Flags.CARRY_FLAG));
+        assertEquals((byte)0b00000000, cpu.getRegACC());
+        assertEquals(NMOS6502Flags.CARRY_FLAG, (cpu.getRegStatus() & NMOS6502Flags.CARRY_FLAG));
     }
 
     @Test
@@ -172,7 +172,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(3);
-        assertEquals((byte)0x43, cpu.getAcc());
+        assertEquals((byte)0x43, cpu.getRegACC());
     }
 
     @Test
@@ -200,7 +200,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(6);
-        assertEquals((byte)0x42, cpu.getAcc());
+        assertEquals((byte)0x42, cpu.getRegACC());
     }
 
     @Test
@@ -226,7 +226,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(4);
-        assertEquals((byte)0x42, cpu.getAcc());
+        assertEquals((byte)0x42, cpu.getRegACC());
     }
 
     @Test
@@ -263,7 +263,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(9);
-        assertEquals((byte)0x42, cpu.getAcc());
+        assertEquals((byte)0x42, cpu.getRegACC());
     }
 
     @Test
@@ -300,7 +300,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(10);
-        assertEquals((byte)0x43, cpu.getAcc());
+        assertEquals((byte)0x43, cpu.getRegACC());
     }
 
     @Test
@@ -337,7 +337,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(9);
-        assertEquals((byte)0x42, cpu.getAcc());
+        assertEquals((byte)0x42, cpu.getRegACC());
     }
 
     @Test
@@ -374,7 +374,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(10);
-        assertEquals((byte)0x43, cpu.getAcc());
+        assertEquals((byte)0x43, cpu.getRegACC());
     }
 
     @Test
@@ -413,7 +413,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(11);
-        assertEquals((byte)0x42, cpu.getAcc());
+        assertEquals((byte)0x42, cpu.getRegACC());
     }
 
     @Test
@@ -452,7 +452,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(10);
-        assertEquals((byte)0x43, cpu.getAcc());
+        assertEquals((byte)0x43, cpu.getRegACC());
     }
 
     @Test
@@ -491,7 +491,7 @@ public class NMOS6502TestADC {
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(11);
-        assertEquals((byte)0x42, cpu.getAcc());
+        assertEquals((byte)0x42, cpu.getRegACC());
     }
 
 }
