@@ -37,6 +37,7 @@ public class NMOS6502 extends Processor {
     private byte    iny;    // Index Register Y
     private byte    status; // Processor Status [C][Z][I][D][B][V][N]
     private byte[]  addr;   // A custom register used for building addresses over multiple cycles
+    private boolean carry;  // A custom carry register for handling ABS X,Y
 
     /**
      * Getters for unit testing
@@ -128,13 +129,17 @@ public class NMOS6502 extends Processor {
             addressBus.writeDataToBus(pc);
             rwFlag.setFlagValue(true);
             fetchedData = dataBus.readDataFromBus()[0];
+            if (PRINT_TRACE)
+                System.out.print("Fetch : [" + String.format("%02X", this.pc[0]) +
+                    String.format("%02X", this.pc[1]) + "] ");
+
             pc = ByteArrayUtils.increment(pc);
         } catch ( Exception ex){
             throw new ProcessorException(ex.getMessage());
         }
 
         if (PRINT_TRACE)
-            System.out.println("Fetch : " + String.format("%02X", fetchedData));
+            System.out.println(String.format("%02X", fetchedData));
         return fetchedData;
     }
 
@@ -203,15 +208,15 @@ public class NMOS6502 extends Processor {
                     } else if (this.cycles == 2) {         // On first cycle read next address in memory
                         this.addr[0] = this.fetch();
                     } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        if ((this.status & NMOS6502Flags.CARRY_FLAG) != NMOS6502Flags.CARRY_FLAG){
+                        if (!this.carry){
                             // Extra cycle required on carry
                             if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.inx)) {
-                                enableFlag(NMOS6502Flags.CARRY_FLAG);
+                                this.carry = true;
                                 this.cycles ++;
                             }
-                            this.addr[1] = (byte)(this.addr[0] + this.inx);
+                            this.addr[1] = (byte)(this.addr[1] + this.inx);
                         } else {
-                            disableFlag(NMOS6502Flags.CARRY_FLAG);
+                            this.carry = false;
                             this.addr[0] = (byte)(this.addr[0] + 0x01);
                         }
 
@@ -225,15 +230,15 @@ public class NMOS6502 extends Processor {
                     } else if (this.cycles == 2) {         // On first cycle read next address in memory
                         this.addr[0] = this.fetch();
                     } else if (this.cycles == 1) {  // On second cycle add X to value on data bus
-                        if ((this.status & NMOS6502Flags.CARRY_FLAG) != NMOS6502Flags.CARRY_FLAG){
+                        if (!this.carry){
                             // Extra cycle required on carry
                             if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.iny)) {
-                                enableFlag(NMOS6502Flags.CARRY_FLAG);
+                                this.carry = true;
                                 this.cycles ++;
                             }
-                            this.addr[1] = (byte)(this.addr[0] + this.iny);
+                            this.addr[1] = (byte)(this.addr[1] + this.iny);
                         } else {
-                            disableFlag(NMOS6502Flags.CARRY_FLAG);
+                            this.carry = false;
                             this.addr[0] = (byte)(this.addr[0] + 0x01);
                         }
 
@@ -257,9 +262,73 @@ public class NMOS6502 extends Processor {
                         addressBus.writeDataToBus(this.addr);
                     }
 
+                case INDEXED_INDIRECT_X:
+                    switch (this.cycles){
+                        case 5:
+                            this.addr[1] = this.fetch();
+                            this.addr[1] = (byte)(this.addr[1] + this.inx);
+                            break;
+                        case 4:
+                            this.addr[0] = 0x00;
+                            this.addressBus.writeDataToBus(this.addr);
+                            break;
+                        case 3:
+                            this.rwFlag.setFlagValue(true);
+                            this.addr[1] = dataBus.readDataFromBus()[0];
+                            break;
+                        case 2:
+                            byte[] next = addressBus.readDataFromBus();
+                            next = ByteArrayUtils.increment(next);
+                            this.addressBus.writeDataToBus(next);
+                            break;
+                        case 1:
+                            this.rwFlag.setFlagValue(true);
+                            this.addr[0] = dataBus.readDataFromBus()[0];
+                            this.addressBus.writeDataToBus(this.addr);
+                            break;
+                    }
+                    break;
 
+                case INDIRECT_INDEXED_Y:
+                    switch (this.cycles){
+                        case 4:
+                            this.addr[0] = 0x00;
+                            this.addr[1] = this.fetch();
+                            this.addressBus.writeDataToBus(this.addr);
+                            break;
+                        case 3:
+                            this.rwFlag.setFlagValue(true);
+                            this.addr[1] = dataBus.readDataFromBus()[0];
+                            break;
+                        case 2:
+                            byte[] next = addressBus.readDataFromBus();
+                            next = ByteArrayUtils.increment(next);
+                            this.addressBus.writeDataToBus(next);
+                            break;
+                        case 1:
+                            this.rwFlag.setFlagValue(true);
+                            this.addr[0] = dataBus.readDataFromBus()[0];
 
-                //TODO remaining addressing modes
+                            if (!this.carry){
+                                if (ByteArrayUtils.willCarryOnAddition(this.addr[1], this.iny)) {
+                                    this.carry = true;
+                                    this.cycles ++;
+                                }
+                                this.addr[1] = (byte)(this.addr[1] + this.iny);
+                            }
+                            else {
+                                this.carry = false;
+                                this.addr[0] = (byte)(this.addr[0] + 0x01);
+                            }
+                            addressBus.writeDataToBus(addr);
+
+                            break;
+                    }
+                    break;
+
+                case RELATIVE:
+                    //TODO implement relative addressing, however will need to implement a branching instruction
+                    break;
             }
         } catch (Exception ex){
             throw new ProcessorException(ex.getMessage());
@@ -309,6 +378,8 @@ public class NMOS6502 extends Processor {
             case NMOS6502Instructions.INS_JMP_IND:
                 JMP();
                 break;
+
+
 
             case NMOS6502Instructions.INS_LDA_IMM:
             case NMOS6502Instructions.INS_LDA_ZP:

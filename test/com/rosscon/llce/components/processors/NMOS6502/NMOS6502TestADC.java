@@ -197,7 +197,7 @@ public class NMOS6502TestADC {
         }};
 
         ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag, true);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
         clock.tick(6);
         assertEquals((byte)0x42, cpu.getAcc());
@@ -232,31 +232,266 @@ public class NMOS6502TestADC {
     @Test
     @DisplayName("ADC Absolute X mode should add the value to the accumulator from combining address with X")
     public void testADCAbsoluteXMode() throws MemoryException, ClockException, InvalidBusWidthException {
-        //TODO
+        Bus addressBus = new Bus(16);
+        Bus dataBus = new Bus(8);
+        Flag rwFlag = new Flag();
+        Clock clock = new Clock();
+
+        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
+                    new byte[]{ NMOS6502Instructions.INS_JMP_ABS });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
+                    new byte[]{ NMOS6502Instructions.INS_LDX_IMM});
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
+                    new byte[]{ (byte)0x01 });
+
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
+                    new byte[]{ NMOS6502Instructions.INS_ADC_ABX });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
+                    new byte[]{ (byte)0x04 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x04 }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x05 }),
+                    new byte[]{ (byte)0x42 });
+        }};
+
+        ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+
+        clock.tick(9);
+        assertEquals((byte)0x42, cpu.getAcc());
     }
 
     @Test
     @DisplayName("ADC Absolute X mode with carry should add the value to the accumulator from combining address with X and carry")
     public void testADCAbsoluteXCarryMode() throws MemoryException, ClockException, InvalidBusWidthException {
-        //TODO
+        Bus addressBus = new Bus(16);
+        Bus dataBus = new Bus(8);
+        Flag rwFlag = new Flag();
+        Clock clock = new Clock();
+
+        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
+                    new byte[]{ NMOS6502Instructions.INS_JMP_ABS });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
+                    new byte[]{ NMOS6502Instructions.INS_LDX_IMM});
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
+                    new byte[]{ (byte)0x01 });
+
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
+                    new byte[]{ NMOS6502Instructions.INS_ADC_ABX });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
+                    new byte[]{ (byte)0xFF });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x04 }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x01, (byte) 0x00 }),
+                    new byte[]{ (byte)0x43 });
+        }};
+
+        ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+
+        clock.tick(10);
+        assertEquals((byte)0x43, cpu.getAcc());
     }
 
     @Test
     @DisplayName("ADC Absolute Y mode should add the value to the accumulator from combining address with Y")
     public void testADCAbsoluteYMode() throws MemoryException, ClockException, InvalidBusWidthException {
-        //TODO
+        Bus addressBus = new Bus(16);
+        Bus dataBus = new Bus(8);
+        Flag rwFlag = new Flag();
+        Clock clock = new Clock();
+
+        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
+                    new byte[]{ NMOS6502Instructions.INS_JMP_ABS });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
+                    new byte[]{ NMOS6502Instructions.INS_LDY_IMM});
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
+                    new byte[]{ (byte)0x01 });
+
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
+                    new byte[]{ NMOS6502Instructions.INS_ADC_ABY });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
+                    new byte[]{ (byte)0x04 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x04 }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x05 }),
+                    new byte[]{ (byte)0x42 });
+        }};
+
+        ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+
+        clock.tick(9);
+        assertEquals((byte)0x42, cpu.getAcc());
+    }
+
+    @Test
+    @DisplayName("ADC Absolute Y mode with carry should add the value to the accumulator from combining address with Y and carry")
+    public void testADCAbsoluteYCarryMode() throws MemoryException, ClockException, InvalidBusWidthException {
+        Bus addressBus = new Bus(16);
+        Bus dataBus = new Bus(8);
+        Flag rwFlag = new Flag();
+        Clock clock = new Clock();
+
+        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
+                    new byte[]{ NMOS6502Instructions.INS_JMP_ABS });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
+                    new byte[]{ NMOS6502Instructions.INS_LDY_IMM});
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
+                    new byte[]{ (byte)0x01 });
+
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
+                    new byte[]{ NMOS6502Instructions.INS_ADC_ABY });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
+                    new byte[]{ (byte)0xFF });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x04 }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x01, (byte) 0x00 }),
+                    new byte[]{ (byte)0x43 });
+        }};
+
+        ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+
+        clock.tick(10);
+        assertEquals((byte)0x43, cpu.getAcc());
     }
 
     @Test
     @DisplayName("ADC Indirect X mode should add the value to the accumulator from combining address with X")
     public void testADCIndirectXMode() throws MemoryException, ClockException, InvalidBusWidthException {
-        //TODO needs LDX instruction and IndirectX addressing mode working prior
+        Bus addressBus = new Bus(16);
+        Bus dataBus = new Bus(8);
+        Flag rwFlag = new Flag();
+        Clock clock = new Clock();
+
+        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
+                    new byte[]{ NMOS6502Instructions.INS_JMP_ABS });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
+                    new byte[]{ NMOS6502Instructions.INS_LDX_IMM});
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
+                    new byte[]{ (byte)0x04 });
+
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
+                    new byte[]{ NMOS6502Instructions.INS_ADC_INX });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
+                    new byte[]{ (byte)0x20 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x24 }),
+                    new byte[]{ (byte)0x74 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x25 }),
+                    new byte[]{ (byte)0x20 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x20, (byte) 0x74 }),
+                    new byte[]{ (byte)0x42 });
+        }};
+
+        ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+
+        clock.tick(11);
+        assertEquals((byte)0x42, cpu.getAcc());
     }
 
     @Test
-    @DisplayName("ADC Indirect X mode should add the value to the accumulator from combining address with X")
+    @DisplayName("ADC Indirect Y mode should add the value to the accumulator from combining address with Y")
     public void testADCIndirectYMode() throws MemoryException, ClockException, InvalidBusWidthException {
-        //TODO needs LDY instruction and IndirectY addressing mode working prior
+        Bus addressBus = new Bus(16);
+        Bus dataBus = new Bus(8);
+        Flag rwFlag = new Flag();
+        Clock clock = new Clock();
+
+        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
+                    new byte[]{ NMOS6502Instructions.INS_JMP_ABS });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
+                    new byte[]{ NMOS6502Instructions.INS_LDY_IMM});
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
+                    new byte[]{ (byte)0x10 });
+
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
+                    new byte[]{ NMOS6502Instructions.INS_ADC_INY });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
+                    new byte[]{ (byte)0x86 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x86 }),
+                    new byte[]{ (byte)0x28 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x87 }),
+                    new byte[]{ (byte)0x40 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x40, (byte) 0x38 }),
+                    new byte[]{ (byte)0x43 });
+        }};
+
+        ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+
+        clock.tick(10);
+        assertEquals((byte)0x43, cpu.getAcc());
+    }
+
+    @Test
+    @DisplayName("ADC Indirect Y Carry mode should add the value to the accumulator from combining address with Y")
+    public void testADCIndirectYCarryMode() throws MemoryException, ClockException, InvalidBusWidthException {
+        Bus addressBus = new Bus(16);
+        Bus dataBus = new Bus(8);
+        Flag rwFlag = new Flag();
+        Clock clock = new Clock();
+
+        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
+                    new byte[]{ NMOS6502Instructions.INS_JMP_ABS });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
+                    new byte[]{ NMOS6502Instructions.INS_LDY_IMM});
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
+                    new byte[]{ (byte)0x01 });
+
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
+                    new byte[]{ NMOS6502Instructions.INS_ADC_INY });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
+                    new byte[]{ (byte)0x86 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x86 }),
+                    new byte[]{ (byte)0xFF });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x87 }),
+                    new byte[]{ (byte)0x40 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x41, (byte) 0x00 }),
+                    new byte[]{ (byte)0x42 });
+        }};
+
+        ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
+        NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+
+        clock.tick(11);
+        assertEquals((byte)0x42, cpu.getAcc());
     }
 
 }

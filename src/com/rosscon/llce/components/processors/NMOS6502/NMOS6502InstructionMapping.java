@@ -22,9 +22,9 @@ public class NMOS6502InstructionMapping extends HashMap {
         this.put(NMOS6502Instructions.INS_ADC_ABY,
                 new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE_Y, 3, 4));
         this.put(NMOS6502Instructions.INS_ADC_INX,
-                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDEXED_INDIRECT, 2, 6));
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
         this.put(NMOS6502Instructions.INS_ADC_INY,
-                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDIRECT_INDEXED, 2, 5));
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5));
 
         /**
          * JMP
@@ -50,9 +50,9 @@ public class NMOS6502InstructionMapping extends HashMap {
         this.put(NMOS6502Instructions.INS_LDA_ABY,
                 new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE_Y, 3, 4));
         this.put(NMOS6502Instructions.INS_LDA_INX,
-                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDEXED_INDIRECT, 2, 6));
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
         this.put(NMOS6502Instructions.INS_LDA_INY,
-                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDIRECT_INDEXED, 2, 5));
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5));
 
         /**
          * LDX
