@@ -536,6 +536,8 @@ public class NMOS6502 extends Processor {
 
     /**
      * Loads the value from memory into the accumulator
+     * Sets ZERO_FLAG if accumulator becomes zero
+     * Sets NEGATIVE_FLAG if bit 7 of accumulator is a 1
      * @throws ProcessorException
      */
     private void LDA() throws ProcessorException {
@@ -563,6 +565,8 @@ public class NMOS6502 extends Processor {
 
     /**
      * Loads the value from memory into the x register
+     * Sets ZERO_FLAG if X register becomes zero
+     * Sets NEGATIVE_FLAG if bit 7 of X register is a 1
      * @throws ProcessorException
      */
     private void LDX() throws ProcessorException {
@@ -590,6 +594,8 @@ public class NMOS6502 extends Processor {
 
     /**
      * Loads the value from memory into the y register
+     * Sets ZERO_FLAG if Y register becomes zero
+     * Sets NEGATIVE_FLAG if bit 7 of Y register is a 1
      * @throws ProcessorException
      */
     private void LDY() throws ProcessorException {
