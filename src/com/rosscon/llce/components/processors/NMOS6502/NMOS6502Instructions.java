@@ -296,30 +296,30 @@ public class NMOS6502Instructions {
     /**
      * TAX Instructions
      */
-    //TODO TAX Instructions
+    public static final byte INS_TAX   = (byte)0xAA;
 
     /**
      * TAY Instructions
      */
-    //TODO TAY Instructions
+    public static final byte INS_TAY   = (byte)0xA8;
 
     /**
      * TSX Instructions
      */
-    //TODO TSX Instructions
+    public static final byte INS_TSX   = (byte)0xBA;
 
     /**
      * TXA Instructions
      */
-    //TODO TXA Instructions
+    public static final byte INS_TXA   = (byte)0x8A;
 
     /**
      * TXS Instructions
      */
-    //TODO TXS Instructions
+    public static final byte INS_TXS   = (byte)0x9A;
 
     /**
      * TYA Instructions
      */
-    //TODO TYA Instructions
+    public static final byte INS_TYA   = (byte)0x98;
 }

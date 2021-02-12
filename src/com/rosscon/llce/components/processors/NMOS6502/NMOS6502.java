@@ -519,6 +519,30 @@ public class NMOS6502 extends Processor {
                 ST(this.regY);
                 break;
 
+            case NMOS6502Instructions.INS_TAX:
+                this.regX = this.regACC;
+                break;
+
+            case NMOS6502Instructions.INS_TAY:
+                this.regY = this.regACC;
+                break;
+
+            case NMOS6502Instructions.INS_TSX:
+                this.regX = this.regSP;
+                break;
+
+            case NMOS6502Instructions.INS_TXA:
+                this.regACC = this.regX;
+                break;
+
+            case NMOS6502Instructions.INS_TXS:
+                this.regSP = this.regX;
+                break;
+
+            case NMOS6502Instructions.INS_TYA:
+                this.regACC = this.regY;
+                break;
+
 
             default:
                 throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + this.instruction);
