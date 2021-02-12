@@ -8,6 +8,7 @@ import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.utils.ByteArrayUtils;
+import com.rosscon.llce.utils.ByteUtils;
 
 /**
  *      _   _ __  __  ____   _____     __ _____  ___ ___
@@ -256,7 +257,7 @@ public class NMOS6502 extends Processor {
                         case 1:
                             if (!this.regIntCarry){
                                 // Extra cycle required on carry
-                                if (ByteArrayUtils.willCarryOnAddition(this.regIntAddr[1], this.regX)) {
+                                if (ByteUtils.willCarryOnAddition(this.regIntAddr[1], this.regX)) {
                                     this.regIntCarry = true;
                                     this.cycles ++;
                                 }
@@ -280,7 +281,7 @@ public class NMOS6502 extends Processor {
                         case 1:
                             if (!this.regIntCarry){
                                 // Extra cycle required on carry
-                                if (ByteArrayUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
+                                if (ByteUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
                                     this.regIntCarry = true;
                                     this.cycles ++;
                                 }
@@ -363,7 +364,7 @@ public class NMOS6502 extends Processor {
                             this.regIntAddr[0] = dataBus.readDataFromBus()[0];
 
                             if (!this.regIntCarry){
-                                if (ByteArrayUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
+                                if (ByteUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
                                     this.regIntCarry = true;
                                     this.cycles ++;
                                 }
@@ -571,7 +572,7 @@ public class NMOS6502 extends Processor {
          * Set Flags
          */
         // Carry Flag
-        if (ByteArrayUtils.willCarryOnAddition(value, this.regACC)) {
+        if (ByteUtils.willCarryOnAddition(value, this.regACC)) {
             enableFlag(NMOS6502Flags.CARRY_FLAG);
         } else {
             clearFlag(NMOS6502Flags.CARRY_FLAG);
