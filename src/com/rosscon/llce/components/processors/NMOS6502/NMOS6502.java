@@ -226,13 +226,11 @@ public class NMOS6502 extends Processor {
 
                 case ABSOLUTE:
                     switch(this.cycles){
-                        case 3:
+                        case 2:
                             this.regIntAddr[1] = this.fetch();
                             break;
-                        case 2:
-                            this.regIntAddr[0] = this.fetch();
-                            break;
                         case 1:
+                            this.regIntAddr[0] = this.fetch();
                             addressBus.writeDataToBus(regIntAddr);
                             break;
                     }
