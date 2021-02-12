@@ -17,7 +17,14 @@ public class NMOS6502Instructions {
     /**
      * AND Instructions
      */
-    //TODO AND Instructions
+    public static final byte INS_AND_IMM  = (byte)0x29;
+    public static final byte INS_AND_ZP   = (byte)0x25;
+    public static final byte INS_AND_ZPX  = (byte)0x35;
+    public static final byte INS_AND_ABS  = (byte)0x2D;
+    public static final byte INS_AND_ABX  = (byte)0x3D;
+    public static final byte INS_AND_ABY  = (byte)0x39;
+    public static final byte INS_AND_INX  = (byte)0x21;
+    public static final byte INS_AND_INY  = (byte)0x31;
 
     /**
      * ASL Instructions

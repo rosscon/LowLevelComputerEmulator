@@ -30,7 +30,22 @@ public class NMOS6502InstructionMapping extends HashMap {
         /**
          * AND
          */
-        //TODO AND Instructions
+        this.put(NMOS6502Instructions.INS_AND_IMM,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.IMMEDIATE, 2, 2));
+        this.put(NMOS6502Instructions.INS_AND_ZP,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE, 2, 3));
+        this.put(NMOS6502Instructions.INS_AND_ZPX,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
+        this.put(NMOS6502Instructions.INS_AND_ABS,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE, 3, 4));
+        this.put(NMOS6502Instructions.INS_AND_ABX,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE_X, 3, 4));
+        this.put(NMOS6502Instructions.INS_AND_ABY,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE_Y, 3, 4));
+        this.put(NMOS6502Instructions.INS_AND_INX,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
+        this.put(NMOS6502Instructions.INS_AND_INY,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5));
 
         /**
          * ASL

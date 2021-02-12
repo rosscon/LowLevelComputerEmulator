@@ -425,6 +425,17 @@ public class NMOS6502 extends Processor {
                 ADC();
                 break;
 
+            case NMOS6502Instructions.INS_AND_IMM:
+            case NMOS6502Instructions.INS_AND_ZP:
+            case NMOS6502Instructions.INS_AND_ZPX:
+            case NMOS6502Instructions.INS_AND_ABS:
+            case NMOS6502Instructions.INS_AND_ABX:
+            case NMOS6502Instructions.INS_AND_ABY:
+            case NMOS6502Instructions.INS_AND_INX:
+            case NMOS6502Instructions.INS_AND_INY:
+                AND();
+                break;
+
 
             case NMOS6502Instructions.INS_CLC_IMP:
                 clearFlag(NMOS6502Flags.CARRY_FLAG);
@@ -600,10 +611,39 @@ public class NMOS6502 extends Processor {
     }
 
     /**
-     * Jumps the program counter to the value currently held on the address bus
-     * @throws ProcessorException
+     * Performs a logical between the accumulator and a memory location
+     * Sets zero flag if the result == 0
+     * Sets the negative flag if bit 7 is set
      */
-    private void JMP() throws ProcessorException {
+    private void AND() throws ProcessorException {
+        try {
+            rwFlag.setFlagValue(true);
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+
+        byte value = dataBus.readDataFromBus()[0];
+        this.regACC = (byte)(this.regACC & value);
+
+        // Zero Flag
+        if (this.regACC == 0x00) {
+            enableFlag(NMOS6502Flags.ZERO_FLAG);
+        } else {
+            clearFlag(NMOS6502Flags.ZERO_FLAG);
+        }
+
+        // Negative Flag
+        if ((this.regACC & 0b10000000) == 0b10000000){
+            enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
+        } else {
+            clearFlag(NMOS6502Flags.NEGATIVE_FLAG);
+        }
+    }
+
+    /**
+     * Jumps the program counter to the value currently held on the address bus
+     */
+    private void JMP() {
         this.regPC = this.regIntAddr;
         if (PRINT_TRACE)
             System.out.println("JMP : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
