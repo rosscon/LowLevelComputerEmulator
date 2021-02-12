@@ -131,7 +131,7 @@ public class NMOS6502 extends Processor {
             cycles      = 0;
             regIntAddr  = new byte[2];
 
-            /**
+            /*
              * Read the reset vector
              * TODO make this timing specific following https://www.pagetable.com/?p=410
              */
@@ -172,7 +172,7 @@ public class NMOS6502 extends Processor {
         }
 
         if (PRINT_TRACE)
-            System.out.println(String.format("%02X", fetchedData));
+            System.out.printf("%02X%n", fetchedData);
         return fetchedData;
     }
 
@@ -402,7 +402,6 @@ public class NMOS6502 extends Processor {
             this.addressingMode = details.addressingMode;
             this.cycles = details.cycles;
             this.cycles --;
-            return;
         } else {
             throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + instruction);
         }
@@ -568,7 +567,7 @@ public class NMOS6502 extends Processor {
                 result = (byte)(result + 0x01);
         }
 
-        /**
+        /*
          * Set Flags
          */
         // Carry Flag
@@ -582,7 +581,7 @@ public class NMOS6502 extends Processor {
         if (result == 0x00)
             enableFlag(NMOS6502Flags.ZERO_FLAG);
 
-        /**
+        /*
          * Overflow flag
          * based on the following logic to detect n overflow situation
          * Pos + Pos = Pos -> OK
@@ -638,6 +637,8 @@ public class NMOS6502 extends Processor {
         } else {
             clearFlag(NMOS6502Flags.NEGATIVE_FLAG);
         }
+        if (PRINT_TRACE)
+            System.out.println("AND : " + String.format("%02X", this.regACC));
     }
 
     /**
@@ -653,7 +654,7 @@ public class NMOS6502 extends Processor {
      * Loads the value from memory into the accumulator
      * Sets ZERO_FLAG if accumulator becomes zero
      * Sets NEGATIVE_FLAG if bit 7 of accumulator is a 1
-     * @throws ProcessorException
+     * @throws ProcessorException Can throw a ProcessorException when issues reading memory
      */
     private void LDA() throws ProcessorException {
         try {
@@ -682,7 +683,7 @@ public class NMOS6502 extends Processor {
      * Loads the value from memory into the x register
      * Sets ZERO_FLAG if X register becomes zero
      * Sets NEGATIVE_FLAG if bit 7 of X register is a 1
-     * @throws ProcessorException
+     * @throws ProcessorException Can throw a ProcessorException when issues reading memory
      */
     private void LDX() throws ProcessorException {
         try {
@@ -711,7 +712,7 @@ public class NMOS6502 extends Processor {
      * Loads the value from memory into the y register
      * Sets ZERO_FLAG if Y register becomes zero
      * Sets NEGATIVE_FLAG if bit 7 of Y register is a 1
-     * @throws ProcessorException
+     * @throws ProcessorException Can throw a ProcessorException when issues reading memory
      */
     private void LDY() throws ProcessorException {
         try {

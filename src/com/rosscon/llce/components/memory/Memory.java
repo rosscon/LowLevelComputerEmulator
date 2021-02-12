@@ -1,8 +1,6 @@
 package com.rosscon.llce.components.memory;
 
 import com.rosscon.llce.components.busses.Bus;
-import com.rosscon.llce.components.clocks.Clock;
-import com.rosscon.llce.components.clocks.ClockListener;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagListener;
 import com.rosscon.llce.utils.ByteArrayWrapper;
