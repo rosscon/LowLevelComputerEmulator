@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class NMOS6502TestJMP {
 

@@ -5,14 +5,14 @@ public class NMOS6502Instructions {
     /**
      * ADC Instructions
      */
-    public static final byte INS_ADC_IMM  = 0x69;
-    public static final byte INS_ADC_ZP   = 0x65;
-    public static final byte INS_ADC_ZPX  = 0x75;
-    public static final byte INS_ADC_ABS  = 0x6D;
-    public static final byte INS_ADC_ABX  = 0x7D;
-    public static final byte INS_ADC_ABY  = 0x79;
-    public static final byte INS_ADC_INX  = 0x61;
-    public static final byte INS_ADC_INY  = 0x71;
+    public static final byte INS_ADC_IMM  = (byte)0x69;
+    public static final byte INS_ADC_ZP   = (byte)0x65;
+    public static final byte INS_ADC_ZPX  = (byte)0x75;
+    public static final byte INS_ADC_ABS  = (byte)0x6D;
+    public static final byte INS_ADC_ABX  = (byte)0x7D;
+    public static final byte INS_ADC_ABY  = (byte)0x79;
+    public static final byte INS_ADC_INX  = (byte)0x61;
+    public static final byte INS_ADC_INY  = (byte)0x71;
 
     /**
      * AND Instructions
@@ -77,22 +77,22 @@ public class NMOS6502Instructions {
     /**
      * CLC Instructions
      */
-    //TODO CLC Instructions
+    public static final byte INS_CLC_IMP  = (byte)0x18;
 
     /**
      * CLD Instructions
      */
-    //TODO CLD Instructions
+    public static final byte INS_CLD_IMP  = (byte)0xD8;
 
     /**
      * CLI Instructions
      */
-    //TODO CLI Instructions
+    public static final byte INS_CLI_IMP  = (byte)0x58;
 
     /**
      * CLV Instructions
      */
-    //TODO CLV Instructions
+    public static final byte INS_CLV_IMP  = (byte)0xB8;
 
     /**
      * CMP Instructions
@@ -147,8 +147,8 @@ public class NMOS6502Instructions {
     /**
      * JMP Instructions
      */
-    public static final byte INS_JMP_ABS    = 0x4C;
-    public static final byte INS_JMP_IND    = 0x6C;
+    public static final byte INS_JMP_ABS    = (byte)0x4C;
+    public static final byte INS_JMP_IND    = (byte)0x6C;
 
 
     /**
@@ -249,17 +249,17 @@ public class NMOS6502Instructions {
     /**
      * SEC Instructions
      */
-    //TODO SEC Instructions
+    public static final byte INS_SEC_IMP    = (byte)0x38;
 
     /**
      * SED Instructions
      */
-    //TODO SED Instructions
+    public static final byte INS_SED_IMP    = (byte)0xF8;
 
     /**
      * SEI Instructions
      */
-    //TODO SEI Instructions
+    public static final byte INS_SEI_IMP    = (byte)0x78;
 
     /**
      * STA Instructions

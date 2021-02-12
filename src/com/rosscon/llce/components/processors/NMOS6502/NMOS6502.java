@@ -175,8 +175,6 @@ public class NMOS6502 extends Processor {
             switch (this.addressingMode) {
                 case IMPLICIT:      // These modes do nothing with memory
                 case ACCUMULATOR:
-                    break;
-
                 case IMMEDIATE:     // Makes cpu request next address in memory
                     if (this.cycles == 1){
                         this.fetch();
@@ -417,6 +415,20 @@ public class NMOS6502 extends Processor {
                 break;
 
 
+            case NMOS6502Instructions.INS_CLC_IMP:
+                clearFlag(NMOS6502Flags.CARRY_FLAG);
+                break;
+            case NMOS6502Instructions.INS_CLD_IMP:
+                clearFlag(NMOS6502Flags.DECIMAL_MODE);
+                break;
+            case NMOS6502Instructions.INS_CLI_IMP:
+                clearFlag(NMOS6502Flags.INTERRUPT_DIS);
+                break;
+            case NMOS6502Instructions.INS_CLV_IMP:
+                clearFlag(NMOS6502Flags.OVERFLOW_FLAG);
+                break;
+
+
 
             case NMOS6502Instructions.INS_JMP_ABS:
             case NMOS6502Instructions.INS_JMP_IND:
@@ -452,6 +464,17 @@ public class NMOS6502 extends Processor {
                 LDX();
                 break;
 
+
+            case NMOS6502Instructions.INS_SEC_IMP:
+                enableFlag(NMOS6502Flags.CARRY_FLAG);
+                break;
+            case NMOS6502Instructions.INS_SED_IMP:
+                enableFlag(NMOS6502Flags.DECIMAL_MODE);
+                break;
+            case NMOS6502Instructions.INS_SEI_IMP:
+                enableFlag(NMOS6502Flags.INTERRUPT_DIS);
+                break;
+
             default:
                 throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + this.instruction);
         }
@@ -485,7 +508,7 @@ public class NMOS6502 extends Processor {
      * Disables a given flag
      * @param flag flag to disable
      */
-    private void disableFlag(byte flag) {
+    private void clearFlag(byte flag) {
         if ((this.regStatus & flag) == flag){
             this.regStatus = (byte)(this.regStatus - flag);
         }
@@ -514,7 +537,7 @@ public class NMOS6502 extends Processor {
 
         if ((this.regStatus & NMOS6502Flags.DECIMAL_MODE) == NMOS6502Flags.DECIMAL_MODE){
             // BCD addition
-            //TODO BCD addition
+            // TODO BCD addition
         } else {
             // Binary addition
             result = (byte)(value + this.regACC);
