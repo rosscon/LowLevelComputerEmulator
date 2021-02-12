@@ -324,7 +324,7 @@ public class NMOS6502TestADC {
 
     @Test
     @DisplayName("ADC Indirect Y Carry mode should add the value to the accumulator from combining address with Y")
-    public void testADCIndirectYCarryMode() throws MemoryException, ClockException, InvalidBusWidthException, ProcessorException {
+    public void testADCIndirectYCarryMode() throws MemoryException, ClockException {
 
         Map<ByteArrayWrapper, byte[]> data = new HashMap<>(){{
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
