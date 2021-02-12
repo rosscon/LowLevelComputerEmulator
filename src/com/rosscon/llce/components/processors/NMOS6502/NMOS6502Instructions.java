@@ -271,17 +271,27 @@ public class NMOS6502Instructions {
     /**
      * STA Instructions
      */
-    //TODO STA Instructions
+    public static final byte INS_STA_ZP    = (byte)0x85;
+    public static final byte INS_STA_ZPX   = (byte)0x95;
+    public static final byte INS_STA_ABS   = (byte)0x8D;
+    public static final byte INS_STA_ABX   = (byte)0x9D;
+    public static final byte INS_STA_ABY   = (byte)0x99;
+    public static final byte INS_STA_INX   = (byte)0x81;
+    public static final byte INS_STA_INY   = (byte)0x91;
 
     /**
      * STX Instructions
      */
-    //TODO STX Instructions
+    public static final byte INS_STX_ZP    = (byte)0x86;
+    public static final byte INS_STX_ZPY   = (byte)0x96;
+    public static final byte INS_STX_ABS   = (byte)0x8E;
 
     /**
      * STY Instructions
      */
-    //TODO STY Instructions
+    public static final byte INS_STY_ZP    = (byte)0x84;
+    public static final byte INS_STY_ZPX   = (byte)0x94;
+    public static final byte INS_STY_ABS   = (byte)0x8C;
 
     /**
      * TAX Instructions

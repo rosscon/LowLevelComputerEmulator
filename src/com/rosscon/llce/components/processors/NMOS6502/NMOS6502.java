@@ -497,6 +497,29 @@ public class NMOS6502 extends Processor {
                 enableFlag(NMOS6502Flags.INTERRUPT_DIS);
                 break;
 
+            case NMOS6502Instructions.INS_STA_ZP:
+            case NMOS6502Instructions.INS_STA_ZPX:
+            case NMOS6502Instructions.INS_STA_ABS:
+            case NMOS6502Instructions.INS_STA_ABX:
+            case NMOS6502Instructions.INS_STA_ABY:
+            case NMOS6502Instructions.INS_STA_INX:
+            case NMOS6502Instructions.INS_STA_INY:
+                ST(this.regACC);
+                break;
+
+            case NMOS6502Instructions.INS_STX_ZP:
+            case NMOS6502Instructions.INS_STX_ZPY:
+            case NMOS6502Instructions.INS_STX_ABS:
+                ST(this.regX);
+                break;
+
+            case NMOS6502Instructions.INS_STY_ZP:
+            case NMOS6502Instructions.INS_STY_ZPX:
+            case NMOS6502Instructions.INS_STY_ABS:
+                ST(this.regY);
+                break;
+
+
             default:
                 throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + this.instruction);
         }
@@ -736,6 +759,20 @@ public class NMOS6502 extends Processor {
 
         if (PRINT_TRACE)
             System.out.println("LDY : " + String.format("%02X", this.regY));
+    }
+
+    /**
+     * Stores the value to the memory address set. Used for STA, STX, STY
+     * @param value value to store in memory
+     * @throws ProcessorException Can throw a ProcessorException if there is an issue writing to memory
+     */
+    private void ST(byte value) throws ProcessorException {
+        try {
+            this.dataBus.writeDataToBus(new byte[]{ value });
+            rwFlag.setFlagValue(false);
+        } catch (InvalidBusDataException | MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
     }
 
 }

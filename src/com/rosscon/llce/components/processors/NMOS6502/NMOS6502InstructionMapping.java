@@ -319,17 +319,40 @@ public class NMOS6502InstructionMapping extends HashMap {
         /**
          * STA
          */
-        //TODO STA Instructions
+        this.put(NMOS6502Instructions.INS_STA_ZP,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE, 2, 3));
+        this.put(NMOS6502Instructions.INS_STA_ZPX,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
+        this.put(NMOS6502Instructions.INS_STA_ABS,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE, 3, 4));
+        this.put(NMOS6502Instructions.INS_STA_ABX,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE_X, 3, 5));
+        this.put(NMOS6502Instructions.INS_STA_ABY,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE_Y, 3, 5));
+        this.put(NMOS6502Instructions.INS_STA_INX,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
+        this.put(NMOS6502Instructions.INS_STA_INY,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 6));
 
         /**
          * STX
          */
-        //TODO STX Instructions
+        this.put(NMOS6502Instructions.INS_STX_ZP,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE, 2, 3));
+        this.put(NMOS6502Instructions.INS_STX_ZPY,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE_Y, 2, 4));
+        this.put(NMOS6502Instructions.INS_STX_ABS,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE, 3, 4));
 
         /**
          * STY
          */
-        //TODO STY Instructions
+        this.put(NMOS6502Instructions.INS_STY_ZP,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE, 2, 3));
+        this.put(NMOS6502Instructions.INS_STY_ZPX,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
+        this.put(NMOS6502Instructions.INS_STY_ABS,
+                new NMOS6502InstructionDetails(NMOS6502AddressingMode.ABSOLUTE, 3, 4));
 
         /**
          * TAX
