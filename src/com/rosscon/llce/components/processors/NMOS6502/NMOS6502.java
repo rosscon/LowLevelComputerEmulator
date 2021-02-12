@@ -9,6 +9,16 @@ import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.utils.ByteArrayUtils;
 
+/**
+ *      _   _ __  __  ____   _____     __ _____  ___ ___
+ *     | \ | |  \/  |/ __ \ / ____|   / /| ____|/ _ \__ \
+ *     |  \| | \  / | |  | | (___    / /_| |__ | | | | ) |
+ *     | . ` | |\/| | |  | |\___ \  | '_ \___ \| | | |/ /
+ *     | |\  | |  | | |__| |____) | | (_) |__) | |_| / /_
+ *     |_| \_|_|  |_|\____/|_____/   \___/____/ \___/____|
+ *
+ * Emulates the functions of an NMOS 6502 processor
+ */
 public class NMOS6502 extends Processor {
 
     /**
@@ -174,6 +184,7 @@ public class NMOS6502 extends Processor {
         try {
             switch (this.addressingMode) {
                 case IMPLICIT:      // These modes do nothing with memory
+                    break;
                 case ACCUMULATOR:
                 case IMMEDIATE:     // Makes cpu request next address in memory
                     if (this.cycles == 1){
@@ -517,8 +528,8 @@ public class NMOS6502 extends Processor {
     /**
      * Add with Carry
      * http://www.obelisk.me.uk/6502/reference.html#ADC
-     * Adds the contents of a memory location to the accumulator and sets the carry
-     * bit if an overflow occurred. All the work is completed on the final cycle once
+     * Adds the contents of a memory location to the accumulator and the carry flag if set
+     * Sets the carry flag bit if an overflow occurred.
      * data has been fetched from memory.
      * Sets CARRY_FLAG if an overflow/carry occurred from bit 7
      * Sets ZERO_FLAG if accumulator becomes zero
@@ -541,14 +552,20 @@ public class NMOS6502 extends Processor {
         } else {
             // Binary addition
             result = (byte)(value + this.regACC);
+
+            if ((this.regStatus & NMOS6502Flags.CARRY_FLAG) == NMOS6502Flags.CARRY_FLAG)
+                result = (byte)(result + 0x01);
         }
 
         /**
          * Set Flags
          */
         // Carry Flag
-        if (ByteArrayUtils.willCarryOnAddition(value, this.regACC))
+        if (ByteArrayUtils.willCarryOnAddition(value, this.regACC)) {
             enableFlag(NMOS6502Flags.CARRY_FLAG);
+        } else {
+            clearFlag(NMOS6502Flags.CARRY_FLAG);
+        }
 
         // Zero Flag
         if (result == 0x00)

@@ -350,4 +350,20 @@ public class NMOS6502TestADC {
         assertEquals((byte)0x42, cpu.getRegACC());
     }
 
+    @Test
+    @DisplayName("ADC When carry bit is set this should also be added to the value")
+    public void testADCFromCarry() throws MemoryException, ClockException{
+
+        byte[] data = new byte[]{
+                NMOS6502Instructions.INS_SEC_IMP,
+                NMOS6502Instructions.INS_ADC_IMM, 0x42
+        };
+
+        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x02}, data);
+
+        clock.tick(4);
+        assertEquals(0x43, cpu.getRegACC());
+    }
+
 }
