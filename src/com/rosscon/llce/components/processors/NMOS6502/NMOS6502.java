@@ -1,6 +1,7 @@
 package com.rosscon.llce.components.processors.NMOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.memory.MemoryException;
@@ -26,12 +27,15 @@ public class NMOS6502 extends Processor {
     private final String EX_TICK_FETCH_ERROR =
             "Error fetching instruction";
 
+    private final String EX_RESET_ERROR =
+            "Unable to perform reset";
+
 
     /**
      * Registers
      */
     private byte[]  regPC;      // Program Counter
-    private byte[]  regSP;      // Stack Pointer
+    private byte    regSP;      // Stack Pointer
     private byte    regACC;     // Accumulator;
     private byte    regX;       // Index Register X
     private byte    regY;       // Index Register Y
@@ -46,7 +50,7 @@ public class NMOS6502 extends Processor {
         return regPC;
     }
 
-    public byte[] getRegSP() {
+    public byte getRegSP() {
         return regSP;
     }
 
@@ -91,12 +95,12 @@ public class NMOS6502 extends Processor {
      * @param dataBus Data Bus
      * @param rwFlag External R/W Flag set by processor
      */
-    public NMOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag) {
+    public NMOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
     }
 
-    public NMOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag, boolean printTrace) {
+    public NMOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag, boolean printTrace) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
         this.PRINT_TRACE = printTrace;
@@ -105,15 +109,34 @@ public class NMOS6502 extends Processor {
     /**
      * Reset/Initialise registers
      */
-    private void reset(){
-        regPC       = new byte[]{ (byte)0xFF, (byte) 0xFC };
-        regSP       = new byte[]{ (byte)0x01, (byte) 0x00 };
-        regACC      = (byte) 0x00;
-        regX        = (byte) 0x00;
-        regY        = (byte) 0x00;
-        regStatus   = (byte) 0x00;
-        cycles      = 0;
-        regIntAddr  = new byte[2];
+    private void reset() throws ProcessorException {
+
+        try {
+            regPC       = new byte[]{(byte) 0xFF, (byte) 0xFC};
+            regSP       = (byte) 0xFF;
+            regACC      = (byte) 0x00;
+            regX        = (byte) 0x00;
+            regY        = (byte) 0x00;
+            regStatus   = (byte) 0x00;
+            cycles      = 0;
+            regIntAddr  = new byte[2];
+
+            /**
+             * Read the reset vector
+             * TODO make this timing specific following https://www.pagetable.com/?p=410
+             */
+            this.addressBus.writeDataToBus(regPC);
+            rwFlag.setFlagValue(true);
+            regIntAddr[1] = this.dataBus.readDataFromBus()[0];
+
+            this.regPC = ByteArrayUtils.increment(this.regPC);
+            this.addressBus.writeDataToBus(regPC);
+            rwFlag.setFlagValue(true);
+            regIntAddr[0] = this.dataBus.readDataFromBus()[0];
+            this.regPC = regIntAddr;
+        } catch (MemoryException | InvalidBusDataException ex){
+            throw new ProcessorException(EX_RESET_ERROR + " : " + ex.getMessage());
+        }
 
         instructionMapping = new NMOS6502InstructionMapping();
     }

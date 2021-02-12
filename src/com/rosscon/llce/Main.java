@@ -9,6 +9,7 @@ import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.memory.ReadOnlyMemory;
 import com.rosscon.llce.components.processors.NMOS6502.NMOS6502;
 import com.rosscon.llce.components.processors.NMOS6502.NMOS6502Instructions;
+import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.utils.ByteArrayWrapper;
 
 import java.util.HashMap;
@@ -16,7 +17,7 @@ import java.util.Map;
 
 public class Main {
 
-    public static void main(String[] args) throws InvalidBusWidthException, MemoryException, ClockException {
+    public static void main(String[] args) throws InvalidBusWidthException, MemoryException, ClockException, ProcessorException {
 
         // Test 6502
         Bus addressBus = new Bus(16);
