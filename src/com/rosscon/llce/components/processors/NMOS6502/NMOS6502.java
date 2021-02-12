@@ -507,15 +507,29 @@ public class NMOS6502 extends Processor {
             enableFlag(NMOS6502Flags.CARRY_FLAG);
 
         // Zero Flag
-        if (value == 0x00)
+        if (result == 0x00)
             enableFlag(NMOS6502Flags.ZERO_FLAG);
 
-        // Overflow Flag
-        if ((this.regACC & 0b10000000) == 0b00000000 && (result & 0b10000000) == 0b10000000)
+        /**
+         * Overflow flag
+         * based on the following logic to detect n overflow situation
+         * Pos + Pos = Pos -> OK
+         * Pos + Pos = Neg -> FAIL Set flag
+         * Pos + Neg = OK -> Cannot overflow
+         * Neg + Neg = Neg -> OK
+         * Neg + Neg = Pos - FAIL Set flag
+         * Only need to look at the MSB of the ACC, Value, Result
+         * HEX 80 = BIN 10000000
+         */
+        if (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)){
             enableFlag(NMOS6502Flags.OVERFLOW_FLAG);
+        }
+        else if (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)){
+            enableFlag(NMOS6502Flags.OVERFLOW_FLAG);
+        }
 
         // Negative Flag
-        if ((value & 0b10000000) == 0b10000000)
+        if ((result & 0b10000000) == 0b10000000)
             enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
 
         // Finally set accumulator with new value
@@ -529,7 +543,7 @@ public class NMOS6502 extends Processor {
      * @throws ProcessorException
      */
     private void JMP() throws ProcessorException {
-        this.regPC = this.addressBus.readDataFromBus();
+        this.regPC = this.regIntAddr;
         if (PRINT_TRACE)
             System.out.println("JMP : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
     }
