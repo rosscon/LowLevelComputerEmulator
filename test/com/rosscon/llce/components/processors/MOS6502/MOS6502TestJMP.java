@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
@@ -18,13 +18,13 @@ import java.util.Map;
 
 import static org.junit.Assert.assertArrayEquals;
 
-public class NMOS6502TestJMP {
+public class MOS6502TestJMP {
 
     Bus addressBus;
     Bus dataBus;
     Flag rwFlag;
     Clock clock;
-    NMOS6502 cpu;
+    MOS6502 cpu;
     ReadOnlyMemory bootRom;
 
     @Before
@@ -43,7 +43,7 @@ public class NMOS6502TestJMP {
         }};
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class NMOS6502TestJMP {
     public void testJMPAbsoluteMode() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_JMP_ABS, 0x01, 0x02
+                MOS6502Instructions.INS_JMP_ABS, 0x01, 0x02
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -66,7 +66,7 @@ public class NMOS6502TestJMP {
     public void testJMPIndirectMode() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_JMP_IND, 0x03, 0x00,
+                MOS6502Instructions.INS_JMP_IND, 0x03, 0x00,
                 0x05, 0x00
         };
 

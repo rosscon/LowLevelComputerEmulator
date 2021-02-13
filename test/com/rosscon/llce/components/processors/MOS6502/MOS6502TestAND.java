@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
@@ -18,13 +18,13 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class NMOS6502TestAND {
+public class MOS6502TestAND {
 
     Bus addressBus;
     Bus dataBus;
     Flag rwFlag;
     Clock clock;
-    NMOS6502 cpu;
+    MOS6502 cpu;
     ReadOnlyMemory bootRom;
 
     @Before
@@ -43,7 +43,7 @@ public class NMOS6502TestAND {
         }};
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
     }
 
     @Test
@@ -51,8 +51,8 @@ public class NMOS6502TestAND {
     public void testANDImmediateMode() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, (byte)0xFF,
-                NMOS6502Instructions.INS_AND_IMM, (byte)0x42
+                MOS6502Instructions.INS_LDA_IMM, (byte)0xFF,
+                MOS6502Instructions.INS_AND_IMM, (byte)0x42
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -60,8 +60,8 @@ public class NMOS6502TestAND {
 
         clock.tick(4);
         assertEquals((byte)0x42, cpu.getRegACC());
-        assertEquals(0x00, (cpu.getRegStatus() & NMOS6502Flags.ZERO_FLAG));
-        assertEquals(0x00, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals(0x00, (cpu.getRegStatus() & MOS6502Flags.ZERO_FLAG));
+        assertEquals(0x00, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 
     @Test
@@ -69,8 +69,8 @@ public class NMOS6502TestAND {
     public void testANDImmediateModeZeroFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, (byte)0xF0,
-                NMOS6502Instructions.INS_AND_IMM, (byte)0x0F
+                MOS6502Instructions.INS_LDA_IMM, (byte)0xF0,
+                MOS6502Instructions.INS_AND_IMM, (byte)0x0F
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -78,8 +78,8 @@ public class NMOS6502TestAND {
 
         clock.tick(4);
         assertEquals((byte)0x00, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & NMOS6502Flags.ZERO_FLAG));
-        assertEquals(0x00, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals(MOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & MOS6502Flags.ZERO_FLAG));
+        assertEquals(0x00, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 
     @Test
@@ -87,8 +87,8 @@ public class NMOS6502TestAND {
     public void testANDImmediateModeNegativeFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, (byte)0xF0,
-                NMOS6502Instructions.INS_AND_IMM, (byte)0xFF
+                MOS6502Instructions.INS_LDA_IMM, (byte)0xF0,
+                MOS6502Instructions.INS_AND_IMM, (byte)0xFF
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -96,6 +96,6 @@ public class NMOS6502TestAND {
 
         clock.tick(4);
         assertEquals((byte)0xF0, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 }

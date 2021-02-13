@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
@@ -23,13 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Tests for STA, STX & STY instructions
  */
-public class NMOS6502TestST_AXY {
+public class MOS6502TestST_AXY {
 
     Bus addressBus;
     Bus dataBus;
     Flag rwFlag;
     Clock clock;
-    NMOS6502 cpu;
+    MOS6502 cpu;
     ReadOnlyMemory bootRom;
     RandomAccessMemory randomAccessMemory;
 
@@ -49,7 +49,7 @@ public class NMOS6502TestST_AXY {
         }};
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
 
         randomAccessMemory = new RandomAccessMemory(addressBus, dataBus,rwFlag,
                 new byte[] {0x01, 0x00}, new byte[] { 0x01, (byte)0x0F});
@@ -60,8 +60,8 @@ public class NMOS6502TestST_AXY {
     public void testSTAStoresAccumulatorToMemory() throws MemoryException, ClockException, InvalidBusDataException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, 0x42,
-                NMOS6502Instructions.INS_STA_ABS, 0x00, 0x01
+                MOS6502Instructions.INS_LDA_IMM, 0x42,
+                MOS6502Instructions.INS_STA_ABS, 0x00, 0x01
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -79,8 +79,8 @@ public class NMOS6502TestST_AXY {
     public void testSTXStoresAccumulatorToMemory() throws MemoryException, ClockException, InvalidBusDataException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, 0x42,
-                NMOS6502Instructions.INS_STX_ABS, 0x00, 0x01
+                MOS6502Instructions.INS_LDX_IMM, 0x42,
+                MOS6502Instructions.INS_STX_ABS, 0x00, 0x01
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -98,8 +98,8 @@ public class NMOS6502TestST_AXY {
     public void testSTYStoresAccumulatorToMemory() throws MemoryException, ClockException, InvalidBusDataException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDY_IMM, 0x42,
-                NMOS6502Instructions.INS_STY_ABS, 0x00, 0x01
+                MOS6502Instructions.INS_LDY_IMM, 0x42,
+                MOS6502Instructions.INS_STY_ABS, 0x00, 0x01
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,

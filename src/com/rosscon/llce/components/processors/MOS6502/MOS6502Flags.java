@@ -1,6 +1,6 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
-public class NMOS6502Flags {
+public class MOS6502Flags {
 
     /**
      * CPU Flags

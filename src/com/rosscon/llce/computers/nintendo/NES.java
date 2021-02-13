@@ -11,7 +11,7 @@ import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
-import com.rosscon.llce.components.processors.NMOS6502.NMOS6502;
+import com.rosscon.llce.components.processors.MOS6502.MOS6502;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.Computer;
 
@@ -108,7 +108,7 @@ public class NES extends Computer {
 
 
     private Clock cpuClock;
-    private NMOS6502 cpu;
+    private MOS6502 cpu;
 
     public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException, ClockException {
 
@@ -157,7 +157,7 @@ public class NES extends Computer {
          * Lastly add the CPU as it will call reset() on start
          */
         this.cpuClock = new Clock();
-        this.cpu = new NMOS6502(cpuClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true);
+        this.cpu = new MOS6502(cpuClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true);
 
         this.cpuClock.tick(100);
 

@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
@@ -11,23 +11,23 @@ import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteUtils;
 
 /**
- *      _   _ __  __  ____   _____     __ _____  ___ ___
- *     | \ | |  \/  |/ __ \ / ____|   / /| ____|/ _ \__ \
- *     |  \| | \  / | |  | | (___    / /_| |__ | | | | ) |
- *     | . ` | |\/| | |  | |\___ \  | '_ \___ \| | | |/ /
- *     | |\  | |  | | |__| |____) | | (_) |__) | |_| / /_
- *     |_| \_|_|  |_|\____/|_____/   \___/____/ \___/____|
+ *      __  __  ____   _____     __ _____  ___ ___
+ *     |  \/  |/ __ \ / ____|   / /| ____|/ _ \__ \
+ *     | \  / | |  | | (___    / /_| |__ | | | | ) |
+ *     | |\/| | |  | |\___ \  | '_ \___ \| | | |/ /
+ *     | |  | | |__| |____) | | (_) |__) | |_| / /_
+ *     |_|  |_|\____/|_____/   \___/____/ \___/____|
  *
- * Emulates the functions of an NMOS 6502 processor
+ * Emulates the functions of an MOS 6502 processor
  */
-public class NMOS6502 extends Processor {
+public class MOS6502 extends Processor {
 
     /**
      * Debugging
      */
     private boolean PRINT_TRACE = false;           // Used to enable printing information to stdout
 
-    private NMOS6502InstructionMapping instructionMapping;
+    private MOS6502InstructionMapping instructionMapping;
 
     /**
      * Error Messages
@@ -95,7 +95,7 @@ public class NMOS6502 extends Processor {
      * Addressing Mode
      * http://www.obelisk.me.uk/6502/addressing.html#IMP
      */
-    private NMOS6502AddressingMode addressingMode;
+    private MOS6502AddressingMode addressingMode;
 
 
     /**
@@ -106,12 +106,12 @@ public class NMOS6502 extends Processor {
      * @param dataBus Data Bus
      * @param rwFlag External R/W Flag set by processor
      */
-    public NMOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag) throws ProcessorException {
+    public MOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
     }
 
-    public NMOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag, boolean printTrace) throws ProcessorException {
+    public MOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag, boolean printTrace) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
         this.PRINT_TRACE = printTrace;
@@ -149,7 +149,7 @@ public class NMOS6502 extends Processor {
             throw new ProcessorException(EX_RESET_ERROR + " : " + ex.getMessage());
         }
 
-        instructionMapping = new NMOS6502InstructionMapping();
+        instructionMapping = new MOS6502InstructionMapping();
     }
 
     /**
@@ -399,7 +399,7 @@ public class NMOS6502 extends Processor {
         this.instruction = instruction;
 
         if (this.instructionMapping.containsKey(instruction)){
-            NMOS6502InstructionDetails details = (NMOS6502InstructionDetails) this.instructionMapping.get(instruction);
+            MOS6502InstructionDetails details = (MOS6502InstructionDetails) this.instructionMapping.get(instruction);
             this.addressingMode = details.addressingMode;
             this.cycles = details.cycles;
             this.cycles --;
@@ -414,132 +414,132 @@ public class NMOS6502 extends Processor {
     private void execute() throws ProcessorException {
 
         switch (this.instruction){
-            case NMOS6502Instructions.INS_ADC_IMM:
-            case NMOS6502Instructions.INS_ADC_ZP:
-            case NMOS6502Instructions.INS_ADC_ZPX:
-            case NMOS6502Instructions.INS_ADC_ABS:
-            case NMOS6502Instructions.INS_ADC_ABX:
-            case NMOS6502Instructions.INS_ADC_ABY:
-            case NMOS6502Instructions.INS_ADC_INX:
-            case NMOS6502Instructions.INS_ADC_INY:
+            case MOS6502Instructions.INS_ADC_IMM:
+            case MOS6502Instructions.INS_ADC_ZP:
+            case MOS6502Instructions.INS_ADC_ZPX:
+            case MOS6502Instructions.INS_ADC_ABS:
+            case MOS6502Instructions.INS_ADC_ABX:
+            case MOS6502Instructions.INS_ADC_ABY:
+            case MOS6502Instructions.INS_ADC_INX:
+            case MOS6502Instructions.INS_ADC_INY:
                 ADC();
                 break;
 
-            case NMOS6502Instructions.INS_AND_IMM:
-            case NMOS6502Instructions.INS_AND_ZP:
-            case NMOS6502Instructions.INS_AND_ZPX:
-            case NMOS6502Instructions.INS_AND_ABS:
-            case NMOS6502Instructions.INS_AND_ABX:
-            case NMOS6502Instructions.INS_AND_ABY:
-            case NMOS6502Instructions.INS_AND_INX:
-            case NMOS6502Instructions.INS_AND_INY:
+            case MOS6502Instructions.INS_AND_IMM:
+            case MOS6502Instructions.INS_AND_ZP:
+            case MOS6502Instructions.INS_AND_ZPX:
+            case MOS6502Instructions.INS_AND_ABS:
+            case MOS6502Instructions.INS_AND_ABX:
+            case MOS6502Instructions.INS_AND_ABY:
+            case MOS6502Instructions.INS_AND_INX:
+            case MOS6502Instructions.INS_AND_INY:
                 AND();
                 break;
 
 
-            case NMOS6502Instructions.INS_CLC_IMP:
-                clearFlag(NMOS6502Flags.CARRY_FLAG);
+            case MOS6502Instructions.INS_CLC_IMP:
+                clearFlag(MOS6502Flags.CARRY_FLAG);
                 break;
-            case NMOS6502Instructions.INS_CLD_IMP:
-                clearFlag(NMOS6502Flags.DECIMAL_MODE);
+            case MOS6502Instructions.INS_CLD_IMP:
+                clearFlag(MOS6502Flags.DECIMAL_MODE);
                 break;
-            case NMOS6502Instructions.INS_CLI_IMP:
-                clearFlag(NMOS6502Flags.INTERRUPT_DIS);
+            case MOS6502Instructions.INS_CLI_IMP:
+                clearFlag(MOS6502Flags.INTERRUPT_DIS);
                 break;
-            case NMOS6502Instructions.INS_CLV_IMP:
-                clearFlag(NMOS6502Flags.OVERFLOW_FLAG);
+            case MOS6502Instructions.INS_CLV_IMP:
+                clearFlag(MOS6502Flags.OVERFLOW_FLAG);
                 break;
 
 
 
-            case NMOS6502Instructions.INS_JMP_ABS:
-            case NMOS6502Instructions.INS_JMP_IND:
+            case MOS6502Instructions.INS_JMP_ABS:
+            case MOS6502Instructions.INS_JMP_IND:
                 JMP();
                 break;
 
 
 
-            case NMOS6502Instructions.INS_LDA_IMM:
-            case NMOS6502Instructions.INS_LDA_ZP:
-            case NMOS6502Instructions.INS_LDA_ZPX:
-            case NMOS6502Instructions.INS_LDA_ABS:
-            case NMOS6502Instructions.INS_LDA_ABX:
-            case NMOS6502Instructions.INS_LDA_ABY:
-            case NMOS6502Instructions.INS_LDA_INX:
-            case NMOS6502Instructions.INS_LDA_INY:
+            case MOS6502Instructions.INS_LDA_IMM:
+            case MOS6502Instructions.INS_LDA_ZP:
+            case MOS6502Instructions.INS_LDA_ZPX:
+            case MOS6502Instructions.INS_LDA_ABS:
+            case MOS6502Instructions.INS_LDA_ABX:
+            case MOS6502Instructions.INS_LDA_ABY:
+            case MOS6502Instructions.INS_LDA_INX:
+            case MOS6502Instructions.INS_LDA_INY:
                 LDA();
                 break;
 
-            case NMOS6502Instructions.INS_LDY_IMM:
-            case NMOS6502Instructions.INS_LDY_ZP:
-            case NMOS6502Instructions.INS_LDY_ZPX:
-            case NMOS6502Instructions.INS_LDY_ABS:
-            case NMOS6502Instructions.INS_LDY_ABX:
+            case MOS6502Instructions.INS_LDY_IMM:
+            case MOS6502Instructions.INS_LDY_ZP:
+            case MOS6502Instructions.INS_LDY_ZPX:
+            case MOS6502Instructions.INS_LDY_ABS:
+            case MOS6502Instructions.INS_LDY_ABX:
                 LDY();
                 break;
 
-            case NMOS6502Instructions.INS_LDX_IMM:
-            case NMOS6502Instructions.INS_LDX_ZP:
-            case NMOS6502Instructions.INS_LDX_ZPY:
-            case NMOS6502Instructions.INS_LDX_ABS:
-            case NMOS6502Instructions.INS_LDX_ABY:
+            case MOS6502Instructions.INS_LDX_IMM:
+            case MOS6502Instructions.INS_LDX_ZP:
+            case MOS6502Instructions.INS_LDX_ZPY:
+            case MOS6502Instructions.INS_LDX_ABS:
+            case MOS6502Instructions.INS_LDX_ABY:
                 LDX();
                 break;
 
 
-            case NMOS6502Instructions.INS_SEC_IMP:
-                enableFlag(NMOS6502Flags.CARRY_FLAG);
+            case MOS6502Instructions.INS_SEC_IMP:
+                enableFlag(MOS6502Flags.CARRY_FLAG);
                 break;
-            case NMOS6502Instructions.INS_SED_IMP:
-                enableFlag(NMOS6502Flags.DECIMAL_MODE);
+            case MOS6502Instructions.INS_SED_IMP:
+                enableFlag(MOS6502Flags.DECIMAL_MODE);
                 break;
-            case NMOS6502Instructions.INS_SEI_IMP:
-                enableFlag(NMOS6502Flags.INTERRUPT_DIS);
+            case MOS6502Instructions.INS_SEI_IMP:
+                enableFlag(MOS6502Flags.INTERRUPT_DIS);
                 break;
 
-            case NMOS6502Instructions.INS_STA_ZP:
-            case NMOS6502Instructions.INS_STA_ZPX:
-            case NMOS6502Instructions.INS_STA_ABS:
-            case NMOS6502Instructions.INS_STA_ABX:
-            case NMOS6502Instructions.INS_STA_ABY:
-            case NMOS6502Instructions.INS_STA_INX:
-            case NMOS6502Instructions.INS_STA_INY:
+            case MOS6502Instructions.INS_STA_ZP:
+            case MOS6502Instructions.INS_STA_ZPX:
+            case MOS6502Instructions.INS_STA_ABS:
+            case MOS6502Instructions.INS_STA_ABX:
+            case MOS6502Instructions.INS_STA_ABY:
+            case MOS6502Instructions.INS_STA_INX:
+            case MOS6502Instructions.INS_STA_INY:
                 ST(this.regACC);
                 break;
 
-            case NMOS6502Instructions.INS_STX_ZP:
-            case NMOS6502Instructions.INS_STX_ZPY:
-            case NMOS6502Instructions.INS_STX_ABS:
+            case MOS6502Instructions.INS_STX_ZP:
+            case MOS6502Instructions.INS_STX_ZPY:
+            case MOS6502Instructions.INS_STX_ABS:
                 ST(this.regX);
                 break;
 
-            case NMOS6502Instructions.INS_STY_ZP:
-            case NMOS6502Instructions.INS_STY_ZPX:
-            case NMOS6502Instructions.INS_STY_ABS:
+            case MOS6502Instructions.INS_STY_ZP:
+            case MOS6502Instructions.INS_STY_ZPX:
+            case MOS6502Instructions.INS_STY_ABS:
                 ST(this.regY);
                 break;
 
-            case NMOS6502Instructions.INS_TAX:
+            case MOS6502Instructions.INS_TAX:
                 this.regX = this.regACC;
                 break;
 
-            case NMOS6502Instructions.INS_TAY:
+            case MOS6502Instructions.INS_TAY:
                 this.regY = this.regACC;
                 break;
 
-            case NMOS6502Instructions.INS_TSX:
+            case MOS6502Instructions.INS_TSX:
                 this.regX = this.regSP;
                 break;
 
-            case NMOS6502Instructions.INS_TXA:
+            case MOS6502Instructions.INS_TXA:
                 this.regACC = this.regX;
                 break;
 
-            case NMOS6502Instructions.INS_TXS:
+            case MOS6502Instructions.INS_TXS:
                 this.regSP = this.regX;
                 break;
 
-            case NMOS6502Instructions.INS_TYA:
+            case MOS6502Instructions.INS_TYA:
                 this.regACC = this.regY;
                 break;
 
@@ -604,14 +604,14 @@ public class NMOS6502 extends Processor {
         byte value = dataBus.readDataFromBus()[0];
         byte result = 0x00;
 
-        if ((this.regStatus & NMOS6502Flags.DECIMAL_MODE) == NMOS6502Flags.DECIMAL_MODE){
+        if ((this.regStatus & MOS6502Flags.DECIMAL_MODE) == MOS6502Flags.DECIMAL_MODE){
             // BCD addition
             // TODO BCD addition
         } else {
             // Binary addition
             result = (byte)(value + this.regACC);
 
-            if ((this.regStatus & NMOS6502Flags.CARRY_FLAG) == NMOS6502Flags.CARRY_FLAG)
+            if ((this.regStatus & MOS6502Flags.CARRY_FLAG) == MOS6502Flags.CARRY_FLAG)
                 result = (byte)(result + 0x01);
         }
 
@@ -620,14 +620,14 @@ public class NMOS6502 extends Processor {
          */
         // Carry Flag
         if (ByteUtils.willCarryOnAddition(value, this.regACC)) {
-            enableFlag(NMOS6502Flags.CARRY_FLAG);
+            enableFlag(MOS6502Flags.CARRY_FLAG);
         } else {
-            clearFlag(NMOS6502Flags.CARRY_FLAG);
+            clearFlag(MOS6502Flags.CARRY_FLAG);
         }
 
         // Zero Flag
         if (result == 0x00)
-            enableFlag(NMOS6502Flags.ZERO_FLAG);
+            enableFlag(MOS6502Flags.ZERO_FLAG);
 
         /*
          * Overflow flag
@@ -641,15 +641,15 @@ public class NMOS6502 extends Processor {
          * HEX 80 = BIN 10000000
          */
         if (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)){
-            enableFlag(NMOS6502Flags.OVERFLOW_FLAG);
+            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
         }
         else if (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)){
-            enableFlag(NMOS6502Flags.OVERFLOW_FLAG);
+            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
         }
 
         // Negative Flag
         if ((result & 0b10000000) == 0b10000000)
-            enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
 
         // Finally set accumulator with new value
         this.regACC = result;
@@ -674,16 +674,16 @@ public class NMOS6502 extends Processor {
 
         // Zero Flag
         if (this.regACC == 0x00) {
-            enableFlag(NMOS6502Flags.ZERO_FLAG);
+            enableFlag(MOS6502Flags.ZERO_FLAG);
         } else {
-            clearFlag(NMOS6502Flags.ZERO_FLAG);
+            clearFlag(MOS6502Flags.ZERO_FLAG);
         }
 
         // Negative Flag
         if ((this.regACC & 0b10000000) == 0b10000000){
-            enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
         } else {
-            clearFlag(NMOS6502Flags.NEGATIVE_FLAG);
+            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
         }
         if (PRINT_TRACE)
             System.out.println("AND : " + String.format("%02X", this.regACC));
@@ -715,11 +715,11 @@ public class NMOS6502 extends Processor {
 
         // Zero Flag
         if (value == 0x00)
-            enableFlag(NMOS6502Flags.ZERO_FLAG);
+            enableFlag(MOS6502Flags.ZERO_FLAG);
 
         // Negative Flag
         if ((value & 0b10000000) == 0b10000000)
-            enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
 
         this.regACC = value;
 
@@ -744,11 +744,11 @@ public class NMOS6502 extends Processor {
 
         // Zero Flag
         if (value == 0x00)
-            enableFlag(NMOS6502Flags.ZERO_FLAG);
+            enableFlag(MOS6502Flags.ZERO_FLAG);
 
         // Negative Flag
         if ((value & 0b10000000) == 0b10000000)
-            enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
 
         this.regX = value;
 
@@ -773,11 +773,11 @@ public class NMOS6502 extends Processor {
 
         // Zero Flag
         if (value == 0x00)
-            enableFlag(NMOS6502Flags.ZERO_FLAG);
+            enableFlag(MOS6502Flags.ZERO_FLAG);
 
         // Negative Flag
         if ((value & 0b10000000) == 0b10000000)
-            enableFlag(NMOS6502Flags.NEGATIVE_FLAG);
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
 
         this.regY = value;
 

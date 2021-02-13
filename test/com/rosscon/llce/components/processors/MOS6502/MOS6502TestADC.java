@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
@@ -23,13 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * http://www.obelisk.me.uk/6502/reference.html#ADC
  *
  */
-public class NMOS6502TestADC {
+public class MOS6502TestADC {
 
     Bus addressBus;
     Bus dataBus;
     Flag rwFlag;
     Clock clock;
-    NMOS6502 cpu;
+    MOS6502 cpu;
     ReadOnlyMemory bootRom;
 
     @Before
@@ -48,7 +48,7 @@ public class NMOS6502TestADC {
         }};
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class NMOS6502TestADC {
     public void testADCImmediateMode() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_IMM, 0x42
+                MOS6502Instructions.INS_ADC_IMM, 0x42
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -71,8 +71,8 @@ public class NMOS6502TestADC {
     public void testADCOverflowFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_IMM, 0x40,
-                NMOS6502Instructions.INS_ADC_IMM, 0x40
+                MOS6502Instructions.INS_ADC_IMM, 0x40,
+                MOS6502Instructions.INS_ADC_IMM, 0x40
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -80,7 +80,7 @@ public class NMOS6502TestADC {
 
         clock.tick(4);
         assertEquals((byte)0b10000000, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.OVERFLOW_FLAG, (cpu.getRegStatus() & NMOS6502Flags.OVERFLOW_FLAG));
+        assertEquals(MOS6502Flags.OVERFLOW_FLAG, (cpu.getRegStatus() & MOS6502Flags.OVERFLOW_FLAG));
     }
 
     @Test
@@ -88,7 +88,7 @@ public class NMOS6502TestADC {
     public void testADCZeroFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_IMM, 0x00
+                MOS6502Instructions.INS_ADC_IMM, 0x00
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -96,7 +96,7 @@ public class NMOS6502TestADC {
 
         clock.tick(2);
         assertEquals((byte)0b00000000, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & NMOS6502Flags.ZERO_FLAG));
+        assertEquals(MOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & MOS6502Flags.ZERO_FLAG));
     }
 
     @Test
@@ -104,7 +104,7 @@ public class NMOS6502TestADC {
     public void testADCNegativeFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_IMM, (byte)0x80
+                MOS6502Instructions.INS_ADC_IMM, (byte)0x80
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -112,7 +112,7 @@ public class NMOS6502TestADC {
 
         clock.tick(2);
         assertEquals((byte)0b10000000, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 
     @Test
@@ -120,8 +120,8 @@ public class NMOS6502TestADC {
     public void testADCCarryFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_IMM, (byte) 0xFF,
-                NMOS6502Instructions.INS_ADC_IMM, (byte) 0x01
+                MOS6502Instructions.INS_ADC_IMM, (byte) 0xFF,
+                MOS6502Instructions.INS_ADC_IMM, (byte) 0x01
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -129,7 +129,7 @@ public class NMOS6502TestADC {
 
         clock.tick(4);
         assertEquals((byte)0b00000000, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.CARRY_FLAG, (cpu.getRegStatus() & NMOS6502Flags.CARRY_FLAG));
+        assertEquals(MOS6502Flags.CARRY_FLAG, (cpu.getRegStatus() & MOS6502Flags.CARRY_FLAG));
     }
 
     @Test
@@ -137,7 +137,7 @@ public class NMOS6502TestADC {
     public void testADCZeroPageMode() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_ZP, (byte) 0x03,
+                MOS6502Instructions.INS_ADC_ZP, (byte) 0x03,
                 0x00, 0x42
         };
 
@@ -153,8 +153,8 @@ public class NMOS6502TestADC {
     public void testADCZeroPageXMode() throws MemoryException, ClockException{
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, (byte) 0x01,
-                NMOS6502Instructions.INS_ADC_ZPX, 0x04,
+                MOS6502Instructions.INS_LDX_IMM, (byte) 0x01,
+                MOS6502Instructions.INS_ADC_ZPX, 0x04,
                 0x00, 0x42
         };
 
@@ -170,7 +170,7 @@ public class NMOS6502TestADC {
     public void testADCAbsoluteMode() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_ABS, 0x04, 0x00,
+                MOS6502Instructions.INS_ADC_ABS, 0x04, 0x00,
                 0x00, 0x42
         };
 
@@ -186,8 +186,8 @@ public class NMOS6502TestADC {
     public void testADCAbsoluteXMode() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, 0x01,
-                NMOS6502Instructions.INS_ADC_ABX, 0x04, 0x00,
+                MOS6502Instructions.INS_LDX_IMM, 0x01,
+                MOS6502Instructions.INS_ADC_ABX, 0x04, 0x00,
                 0x42
         };
 
@@ -204,12 +204,12 @@ public class NMOS6502TestADC {
 
         Map<ByteArrayWrapper, byte[]> data = new HashMap<>(){{
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
-                    new byte[]{ NMOS6502Instructions.INS_LDX_IMM});
+                    new byte[]{ MOS6502Instructions.INS_LDX_IMM});
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
                     new byte[]{ (byte)0x01 });
 
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
-                    new byte[]{ NMOS6502Instructions.INS_ADC_ABX });
+                    new byte[]{ MOS6502Instructions.INS_ADC_ABX });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
                     new byte[]{ (byte)0xFF });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x04 }),
@@ -228,8 +228,8 @@ public class NMOS6502TestADC {
     @DisplayName("ADC Absolute Y mode should add the value to the accumulator from combining address with Y")
     public void testADCAbsoluteYMode() throws MemoryException, ClockException {
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDY_IMM, 0x01,
-                NMOS6502Instructions.INS_ADC_ABY, 0x04, 0x00,
+                MOS6502Instructions.INS_LDY_IMM, 0x01,
+                MOS6502Instructions.INS_ADC_ABY, 0x04, 0x00,
                 0x42
         };
 
@@ -246,12 +246,12 @@ public class NMOS6502TestADC {
 
         Map<ByteArrayWrapper, byte[]> data = new HashMap<>(){{
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
-                    new byte[]{ NMOS6502Instructions.INS_LDY_IMM});
+                    new byte[]{ MOS6502Instructions.INS_LDY_IMM});
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
                     new byte[]{ (byte)0x01 });
 
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
-                    new byte[]{ NMOS6502Instructions.INS_ADC_ABY });
+                    new byte[]{ MOS6502Instructions.INS_ADC_ABY });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
                     new byte[]{ (byte)0xFF });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x04 }),
@@ -272,12 +272,12 @@ public class NMOS6502TestADC {
 
         Map<ByteArrayWrapper, byte[]> data = new HashMap<>(){{
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
-                    new byte[]{ NMOS6502Instructions.INS_LDX_IMM});
+                    new byte[]{ MOS6502Instructions.INS_LDX_IMM});
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
                     new byte[]{ (byte)0x04 });
 
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
-                    new byte[]{ NMOS6502Instructions.INS_ADC_INX });
+                    new byte[]{ MOS6502Instructions.INS_ADC_INX });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
                     new byte[]{ (byte)0x20 });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x24 }),
@@ -300,12 +300,12 @@ public class NMOS6502TestADC {
 
         Map<ByteArrayWrapper, byte[]> data = new HashMap<>(){{
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
-                    new byte[]{ NMOS6502Instructions.INS_LDY_IMM});
+                    new byte[]{ MOS6502Instructions.INS_LDY_IMM});
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
                     new byte[]{ (byte)0x10 });
 
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
-                    new byte[]{ NMOS6502Instructions.INS_ADC_INY });
+                    new byte[]{ MOS6502Instructions.INS_ADC_INY });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
                     new byte[]{ (byte)0x86 });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x86 }),
@@ -328,12 +328,12 @@ public class NMOS6502TestADC {
 
         Map<ByteArrayWrapper, byte[]> data = new HashMap<>(){{
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
-                    new byte[]{ NMOS6502Instructions.INS_LDY_IMM});
+                    new byte[]{ MOS6502Instructions.INS_LDY_IMM});
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
                     new byte[]{ (byte)0x01 });
 
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
-                    new byte[]{ NMOS6502Instructions.INS_ADC_INY });
+                    new byte[]{ MOS6502Instructions.INS_ADC_INY });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
                     new byte[]{ (byte)0x86 });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x86 }),
@@ -355,8 +355,8 @@ public class NMOS6502TestADC {
     public void testADCFromCarry() throws MemoryException, ClockException{
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_SEC_IMP,
-                NMOS6502Instructions.INS_ADC_IMM, 0x42
+                MOS6502Instructions.INS_SEC_IMP,
+                MOS6502Instructions.INS_ADC_IMM, 0x42
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,

@@ -1,14 +1,14 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 /**
  * Class holder of details for an instruction
  */
-public class NMOS6502InstructionDetails {
+public class MOS6502InstructionDetails {
 
     /**
      * Addressing Mode
      */
-    public NMOS6502AddressingMode addressingMode;
+    public MOS6502AddressingMode addressingMode;
 
     /**
      * Instruction Size
@@ -20,9 +20,9 @@ public class NMOS6502InstructionDetails {
      */
     public int cycles;
 
-    public NMOS6502InstructionDetails(NMOS6502AddressingMode addressingMode,
-                                      int instructionSize,
-                                      int cycles ){
+    public MOS6502InstructionDetails(MOS6502AddressingMode addressingMode,
+                                     int instructionSize,
+                                     int cycles ){
         this.addressingMode = addressingMode;
         this.instructionSize = instructionSize;
         this.cycles = cycles;

@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
@@ -22,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 /**
  * Since all the set and clear flag commands are so simple have grouped together.
  */
-public class NMOS6502TestSE_CL {
+public class MOS6502TestSE_CL {
 
     Bus addressBus;
     Bus dataBus;
     Flag rwFlag;
     Clock clock;
-    NMOS6502 cpu;
+    MOS6502 cpu;
     ReadOnlyMemory bootRom;
 
     @Before
@@ -47,7 +47,7 @@ public class NMOS6502TestSE_CL {
         }};
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
     }
 
     @Test
@@ -55,17 +55,17 @@ public class NMOS6502TestSE_CL {
     public void testSECandCLC() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_SEC_IMP,
-                NMOS6502Instructions.INS_CLC_IMP
+                MOS6502Instructions.INS_SEC_IMP,
+                MOS6502Instructions.INS_CLC_IMP
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
                 new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
 
         clock.tick(2);
-        assertEquals((cpu.getRegStatus() & NMOS6502Flags.CARRY_FLAG), NMOS6502Flags.CARRY_FLAG);
+        assertEquals((cpu.getRegStatus() & MOS6502Flags.CARRY_FLAG), MOS6502Flags.CARRY_FLAG);
         clock.tick(2);
-        assertNotEquals((cpu.getRegStatus() & NMOS6502Flags.CARRY_FLAG), NMOS6502Flags.CARRY_FLAG);
+        assertNotEquals((cpu.getRegStatus() & MOS6502Flags.CARRY_FLAG), MOS6502Flags.CARRY_FLAG);
     }
 
     @Test
@@ -73,17 +73,17 @@ public class NMOS6502TestSE_CL {
     public void testSEDandCLD() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_SED_IMP,
-                NMOS6502Instructions.INS_CLD_IMP
+                MOS6502Instructions.INS_SED_IMP,
+                MOS6502Instructions.INS_CLD_IMP
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
                 new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
 
         clock.tick(2);
-        assertEquals((cpu.getRegStatus() & NMOS6502Flags.DECIMAL_MODE), NMOS6502Flags.DECIMAL_MODE);
+        assertEquals((cpu.getRegStatus() & MOS6502Flags.DECIMAL_MODE), MOS6502Flags.DECIMAL_MODE);
         clock.tick(2);
-        assertNotEquals((cpu.getRegStatus() & NMOS6502Flags.DECIMAL_MODE), NMOS6502Flags.DECIMAL_MODE);
+        assertNotEquals((cpu.getRegStatus() & MOS6502Flags.DECIMAL_MODE), MOS6502Flags.DECIMAL_MODE);
     }
 
     @Test
@@ -91,17 +91,17 @@ public class NMOS6502TestSE_CL {
     public void testSEIandCLI() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_SEI_IMP,
-                NMOS6502Instructions.INS_CLI_IMP
+                MOS6502Instructions.INS_SEI_IMP,
+                MOS6502Instructions.INS_CLI_IMP
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
                 new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
 
         clock.tick(2);
-        assertEquals((cpu.getRegStatus() & NMOS6502Flags.INTERRUPT_DIS), NMOS6502Flags.INTERRUPT_DIS);
+        assertEquals((cpu.getRegStatus() & MOS6502Flags.INTERRUPT_DIS), MOS6502Flags.INTERRUPT_DIS);
         clock.tick(2);
-        assertNotEquals((cpu.getRegStatus() & NMOS6502Flags.INTERRUPT_DIS), NMOS6502Flags.INTERRUPT_DIS);
+        assertNotEquals((cpu.getRegStatus() & MOS6502Flags.INTERRUPT_DIS), MOS6502Flags.INTERRUPT_DIS);
     }
 
     @Test
@@ -109,17 +109,17 @@ public class NMOS6502TestSE_CL {
     public void testCLV() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_ADC_IMM, 0x40,
-                NMOS6502Instructions.INS_ADC_IMM, 0x40,
-                NMOS6502Instructions.INS_CLV_IMP,
+                MOS6502Instructions.INS_ADC_IMM, 0x40,
+                MOS6502Instructions.INS_ADC_IMM, 0x40,
+                MOS6502Instructions.INS_CLV_IMP,
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
                 new byte[]{0x00, 0x00}, new byte[]{0x00, 0x04}, data);
 
         clock.tick(4);
-        assertEquals((cpu.getRegStatus() & NMOS6502Flags.OVERFLOW_FLAG), NMOS6502Flags.OVERFLOW_FLAG);
+        assertEquals((cpu.getRegStatus() & MOS6502Flags.OVERFLOW_FLAG), MOS6502Flags.OVERFLOW_FLAG);
         clock.tick(2);
-        assertNotEquals((cpu.getRegStatus() & NMOS6502Flags.INTERRUPT_DIS), NMOS6502Flags.INTERRUPT_DIS);
+        assertNotEquals((cpu.getRegStatus() & MOS6502Flags.INTERRUPT_DIS), MOS6502Flags.INTERRUPT_DIS);
     }
 }

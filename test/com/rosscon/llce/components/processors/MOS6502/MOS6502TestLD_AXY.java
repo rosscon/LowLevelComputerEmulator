@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
@@ -22,13 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * LDA, LDX, LDY are simple instructions so tests grouped together
  */
 
-public class NMOS6502TestLD_AXY {
+public class MOS6502TestLD_AXY {
 
     Bus addressBus;
     Bus dataBus;
     Flag rwFlag;
     Clock clock;
-    NMOS6502 cpu;
+    MOS6502 cpu;
     ReadOnlyMemory bootRom;
 
     @Before
@@ -47,7 +47,7 @@ public class NMOS6502TestLD_AXY {
         }};
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
     }
 
     @Test
@@ -55,7 +55,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDAImmediate() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, 0x42
+                MOS6502Instructions.INS_LDA_IMM, 0x42
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -70,7 +70,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDAImmediateZeroFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, 0x00
+                MOS6502Instructions.INS_LDA_IMM, 0x00
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -78,7 +78,7 @@ public class NMOS6502TestLD_AXY {
 
         clock.tick(2);
         assertEquals(0x00, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & NMOS6502Flags.ZERO_FLAG));
+        assertEquals(MOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & MOS6502Flags.ZERO_FLAG));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDAImmediateNegFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, (byte)0xFF
+                MOS6502Instructions.INS_LDA_IMM, (byte)0xFF
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -94,7 +94,7 @@ public class NMOS6502TestLD_AXY {
 
         clock.tick(2);
         assertEquals((byte)0xFF, cpu.getRegACC());
-        assertEquals(NMOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 
     @Test
@@ -102,7 +102,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDXImmediate() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, 0x42
+                MOS6502Instructions.INS_LDX_IMM, 0x42
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -117,7 +117,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDXImmediateZeroFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, 0x00
+                MOS6502Instructions.INS_LDX_IMM, 0x00
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -125,7 +125,7 @@ public class NMOS6502TestLD_AXY {
 
         clock.tick(2);
         assertEquals(0x00, cpu.getRegX());
-        assertEquals(NMOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & NMOS6502Flags.ZERO_FLAG));
+        assertEquals(MOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & MOS6502Flags.ZERO_FLAG));
     }
 
     @Test
@@ -133,7 +133,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDXImmediateNegFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, (byte)0xFF
+                MOS6502Instructions.INS_LDX_IMM, (byte)0xFF
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -141,7 +141,7 @@ public class NMOS6502TestLD_AXY {
 
         clock.tick(2);
         assertEquals((byte)0xFF, cpu.getRegX());
-        assertEquals(NMOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 
     @Test
@@ -149,7 +149,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDYImmediate() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDY_IMM, 0x42
+                MOS6502Instructions.INS_LDY_IMM, 0x42
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -164,7 +164,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDYImmediateZeroFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDY_IMM, 0x00
+                MOS6502Instructions.INS_LDY_IMM, 0x00
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -172,7 +172,7 @@ public class NMOS6502TestLD_AXY {
 
         clock.tick(2);
         assertEquals(0x00, cpu.getRegY());
-        assertEquals(NMOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & NMOS6502Flags.ZERO_FLAG));
+        assertEquals(MOS6502Flags.ZERO_FLAG, (cpu.getRegStatus() & MOS6502Flags.ZERO_FLAG));
     }
 
     @Test
@@ -180,7 +180,7 @@ public class NMOS6502TestLD_AXY {
     public void testLDYImmediateNegFlag() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDY_IMM, (byte)0xFF
+                MOS6502Instructions.INS_LDY_IMM, (byte)0xFF
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -188,6 +188,6 @@ public class NMOS6502TestLD_AXY {
 
         clock.tick(2);
         assertEquals((byte)0xFF, cpu.getRegY());
-        assertEquals(NMOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & NMOS6502Flags.NEGATIVE_FLAG));
+        assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 }

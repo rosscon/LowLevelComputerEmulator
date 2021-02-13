@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
@@ -21,13 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Test all the transfer between registers functions
  */
-public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
+public class MOS6502TestT_AX_AY_SX_XA_XS_YA {
 
     Bus addressBus;
     Bus dataBus;
     Flag rwFlag;
     Clock clock;
-    NMOS6502 cpu;
+    MOS6502 cpu;
     ReadOnlyMemory bootRom;
 
     @Before
@@ -46,7 +46,7 @@ public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
         }};
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
     }
 
     @Test
@@ -54,8 +54,8 @@ public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
     public void testTAX() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, 0x42,
-                NMOS6502Instructions.INS_TAX
+                MOS6502Instructions.INS_LDA_IMM, 0x42,
+                MOS6502Instructions.INS_TAX
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -70,8 +70,8 @@ public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
     public void testTAY() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDA_IMM, 0x42,
-                NMOS6502Instructions.INS_TAY
+                MOS6502Instructions.INS_LDA_IMM, 0x42,
+                MOS6502Instructions.INS_TAY
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -86,7 +86,7 @@ public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
     public void testTSX() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_TSX
+                MOS6502Instructions.INS_TSX
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -101,8 +101,8 @@ public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
     public void testTXA() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, 0x42,
-                NMOS6502Instructions.INS_TXA
+                MOS6502Instructions.INS_LDX_IMM, 0x42,
+                MOS6502Instructions.INS_TXA
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -117,8 +117,8 @@ public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
     public void testTXS() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDX_IMM, 0x42,
-                NMOS6502Instructions.INS_TXS
+                MOS6502Instructions.INS_LDX_IMM, 0x42,
+                MOS6502Instructions.INS_TXS
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -133,8 +133,8 @@ public class NMOS6502TestT_AX_AY_SX_XA_XS_YA {
     public void testTYA() throws MemoryException, ClockException {
 
         byte[] data = new byte[]{
-                NMOS6502Instructions.INS_LDY_IMM, 0x42,
-                NMOS6502Instructions.INS_TYA
+                MOS6502Instructions.INS_LDY_IMM, 0x42,
+                MOS6502Instructions.INS_TYA
         };
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,

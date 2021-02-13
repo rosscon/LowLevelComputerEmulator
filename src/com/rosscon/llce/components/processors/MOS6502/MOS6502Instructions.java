@@ -1,6 +1,6 @@
-package com.rosscon.llce.components.processors.NMOS6502;
+package com.rosscon.llce.components.processors.MOS6502;
 
-public class NMOS6502Instructions {
+public class MOS6502Instructions {
 
     /**
      * ADC Instructions
