@@ -3,11 +3,19 @@ package com.rosscon.llce.computers.nintendo;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
+import com.rosscon.llce.components.cartridges.CartridgeException;
+import com.rosscon.llce.components.cartridges.NES.NESCartridge;
+import com.rosscon.llce.components.cartridges.NES.NESCartridgeFactory;
+import com.rosscon.llce.components.clocks.Clock;
+import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
 import com.rosscon.llce.components.processors.NMOS6502.NMOS6502;
+import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.Computer;
+
+import java.io.IOException;
 
 /**
  * This is a pre configured Nintendo NES computer
@@ -72,10 +80,9 @@ public class NES extends Computer {
     /**
      * Main Busses and flags
      */
-    private Bus mainAddressBus;
-    private Bus mainDataBus;
-
-    private Flag rwFlagMain;
+    private Bus cpuAddressBus;
+    private Bus cpuDataBus;
+    private Flag rwFlagCpu;
 
     /**
      * Internal RAM and mapper
@@ -94,19 +101,23 @@ public class NES extends Computer {
     private Bus ppuDataBus;
 
 
+    /**
+     * Cartridge
+     */
+    private NESCartridge cartridge;
 
 
-
+    private Clock cpuClock;
     private NMOS6502 cpu;
 
-    public NES () throws InvalidBusWidthException {
+    public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException, ClockException {
 
         /*
          * Main bus
          */
-        this.mainAddressBus = new Bus(16);
-        this.mainDataBus = new Bus(8);
-        this.rwFlagMain = new Flag();
+        this.cpuAddressBus = new Bus(16);
+        this.cpuDataBus = new Bus(8);
+        this.rwFlagCpu = new Flag();
 
         /*
          * Internal RAM and mirroring mapper
@@ -118,13 +129,9 @@ public class NES extends Computer {
                 rwFlagInternalRamMapper,
                 new byte[] {0x00, 0x00}, new byte[] { 0x07, (byte)0xFF});
 
-        this.internalRAMMapper = new MirroredMapper(mainAddressBus, mainDataBus, rwFlagMain,
+        this.internalRAMMapper = new MirroredMapper(cpuAddressBus, cpuDataBus, rwFlagCpu,
                 this.internalRAM, new byte[] {0x00, 0x00},
                 new byte[] { 0x1F, (byte)0xFF}, new byte[] { 0x07, (byte)0xFF});
-
-        /*
-         * Setup the cartridge TODO
-         */
 
 
         /*
@@ -132,11 +139,29 @@ public class NES extends Computer {
          */
         this.ppuAddressBus = new Bus(16);
         this.ppuDataBus = new Bus(8);
+        this.rwFlagPPU = new Flag();
+
+
+        /*
+         * Setup/Add the cartridge
+         */
+        Clock clock = new Clock();
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "/Users/rossconroy/Desktop/nestest.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+        );
 
 
         /*
          * Lastly add the CPU as it will call reset() on start
          */
+        this.cpuClock = new Clock();
+        this.cpu = new NMOS6502(cpuClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true);
+
+        this.cpuClock.tick(100);
+
+        System.out.println("TEST");
     }
 
 }

@@ -2,6 +2,7 @@ package com.rosscon.llce;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
+import com.rosscon.llce.components.cartridges.CartridgeException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.flags.Flag;
@@ -10,15 +11,21 @@ import com.rosscon.llce.components.memory.ReadOnlyMemory;
 import com.rosscon.llce.components.processors.NMOS6502.NMOS6502;
 import com.rosscon.llce.components.processors.NMOS6502.NMOS6502Instructions;
 import com.rosscon.llce.components.processors.ProcessorException;
+import com.rosscon.llce.computers.nintendo.NES;
 import com.rosscon.llce.utils.ByteArrayWrapper;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Main {
 
-    public static void main(String[] args) throws InvalidBusWidthException, MemoryException, ClockException, ProcessorException {
+    public static void main(String[] args) throws InvalidBusWidthException, MemoryException, ClockException, ProcessorException, IOException, CartridgeException {
 
+
+        NES console = new NES();
+
+/*
         // Test 6502
         Bus addressBus = new Bus(16);
         Bus dataBus = new Bus(8);
@@ -70,7 +77,7 @@ public class Main {
         ReadOnlyMemory rom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
         NMOS6502 cpu = new NMOS6502(clock, addressBus, dataBus, rwFlag);
 
-        clock.tick(12);
+        clock.tick(12);*/
     }
 }
 
