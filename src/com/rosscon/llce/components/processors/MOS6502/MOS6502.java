@@ -465,7 +465,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_ADC_ABY:
             case MOS6502Instructions.INS_ADC_INX:
             case MOS6502Instructions.INS_ADC_INY:
-                ADC();
+                if (this.cycles == 0) ADC();
                 break;
 
             case MOS6502Instructions.INS_AND_IMM:
@@ -476,7 +476,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_AND_ABY:
             case MOS6502Instructions.INS_AND_INX:
             case MOS6502Instructions.INS_AND_INY:
-                AND();
+                if (this.cycles == 0) AND();
                 break;
 
 
@@ -497,7 +497,7 @@ public class MOS6502 extends Processor {
 
             case MOS6502Instructions.INS_JMP_ABS:
             case MOS6502Instructions.INS_JMP_IND:
-                JMP();
+                if (this.cycles == 0) JMP();
                 break;
 
 
@@ -513,7 +513,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_LDA_ABY:
             case MOS6502Instructions.INS_LDA_INX:
             case MOS6502Instructions.INS_LDA_INY:
-                LDA();
+                if (this.cycles == 0) LDA();
                 break;
 
             case MOS6502Instructions.INS_LDY_IMM:
@@ -521,7 +521,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_LDY_ZPX:
             case MOS6502Instructions.INS_LDY_ABS:
             case MOS6502Instructions.INS_LDY_ABX:
-                LDY();
+                if (this.cycles == 0) LDY();
                 break;
 
             case MOS6502Instructions.INS_LDX_IMM:
@@ -529,12 +529,12 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_LDX_ZPY:
             case MOS6502Instructions.INS_LDX_ABS:
             case MOS6502Instructions.INS_LDX_ABY:
-                LDX();
+                if (this.cycles == 0) LDX();
                 break;
 
 
             case MOS6502Instructions.INS_RTI_IMP:
-                RTI();
+                if (this.cycles == 0) RTI();
                 break;
 
 
@@ -555,19 +555,19 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_STA_ABY:
             case MOS6502Instructions.INS_STA_INX:
             case MOS6502Instructions.INS_STA_INY:
-                ST(this.regACC);
+                if (this.cycles == 0) ST(this.regACC);
                 break;
 
             case MOS6502Instructions.INS_STX_ZP:
             case MOS6502Instructions.INS_STX_ZPY:
             case MOS6502Instructions.INS_STX_ABS:
-                ST(this.regX);
+                if (this.cycles == 0) ST(this.regX);
                 break;
 
             case MOS6502Instructions.INS_STY_ZP:
             case MOS6502Instructions.INS_STY_ZPX:
             case MOS6502Instructions.INS_STY_ABS:
-                ST(this.regY);
+                if (this.cycles == 0) ST(this.regY);
                 break;
 
             case MOS6502Instructions.INS_TAX:
@@ -612,7 +612,8 @@ public class MOS6502 extends Processor {
         }
         else if ( this.cycles > 0 ) {
             addressing();
-            if (this.cycles == 0) execute();
+            execute();
+            //if (this.cycles == 0) execute();
         }
     }
 
@@ -751,30 +752,35 @@ public class MOS6502 extends Processor {
 
     /**
      * Jumps to subroutine
-     * pushes the value of the program counter + 1 to the stack. Then sets the PC to what was read from memory
-     * (PC from start of instruction + 1, Absolute addressing will have incremented the counter by 2 meaning it
-     * would now be pointing to the next instruction)
+     * pushes the value of the program counter + 2 to the stack. Then sets the PC to what was read from memory
      */
     private void JSR() throws ProcessorException {
 
-        // Decrement a temporary PC to account for the PC incrementing in the addressing
-        byte[] tmpPC = this.regPC;
-        if (tmpPC[1] == 0x00){
-            tmpPC[0] = (byte)(tmpPC[0] + 0xFF);
+        switch (this.cycles){
+            case 5:
+                this.regIntAddr[1] = (byte)(this.regPC[1] + 0x02);
+                break;
+            case 4:
+                this.regIntAddr[0] = this.regPC[0];
+                if (this.regPC[1] == 0x00 || this.regPC[1] == 0x01 || this.regPC[1] == 0x02)
+                    this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
+                break;
+            case 3:
+                pushToStack(regIntAddr[0]);
+                if (PRINT_TRACE)
+                    System.out.println("JSR Pushed : " + String.format("%02X", regIntAddr[0]));
+                break;
+            case 2:
+                pushToStack(regIntAddr[1]);
+                if (PRINT_TRACE)
+                    System.out.println("JSR Pushed : " + String.format("%02X", regIntAddr[1]));
+                break;
+            case 0:
+                this.regPC = this.regIntAddr;
+                if (PRINT_TRACE)
+                    System.out.println("JSR Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[0]));
+                break;
         }
-        tmpPC[1] = (byte)(tmpPC[1] + 0xFF);
-
-        pushToStack(tmpPC[0]);
-        if (PRINT_TRACE)
-            System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[0]));
-
-        pushToStack(tmpPC[1]);
-        if (PRINT_TRACE)
-            System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[1]));
-
-        this.regPC = this.regIntAddr;
-        if (PRINT_TRACE)
-            System.out.println("JSR Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[0]));
     }
 
     /**
