@@ -28,5 +28,6 @@ public abstract class Mapper implements FlagListener {
         this.addressBus = addressBus;
         this.dataBus = dataBus;
         this.rwFlag = rwFlag;
+        rwFlag.addListener(this);
     }
 }

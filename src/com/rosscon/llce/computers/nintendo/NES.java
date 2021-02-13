@@ -2,6 +2,8 @@ package com.rosscon.llce.computers.nintendo;
 
 
 import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.InvalidBusWidthException;
+import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
 import com.rosscon.llce.components.processors.NMOS6502.NMOS6502;
@@ -12,8 +14,8 @@ import com.rosscon.llce.computers.Computer;
  *
  * CPU MEMORY MAP See https://wiki.nesdev.com/w/index.php/CPU_memory_map
  * Address Range        Size HEX    Size                Device
- * 0x0000 - 0x07FFF     0x0800      2KB                 Internal RAM
- * 0x0800 - 0x1FFFF     0x18000     6KB (3x2KB)         Mirrors of 0x0000 - 0x07FFF
+ * 0x0000 - 0x07FF      0x0800      2KB                 Internal RAM
+ * 0x0800 - 0x1FFF      0x18000     6KB (3x2KB)         Mirrors of 0x0000 - 0x07FFF
  * 0x2000 - 0x2007      0x0008      8 bytes             PPU Registers
  * 0x2008 - 0x3FFF      0x1FF8      8184 bytes          Mirror of PPU registers, repeats every 8 bytes
  * 0x4000 - 0x4017      0x0018      24 bytes            APU an I/O registers
@@ -61,20 +63,80 @@ import com.rosscon.llce.computers.Computer;
  *           | Nametable Mapper | | Palette Mapper |
  *           +---------+--------+ +--------+-------+
  *                     |                   |
- *              +------+------+    +-------+------+
- *              | Nametables  |    | Pallette RAM |
- *              +-------------+    +--------------+
+ *              +------+------+     +------+------+
+ *              | Nametables  |     | Palette RAM |
+ *              +-------------+     +-------------+
  */
 public class NES extends Computer {
 
-    Bus mainAddressBus;
-    Bus mainDataBus;
-    Bus ppuAddressBus;
-    Bus ppuDataBus;
+    /**
+     * Main Busses and flags
+     */
+    private Bus mainAddressBus;
+    private Bus mainDataBus;
 
-    MirroredMapper internalRAMMapper;
+    private Flag rwFlagMain;
 
-    RandomAccessMemory internalRAM;
-    NMOS6502 cpu;
+    /**
+     * Internal RAM and mapper
+     */
+    private Flag rwFlagInternalRamMapper;
+    private RandomAccessMemory internalRAM;
+    private Bus internalRAMAddressBus;
+    private Bus internalRAMDataBus;
+    private MirroredMapper internalRAMMapper;
+
+    /**
+     * PPU busses and flags
+     */
+    private Flag rwFlagPPU;
+    private Bus ppuAddressBus;
+    private Bus ppuDataBus;
+
+
+
+
+
+    private NMOS6502 cpu;
+
+    public NES () throws InvalidBusWidthException {
+
+        /*
+         * Main bus
+         */
+        this.mainAddressBus = new Bus(16);
+        this.mainDataBus = new Bus(8);
+        this.rwFlagMain = new Flag();
+
+        /*
+         * Internal RAM and mirroring mapper
+         */
+        this.internalRAMAddressBus = new Bus(16);
+        this.internalRAMDataBus = new Bus(8);
+        this.rwFlagInternalRamMapper = new Flag();
+        this.internalRAM = new RandomAccessMemory(internalRAMAddressBus, internalRAMDataBus,
+                rwFlagInternalRamMapper,
+                new byte[] {0x00, 0x00}, new byte[] { 0x07, (byte)0xFF});
+
+        this.internalRAMMapper = new MirroredMapper(mainAddressBus, mainDataBus, rwFlagMain,
+                this.internalRAM, new byte[] {0x00, 0x00},
+                new byte[] { 0x1F, (byte)0xFF}, new byte[] { 0x07, (byte)0xFF});
+
+        /*
+         * Setup the cartridge TODO
+         */
+
+
+        /*
+         * Setup the PPU TODO
+         */
+        this.ppuAddressBus = new Bus(16);
+        this.ppuDataBus = new Bus(8);
+
+
+        /*
+         * Lastly add the CPU as it will call reset() on start
+         */
+    }
 
 }

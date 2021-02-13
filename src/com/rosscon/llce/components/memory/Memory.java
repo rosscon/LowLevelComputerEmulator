@@ -35,12 +35,30 @@ public abstract class Memory implements FlagListener {
     protected Flag rwFlag;
 
 
+    /**
+     * Default constructor for all memory kinds
+     * @param addressBus address bus to attach to
+     * @param dataBus data bus to attach to
+     * @param rwFlag rwFlag to listen for events
+     */
     public Memory (Bus addressBus, Bus dataBus, Flag rwFlag){
         this.addressBus = addressBus;
         this.dataBus = dataBus;
         this.rwFlag = rwFlag;
 
         rwFlag.addListener(this::onFlagChange);
+    }
+
+    public Bus getAddressBus(){
+        return this.addressBus;
+    }
+
+    public Bus getDataBus(){
+        return this.dataBus;
+    }
+
+    public Flag getRwFlag() {
+        return this.rwFlag;
     }
 }
 
