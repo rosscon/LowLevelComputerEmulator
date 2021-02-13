@@ -2,21 +2,22 @@ package com.rosscon.llce.components.cartridges;
 
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.FlagListener;
 
 /**
  * A generic Cartridge class
  */
-public abstract class Cartridge {
+public abstract class Cartridge implements FlagListener {
 
     /**
      * Address Bus
      */
-    Bus addressBus;
+    protected Bus addressBus;
 
     /**
      * Data Bus
      */
-    Bus dataBus;
+    protected Bus dataBus;
 
     /**
      * Read Write Flag

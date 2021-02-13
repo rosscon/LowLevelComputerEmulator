@@ -6,7 +6,7 @@ The following components are each emulated and configurable.
 * Mappers (TODO)
     * Bank switching (TODO)
     * Address re-mapping (TODO)
-    * Address mirroring (TODO)
+    * Address mirroring
 * Clocks
 * Flags/Interrupts
 * ROM

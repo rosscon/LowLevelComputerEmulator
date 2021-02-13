@@ -84,7 +84,7 @@ public class ReadOnlyMemory extends Memory {
         }};
 
         for (byte[] index = startAddress;
-             Arrays.compare(index, endAddress) < 1;
+             !Arrays.equals(index, ByteArrayUtils.increment(endAddress));
              index = ByteArrayUtils.increment(index)){
 
             List<Byte> tmpData = new LinkedList<>();
@@ -98,7 +98,8 @@ public class ReadOnlyMemory extends Memory {
             this.contents.put(new ByteArrayWrapper(index), ByteArrayUtils.listToArray(tmpData));
         }
 
-        if (dataQueue.size() > 0) throw new MemoryException(DATA_SIZE_ADDRESS_MISMATCH);
+        if (dataQueue.size() > 0)
+            throw new MemoryException(DATA_SIZE_ADDRESS_MISMATCH);
     }
 
     /**

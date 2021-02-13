@@ -48,11 +48,19 @@ public class MirroredMapper extends Mapper {
         this.mask = mask;
 
         // Determine mappers valid addresses, this is to simplify lookup later
-        byte[] current = Arrays.copyOf(mapperLow, mapperLow.length);
+        /*byte[] current = Arrays.copyOf(mapperLow, mapperLow.length);
         while (! Arrays.equals(current, mapperHigh)){
             ByteArrayWrapper wrappedKey = new ByteArrayWrapper(current);
             validAddresses.add(wrappedKey);
             current = ByteArrayUtils.increment(current);
+        }*/
+
+        for (byte[] index = mapperLow;
+             !Arrays.equals(index, ByteArrayUtils.increment(mapperHigh));
+             index = ByteArrayUtils.increment(index)){
+
+            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(index);
+            validAddresses.add(wrappedKey);
         }
 
     }
