@@ -6,12 +6,20 @@ import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.nintendo.NES;
+import com.rosscon.llce.utils.ByteUtils;
 
 import java.io.IOException;
 
 public class Main {
 
     public static void main(String[] args) throws InvalidBusWidthException, MemoryException, ClockException, ProcessorException, IOException, CartridgeException {
+
+
+        byte a = (byte) 0xFE;
+
+        byte b = (byte) (a + 0xFF);
+
+        int b2 = ByteUtils.byteToIntUnsigned(b);
 
 
         NES console = new NES();

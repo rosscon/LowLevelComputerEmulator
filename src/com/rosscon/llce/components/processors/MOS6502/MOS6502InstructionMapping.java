@@ -188,7 +188,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * JSR
          */
-        //TODO JSR Instructions
+        this.put(MOS6502Instructions.INS_JSR_ABS,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.ABSOLUTE, 3, 6));
 
         /*
          * LDA
@@ -286,7 +287,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * RTI
          */
-        //TODO RTI Instructions
+        this.put(MOS6502Instructions.INS_RTI_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 6));
 
         /*
          * RTS

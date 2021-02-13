@@ -10,6 +10,8 @@ import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteUtils;
 
+import java.util.Arrays;
+
 /**
  *      __  __  ____   _____     __ _____  ___ ___
  *     |  \/  |/ __ \ / ____|   / /| ____|/ _ \__ \
@@ -41,6 +43,9 @@ public class MOS6502 extends Processor {
     private final String EX_RESET_ERROR =
             "Unable to perform reset";
 
+    private final String EX_STACK_PUSH_ERROR =
+            "Unable to push to stack";
+
 
     /**
      * Registers
@@ -53,6 +58,8 @@ public class MOS6502 extends Processor {
     private byte    regStatus;  // Processor Status [C][Z][I][D][B][V][N]
     private byte[]  regIntAddr; // Custom register used for building addresses over multiple cycles
     private boolean regIntCarry;// Custom carry register for handling ABS X,Y
+
+    private final byte STACK_PAGE = (byte)0x01;
 
     /**
      * Getters for unit testing
@@ -150,6 +157,42 @@ public class MOS6502 extends Processor {
         }
 
         instructionMapping = new MOS6502InstructionMapping();
+    }
+
+    /**
+     * Pushes a value to the stack then decrements the stack pointer by 1
+     * @param value value to push to the stack
+     */
+    private void pushToStack(byte value) throws ProcessorException {
+        try {
+            byte[] freeAddress = new byte[] { this.STACK_PAGE, this.regSP };
+            this.addressBus.writeDataToBus(freeAddress);
+            this.dataBus.writeDataToBus(new byte[] {value});
+            this.rwFlag.setFlagValue(false);
+            this.regSP = (byte)(this.regSP + 0xFF); // Adding FF allowing a wrap around is easier than subtraction
+        } catch (MemoryException | InvalidBusDataException e) {
+            throw new ProcessorException(this.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
+        }
+    }
+
+    /**
+     * Pulls a byte of data from the stack
+     * Increases the stack pointer by 1 then reads the value at that address
+     * @return
+     */
+    private byte pullFromStack() throws ProcessorException {
+        byte read;
+        try {
+            this.regSP = (byte)(this.regSP + 0x01);
+            byte[] readAddress = new byte[] { this.STACK_PAGE, this.regSP };
+            readAddress = ByteArrayUtils.increment(readAddress);
+            this.addressBus.writeDataToBus(readAddress);
+            this.rwFlag.setFlagValue(true);
+            read = this.dataBus.readDataFromBus()[0];
+        } catch (MemoryException | InvalidBusDataException e) {
+            throw new ProcessorException(this.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
+        }
+        return read;
     }
 
     /**
@@ -458,6 +501,9 @@ public class MOS6502 extends Processor {
                 break;
 
 
+            case MOS6502Instructions.INS_JSR_ABS:
+                JSR();
+                break;
 
             case MOS6502Instructions.INS_LDA_IMM:
             case MOS6502Instructions.INS_LDA_ZP:
@@ -484,6 +530,11 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_LDX_ABS:
             case MOS6502Instructions.INS_LDX_ABY:
                 LDX();
+                break;
+
+
+            case MOS6502Instructions.INS_RTI_IMP:
+                RTI();
                 break;
 
 
@@ -699,6 +750,34 @@ public class MOS6502 extends Processor {
     }
 
     /**
+     * Jumps to subroutine
+     * pushes the value of the program counter + 1 to the stack. Then sets the PC to what was read from memory
+     * (PC from start of instruction + 1, Absolute addressing will have incremented the counter by 2 meaning it
+     * would now be pointing to the next instruction)
+     */
+    private void JSR() throws ProcessorException {
+
+        // Decrement a temporary PC to account for the PC incrementing in the addressing
+        byte[] tmpPC = this.regPC;
+        if (tmpPC[1] == 0x00){
+            tmpPC[0] = (byte)(tmpPC[0] + 0xFF);
+        }
+        tmpPC[1] = (byte)(tmpPC[1] + 0xFF);
+
+        pushToStack(tmpPC[0]);
+        if (PRINT_TRACE)
+            System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[0]));
+
+        pushToStack(tmpPC[1]);
+        if (PRINT_TRACE)
+            System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[1]));
+
+        this.regPC = this.regIntAddr;
+        if (PRINT_TRACE)
+            System.out.println("JSR Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[0]));
+    }
+
+    /**
      * Loads the value from memory into the accumulator
      * Sets ZERO_FLAG if accumulator becomes zero
      * Sets NEGATIVE_FLAG if bit 7 of accumulator is a 1
@@ -783,6 +862,30 @@ public class MOS6502 extends Processor {
 
         if (PRINT_TRACE)
             System.out.println("LDY : " + String.format("%02X", this.regY));
+    }
+
+    /**
+     * Pulls the processor flags followed by the program counter from the stack
+     * When pulling the processor flags bits 5 and 4 are ignored
+     * https://wiki.nesdev.com/w/index.php/Status_flags
+     */
+    private void RTI() throws ProcessorException {
+        byte flags = pullFromStack();
+        if (PRINT_TRACE)
+            System.out.println("RTI Flags Pulled: " + String.format("%02X", flags));
+
+        flags = (byte)(flags & 0b11001111);
+
+        if (PRINT_TRACE)
+            System.out.println("RTI Flags Masked: " + String.format("%02X", flags));
+
+        this.regStatus = flags;
+
+        this.regPC[1] = pullFromStack();
+        this.regPC[0] = pullFromStack();
+
+        if (PRINT_TRACE)
+            System.out.println("RTI Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[0]));
     }
 
     /**

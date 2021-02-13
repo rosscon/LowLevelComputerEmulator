@@ -161,7 +161,7 @@ public class MOS6502Instructions {
     /**
      * JSR Instructions
      */
-    //TODO JSR Instructions
+    public static final byte INS_JSR_ABS    = (byte)0x20;
 
     /**
      * LDA Instructions
@@ -241,7 +241,7 @@ public class MOS6502Instructions {
     /**
      * RTI Instructions
      */
-    //TODO RTI Instructions
+    public static final byte INS_RTI_IMP    = (byte)0x40;
 
     /**
      * RTS Instructions
