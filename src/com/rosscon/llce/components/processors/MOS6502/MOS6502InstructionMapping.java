@@ -90,7 +90,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * BRK
          */
-        //TODO BRK Instructions
+        this.put(MOS6502Instructions.INS_BRK_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 7));
 
         /*
          * BVC
@@ -144,17 +145,26 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * DEC
          */
-        //TODO DEC Instructions
+        this.put(MOS6502Instructions.INS_DEC_ZP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.ZERO_PAGE, 2, 5));
+        this.put(MOS6502Instructions.INS_DEC_ZPX,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.ZERO_PAGE_X, 2, 6));
+        this.put(MOS6502Instructions.INS_DEC_ABS,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.ABSOLUTE, 1, 6));
+        this.put(MOS6502Instructions.INS_DEC_ABX,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.ABSOLUTE_X, 1, 7));
 
         /*
          * DEX
          */
-        //TODO DEX Instructions
+        this.put(MOS6502Instructions.INS_DEX_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.ZERO_PAGE, 1, 2));
 
         /*
          * DEY
          */
-        //TODO DEY Instructions
+        this.put(MOS6502Instructions.INS_DEY_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.ZERO_PAGE, 1, 2));
 
         /*
          * EOR

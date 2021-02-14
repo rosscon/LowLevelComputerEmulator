@@ -69,7 +69,7 @@ public class MOS6502Instructions {
     /**
      * BRK Instructions
      */
-    //TODO BRK Instructions
+    public static final byte INS_BRK_IMP  = (byte)0x00;
 
     /**
      * BVC Instructions
@@ -119,17 +119,20 @@ public class MOS6502Instructions {
     /**
      * DEC Instructions
      */
-    //TODO DEC Instructions
+    public static final byte INS_DEC_ZP   = (byte)0xC6;
+    public static final byte INS_DEC_ZPX  = (byte)0xD6;
+    public static final byte INS_DEC_ABS  = (byte)0xCE;
+    public static final byte INS_DEC_ABX  = (byte)0xDE;
 
     /**
      * DEX Instructions
      */
-    //TODO DEX Instructions
+    public static final byte INS_DEX_IMP  = (byte)0xCA;
 
     /**
      * DEY Instructions
      */
-    //TODO DEY Instructions
+    public static final byte INS_DEY_IMP  = (byte)0x88;
 
     /**
      * EOR Instructions

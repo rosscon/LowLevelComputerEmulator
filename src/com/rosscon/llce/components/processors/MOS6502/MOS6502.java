@@ -10,7 +10,6 @@ import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteUtils;
 
-import java.util.Arrays;
 
 /**
  *      __  __  ____   _____     __ _____  ___ ___
@@ -59,7 +58,13 @@ public class MOS6502 extends Processor {
     private byte[]  regIntAddr; // Custom register used for building addresses over multiple cycles
     private boolean regIntCarry;// Custom carry register for handling ABS X,Y
 
-    private final byte STACK_PAGE = (byte)0x01;
+    /**
+     * Vectors / Pages
+     */
+    private final byte STACK_PAGE       = (byte)0x01;
+    private final byte[] VECTOR_NMI     = new byte[]{ (byte)0xFF, (byte)0xFFB };
+    private final byte[] VECTOR_RESET   = new byte[]{ (byte)0xFF, (byte)0xFFC };
+    private final byte[] VECTOR_IRQ_BRK = new byte[]{ (byte)0xFF, (byte)0xFFE };
 
     /**
      * Getters for unit testing
@@ -130,7 +135,7 @@ public class MOS6502 extends Processor {
     private void reset() throws ProcessorException {
 
         try {
-            regPC       = new byte[]{(byte) 0xFF, (byte) 0xFC};
+            regPC       = VECTOR_RESET;
             regSP       = (byte) 0xFF;
             regACC      = (byte) 0x00;
             regX        = (byte) 0x00;
@@ -479,6 +484,11 @@ public class MOS6502 extends Processor {
                 if (this.cycles == 0) AND();
                 break;
 
+            case MOS6502Instructions.INS_BRK_IMP:
+                BRK();
+                break;
+
+
 
             case MOS6502Instructions.INS_CLC_IMP:
                 clearFlag(MOS6502Flags.CARRY_FLAG);
@@ -491,6 +501,22 @@ public class MOS6502 extends Processor {
                 break;
             case MOS6502Instructions.INS_CLV_IMP:
                 clearFlag(MOS6502Flags.OVERFLOW_FLAG);
+                break;
+
+
+            case MOS6502Instructions.INS_DEC_ZP:
+            case MOS6502Instructions.INS_DEC_ZPX:
+            case MOS6502Instructions.INS_DEC_ABS:
+            case MOS6502Instructions.INS_DEC_ABX:
+                DEC();
+                break;
+
+            case MOS6502Instructions.INS_DEX_IMP:
+                DEX();
+                break;
+
+            case MOS6502Instructions.INS_DEY_IMP:
+                DEY();
                 break;
 
 
@@ -739,6 +765,126 @@ public class MOS6502 extends Processor {
         }
         if (PRINT_TRACE)
             System.out.println("AND : " + String.format("%02X", this.regACC));
+    }
+
+    /**
+     * Pushes PC and status to the stack
+     * set the PC to the interrupt vector at 0xFFFE/F
+     * Set the break flag, note this is not left in the status, see https://wiki.nesdev.com/w/index.php/Status_flags
+     * "The B Flag" bits 4 and 5 are only set in the stack and not in the register.
+     */
+    private void BRK() throws ProcessorException {
+        switch (this.cycles){
+            case 5:
+                // Push PC high to stack
+                pushToStack(this.regPC[0]);
+                if (PRINT_TRACE)
+                    System.out.println("BRK Pushed : " + String.format("%02X", this.regPC[0]));
+                // Push PC low to stack
+                pushToStack(this.regPC[1]);
+                if (PRINT_TRACE)
+                    System.out.println("BRK Pushed : " + String.format("%02X", this.regPC[1]));
+                break;
+            case 4:
+                // Set flags
+                enableFlag(MOS6502Flags.BREAK_COMMAND);
+                enableFlag(MOS6502Flags.IGNORED_FLAG);
+                // Push status to stack
+                pushToStack(this.regStatus);
+                if (PRINT_TRACE)
+                    System.out.println("BRK Pushed : " + String.format("%02X", this.regStatus));
+                break;
+            case 3:
+                this.regPC = VECTOR_IRQ_BRK;
+                break;
+            case 2:
+                // Set PC low
+                this.regIntAddr[1] = fetch();
+                break;
+            case 1:
+                // Set PC high
+                this.regIntAddr[0] = fetch();
+                break;
+            case 0:
+                // Set PC
+                this.regPC = this.regIntAddr;
+                // Clear Flags
+                clearFlag(MOS6502Flags.BREAK_COMMAND);
+                clearFlag(MOS6502Flags.IGNORED_FLAG);
+                break;
+        }
+    }
+
+    /**
+     * Reads the value on the data bus, then decrements it on bus and sets the bus to write
+     * Finally any flags are set
+     * Sets ZERO_FLAG if == 0x0
+     * Sets NEGATIVE_FLAG if but 7 is set to a 1
+     */
+    private void DEC() throws ProcessorException {
+        if (this.cycles == 0){
+            try{
+                this.rwFlag.setFlagValue(true);
+                byte value = this.dataBus.readDataFromBus()[0];
+
+                value = (byte)(value + 0xFF);
+                this.dataBus.writeDataToBus(new byte[]{value});
+                this.rwFlag.setFlagValue(false);
+
+                // Zero Flag
+                if (this.dataBus.readDataFromBus()[0] == 0x00)
+                    enableFlag(MOS6502Flags.ZERO_FLAG);
+
+                // Negative Flag
+                if ((this.dataBus.readDataFromBus()[0] & 0b10000000) == 0b10000000)
+                    enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+                if (PRINT_TRACE)
+                    System.out.println("DEC : " + String.format("%02X", this.dataBus.readDataFromBus()[0]));
+            } catch (MemoryException | InvalidBusDataException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Decrements the value of the X register by 1
+     * Sets ZERO_FLAG if == 0x0
+     * Sets NEGATIVE_FLAG if but 7 is set to a 1
+     */
+    private void DEX() {
+        this.regX = (byte)(this.regX + 0xFF);
+
+        // Zero Flag
+        if (this.regX == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        // Negative Flag
+        if ((this.regX & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        if (PRINT_TRACE)
+            System.out.println("DEX : " + String.format("%02X", this.regX));
+    }
+
+    /**
+     * Decrements the value of the Y register by 1
+     * Sets ZERO_FLAG if == 0x0
+     * Sets NEGATIVE_FLAG if but 7 is set to a 1
+     */
+    private void DEY() {
+        this.regY = (byte)(this.regY + 0xFF);
+
+        // Zero Flag
+        if (this.regY == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        // Negative Flag
+        if ((this.regY & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        if (PRINT_TRACE)
+            System.out.println("DEY : " + String.format("%02X", this.regY));
     }
 
     /**

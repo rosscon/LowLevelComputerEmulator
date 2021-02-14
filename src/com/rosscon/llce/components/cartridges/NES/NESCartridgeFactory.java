@@ -179,7 +179,13 @@ public class NESCartridgeFactory {
 
         int mapper = parseMapperNumber(flag6, flag7);
 
-        System.out.println(prgRom[prgRom.length - 2] + " : " + prgRom[prgRom.length - 1]);
+        //private final byte[] VECTOR_NMI     = new byte[]{ (byte)0xFF, (byte)0xFFB };
+        //private final byte[] VECTOR_RESET   = new byte[]{ (byte)0xFF, (byte)0xFFC };
+        //private final byte[] VECTOR_IRQ_BRK = new byte[]{ (byte)0xFF, (byte)0xFFE };
+        //System.out.println(prgRom[prgRom.length - 2] + " : " + prgRom[prgRom.length - 1]);
+        System.out.println("NMI     : " + String.format("%02X", prgRom[prgRom.length - 5]) + String.format("%02X", prgRom[prgRom.length - 6]));
+        System.out.println("RST     : " + String.format("%02X", prgRom[prgRom.length - 3]) + String.format("%02X", prgRom[prgRom.length - 4]));
+        System.out.println("IRQ/BRK : " + String.format("%02X", prgRom[prgRom.length - 1]) + String.format("%02X", prgRom[prgRom.length - 2]));
 
         NESNametableMirroring mirroring = getNametableMirroring(flag6);
 

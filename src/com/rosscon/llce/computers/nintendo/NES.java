@@ -147,7 +147,7 @@ public class NES extends Computer {
          */
         Clock clock = new Clock();
         this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/nestest.nes",
+                "/Users/rossconroy/Desktop/donkey.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
         );
