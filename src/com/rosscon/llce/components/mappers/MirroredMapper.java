@@ -24,12 +24,13 @@ public class MirroredMapper extends Mapper {
     /**
      * Mask to AND with requested address in order to address the memory.
      */
-    byte[] mask;
+    private long mask;
 
     /**
      * Set of valid addresses, this is to simplify the check if an address is associated with mapper
      */
     protected Set<ByteArrayWrapper> validAddresses = new HashSet<>();
+
 
     /**
      * A mirrored mapper, Works by using a bitmask to determine the true memory address
@@ -45,23 +46,11 @@ public class MirroredMapper extends Mapper {
                           byte[] mapperLow, byte[] mapperHigh, byte[] mask) {
         super(addressBus, dataBus, rwFlag);
         this.memory = memory;
-        this.mask = mask;
 
-        // Determine mappers valid addresses, this is to simplify lookup later
-        /*byte[] current = Arrays.copyOf(mapperLow, mapperLow.length);
-        while (! Arrays.equals(current, mapperHigh)){
-            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(current);
-            validAddresses.add(wrappedKey);
-            current = ByteArrayUtils.increment(current);
-        }*/
+        this.mask = ByteArrayUtils.byteArrayToLong(mask);
 
-        for (byte[] index = mapperLow;
-             !Arrays.equals(index, ByteArrayUtils.increment(mapperHigh));
-             index = ByteArrayUtils.increment(index)){
-
-            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(index);
-            validAddresses.add(wrappedKey);
-        }
+        this.start = ByteArrayUtils.byteArrayToLong(mapperLow);
+        this.end = ByteArrayUtils.byteArrayToLong(mapperHigh);
 
     }
 
@@ -69,21 +58,16 @@ public class MirroredMapper extends Mapper {
     public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
 
         if (flag == rwFlag) {
-            byte[] key = this.addressBus.readDataFromBus();
-            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(key);
 
-            // Is in our valid address range
-            if (this.validAddresses.contains(wrappedKey)){
+            long address = ByteArrayUtils.byteArrayToLong(this.addressBus.readDataFromBus());
 
-                // Mask the requested memory address
-                byte [] maskedAddress = new byte[mask.length];
-                for (int i = 0; i < maskedAddress.length; i++){
-                    maskedAddress[i] = (byte)(addressBus.readDataFromBus()[i] & mask[i]);
-                }
+            if (address >= this.start && address <= this.end){
+                long maskedAddress = address & this.mask;
 
-                // Put masked address on address bus to memory
-                try{
-                    this.memory.getAddressBus().writeDataToBus(maskedAddress);
+                try {
+                    this.memory.getAddressBus().writeDataToBus(
+                            ByteArrayUtils.longToByteArray(maskedAddress, this.addressBus.readDataFromBus().length)
+                    );
                 } catch (InvalidBusDataException ex) {
                     throw new MemoryException(ex.getMessage());
                 }
@@ -97,10 +81,8 @@ public class MirroredMapper extends Mapper {
                     }
                 }
 
-                // Pass the RW flag status along
                 this.memory.getRwFlag().setFlagValue(newValue);
 
-                //If incoming flag value was true (READ), now need to pass data back to source bus
                 if (newValue){
                     try {
                         this.dataBus.writeDataToBus(this.memory.getDataBus().readDataFromBus());
@@ -110,7 +92,6 @@ public class MirroredMapper extends Mapper {
                     }
                 }
             }
-
         }
 
     }

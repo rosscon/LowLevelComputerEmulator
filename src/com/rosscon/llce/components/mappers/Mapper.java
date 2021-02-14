@@ -12,17 +12,27 @@ public abstract class Mapper implements FlagListener {
     /**
      * Address Bus
      */
-    Bus addressBus;
+    protected Bus addressBus;
 
     /**
      * Data Bus
      */
-    Bus dataBus;
+    protected Bus dataBus;
 
     /**
      * Read Write Flag
      */
-    Flag rwFlag;
+    protected Flag rwFlag;
+
+    /**
+     * First address mapper can respond to
+     */
+    protected long start;
+
+    /**
+     * Last address mapper can respond to
+     */
+    protected long end;
 
     public Mapper(Bus addressBus, Bus dataBus, Flag rwFlag){
         this.addressBus = addressBus;

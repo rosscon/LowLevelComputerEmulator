@@ -27,6 +27,7 @@ public class ReadOnlyMemory extends Memory {
             "Size of supplied data does not match the address range provided";
 
 
+
     /**
      * Instantiate read only memory with empty contents
      * @param addressBus address bus to attach to
@@ -48,20 +49,27 @@ public class ReadOnlyMemory extends Memory {
     public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag, Map<ByteArrayWrapper, byte[]> init) throws MemoryException {
         super(addressBus, dataBus, rwFlag);
 
-        int addressWidth = addressBus.readDataFromBus().length;
-        int dataWidth = dataBus.readDataFromBus().length;
+        this.start = Long.MAX_VALUE;
+        long end = Long.MIN_VALUE;
 
-        Iterator initIt = init.entrySet().iterator();
+        for (ByteArrayWrapper key : init.keySet()) {
 
-        // Check that the input data matches the busses widths
-        while (initIt.hasNext()){
-            Map.Entry element = (Map.Entry)initIt.next();
-            if (((ByteArrayWrapper)element.getKey()).getLength() != addressWidth ||
-                    ((byte[])element.getValue()).length != dataWidth)
-                throw new MemoryException(BUS_SIZE_MISMATCH);
+            if (key.getData().length != addressBus.readDataFromBus().length)
+                throw new MemoryException(this.BUS_SIZE_MISMATCH);
+
+            long address = ByteArrayUtils.byteArrayToLong(key.getData());
+            this.start = Math.min(address, start);
+            end = Math.max(address, end);
         }
 
-        this.contents = Map.copyOf(init);
+        int size = (int) ((end - start) + 1);
+        this.contentsArr = new byte[size][dataBus.readDataFromBus().length];
+
+        for (Map.Entry<ByteArrayWrapper, byte[]> entry : init.entrySet()) {
+            long address = ByteArrayUtils.byteArrayToLong(entry.getKey().getData());
+            address -= start;
+            this.contentsArr[(int)address] = entry.getValue();
+        }
     }
 
     /**
@@ -79,27 +87,26 @@ public class ReadOnlyMemory extends Memory {
                           byte[] startAddress, byte[] endAddress, byte[] data) throws MemoryException {
         super(addressBus, dataBus, rwFlag);
 
-        Queue<Byte> dataQueue = new ArrayDeque<>(){{
-            for (byte datum : data) add(datum);
-        }};
+        // Change to storing into a normal array
+        this.start = ByteArrayUtils.byteArrayToLong(startAddress);
+        long end = ByteArrayUtils.byteArrayToLong(endAddress);
+        int size = (int) ((end - start) + 1);
 
-        for (byte[] index = startAddress;
-             !Arrays.equals(index, ByteArrayUtils.increment(endAddress));
-             index = ByteArrayUtils.increment(index)){
+        int dataByteWidth = dataBus.readDataFromBus().length;
+        this.contentsArr = new byte[size][dataBus.readDataFromBus().length];
 
-            List<Byte> tmpData = new LinkedList<>();
-
-            int width = dataBus.readDataFromBus().length;
-            for (int j = width; j > 0; j--){
-                if (dataQueue.size() == 0) throw new MemoryException(DATA_SIZE_ADDRESS_MISMATCH);
-                tmpData.add(dataQueue.remove());
-            }
-
-            this.contents.put(new ByteArrayWrapper(index), ByteArrayUtils.listToArray(tmpData));
+        if (size * dataByteWidth != data.length) {
+            throw new MemoryException(this.BUS_SIZE_MISMATCH);
         }
 
-        if (dataQueue.size() > 0)
-            throw new MemoryException(DATA_SIZE_ADDRESS_MISMATCH);
+        for (int i = 0; i < size; i++){
+            byte[] tmp = new byte[dataByteWidth];
+            for (int j = 0; j < dataByteWidth; j++){
+                int dataIndex = (i * dataByteWidth) + j;
+                tmp[j] = data[dataIndex];
+                this.contentsArr[i] = tmp;
+            }
+        }
     }
 
     /**
@@ -114,12 +121,12 @@ public class ReadOnlyMemory extends Memory {
         // On R/W flag being set to true write contents at address on address bus to data bus if within range
         if (flag == rwFlag && newValue){
 
-            byte[] key = this.addressBus.readDataFromBus();
-            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(key);
+            long address = ByteArrayUtils.byteArrayToLong(this.addressBus.readDataFromBus());
 
-            if(this.contents.containsKey(wrappedKey)) {
+            if (address >= this.start && address < this.start + contentsArr.length){
+                address -= start;
                 try {
-                    this.dataBus.writeDataToBus(contents.get(wrappedKey));
+                    this.dataBus.writeDataToBus(this.contentsArr[(int) address]);
                 } catch (InvalidBusDataException ex) {
                     throw new MemoryException(ex.getMessage());
                 }

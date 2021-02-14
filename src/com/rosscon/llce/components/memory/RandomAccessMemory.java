@@ -25,13 +25,11 @@ public class RandomAccessMemory extends Memory {
     public RandomAccessMemory(Bus addressBus, Bus dataBus, Flag rwFlag, byte[] startAddress, byte[] endAddress){
         super(addressBus, dataBus, rwFlag);
 
-        // Pre populate RAM with all 0's
-        byte[] current = Arrays.copyOf(startAddress, startAddress.length);
-        while (! Arrays.equals(current, endAddress)){
-            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(current);
-            this.contents.put(wrappedKey, new byte[dataBus.readDataFromBus().length]);
-            current = ByteArrayUtils.increment(current);
-        }
+        this.start = ByteArrayUtils.byteArrayToLong(startAddress);
+        long end = ByteArrayUtils.byteArrayToLong(endAddress);
+        int size = (int) ((end - start) + 1);
+        int dataByteWidth = dataBus.readDataFromBus().length;
+        this.contentsArr = new byte[size][dataByteWidth];
     }
 
 
@@ -45,23 +43,20 @@ public class RandomAccessMemory extends Memory {
     public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
 
         if (flag == rwFlag) {
-            byte[] key = this.addressBus.readDataFromBus();
-            ByteArrayWrapper wrappedKey = new ByteArrayWrapper(key);
 
-            // Check if in our memory address range
-            if(this.contents.containsKey(wrappedKey)){
+            long address = ByteArrayUtils.byteArrayToLong(this.addressBus.readDataFromBus());
 
-                //Read (Write a value to data bus)
-                if (newValue){
+            if (address >= this.start && address < this.start + contentsArr.length){
+                address -= start;
+
+                if (newValue) {
                     try {
-                        this.dataBus.writeDataToBus(contents.get(wrappedKey));
+                        this.dataBus.writeDataToBus(this.contentsArr[(int) address]);
                     } catch (InvalidBusDataException ex) {
                         throw new MemoryException(ex.getMessage());
                     }
-                }
-                //Write (Read value from data bus and write to contents)
-                else {
-                    this.contents.put(wrappedKey, this.dataBus.readDataFromBus());
+                } else {
+                    this.contentsArr[(int)address] = this.dataBus.readDataFromBus();
                 }
             }
 

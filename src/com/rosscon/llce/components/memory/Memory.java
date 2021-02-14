@@ -3,10 +3,6 @@ package com.rosscon.llce.components.memory;
 import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagListener;
-import com.rosscon.llce.utils.ByteArrayWrapper;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -25,9 +21,19 @@ public abstract class Memory implements FlagListener {
     protected Bus dataBus;
 
     /**
-     * Contents of the memory <address, data>
+     * Contents of the memory as an array
      */
-    protected Map<ByteArrayWrapper, byte[]> contents = new HashMap<>();
+    protected byte[][] contentsArr;
+
+    /**
+     * First address of memory
+     */
+    protected long start;
+
+    /**
+     * Last address of memory
+     */
+    protected long end;
 
     /**
      * R/W flag, high = read, low = write

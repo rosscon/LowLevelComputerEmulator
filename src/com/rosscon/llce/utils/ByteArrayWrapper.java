@@ -35,4 +35,8 @@ public final class ByteArrayWrapper {
     public int getLength(){
         return data.length;
     }
+
+    public byte[] getData(){
+        return data;
+    }
 }

@@ -330,17 +330,17 @@ public class MOS6502TestADC {
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
                     new byte[]{ MOS6502Instructions.INS_LDY_IMM});
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x01 }),
-                    new byte[]{ (byte)0x01 });
+                    new byte[]{ (byte)0xFF });
 
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x02 }),
                     new byte[]{ MOS6502Instructions.INS_ADC_INY });
             put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x03 }),
-                    new byte[]{ (byte)0x86 });
-            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x86 }),
-                    new byte[]{ (byte)0xFF });
-            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x87 }),
-                    new byte[]{ (byte)0x40 });
-            put(new ByteArrayWrapper(new byte[]{ (byte)0x41, (byte) 0x00 }),
+                    new byte[]{ (byte)0x4 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x04 }),
+                    new byte[]{ (byte)0x06 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x05 }),
+                    new byte[]{ (byte)0x00 });
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x01, (byte) 0x05 }),
                     new byte[]{ (byte)0x42 });
         }};
 

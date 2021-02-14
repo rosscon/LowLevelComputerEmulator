@@ -54,4 +54,38 @@ public class ByteArrayUtils {
         return output;
     }
 
+    /**
+     * Converts a byte array to a long data type. due to limitations of java
+     * this limits to 64 bit as the maximum.
+     * @param input
+     * @return
+     */
+    public static long byteArrayToLong(byte[] input){
+        long value = 0;
+
+        for (int i = 0; i < input.length; i++){
+            value = (value << 8) + (input[i] & 0xFF);
+        }
+
+        return value;
+    }
+
+    /**
+     * Converts a long value into a byte array of given size
+     * @param value long value to convert
+     * @param bytes number of bytes
+     * @return byte[] where byte[0] is MSB and byte[length - 1] is LSB
+     */
+    public static byte[] longToByteArray(long value, int bytes){
+
+        byte[] result = new byte[bytes];
+
+        for (int i = result.length - 1; i >= 0; i--){
+            result[i] = (byte)(value & 0xFF);
+            value = (value >>> 8);
+        }
+
+        return result;
+    }
+
 }
