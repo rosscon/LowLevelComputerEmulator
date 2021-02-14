@@ -8,6 +8,7 @@ import com.rosscon.llce.components.cartridges.NES.NESCartridge;
 import com.rosscon.llce.components.cartridges.NES.NESCartridgeFactory;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockException;
+import com.rosscon.llce.components.clocks.dividers.Divider;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
@@ -107,7 +108,10 @@ public class NES extends Computer {
     private NESCartridge cartridge;
 
 
-    private Clock cpuClock;
+    private Clock masterClock;
+    private Divider cpuDivider;
+    private Divider ppuDivider;
+
     private MOS6502 cpu;
 
     public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException, ClockException {
@@ -146,8 +150,13 @@ public class NES extends Computer {
          * Setup/Add the cartridge
          */
         Clock clock = new Clock();
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/donkey.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+        );*/
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "/Users/rossconroy/Desktop/nestest.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
         );
@@ -156,10 +165,18 @@ public class NES extends Computer {
         /*
          * Lastly add the CPU as it will call reset() on start
          */
-        this.cpuClock = new Clock();
-        this.cpu = new MOS6502(cpuClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true);
+        this.masterClock = new Clock();
+        this.cpuDivider = new Divider(12, masterClock);
+        this.ppuDivider = new Divider(4, masterClock);
 
-        this.cpuClock.tick(100);
+        this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
+
+        long cycles = 100000000;
+        long start = System.nanoTime();
+        this.masterClock.tick(cycles);
+        long finish = System.nanoTime();
+        float difference = finish - start;
+        System.out.println(((float)cycles / (difference / 1000000000f)) / 1000000f + "MHz");
 
         System.out.println("TEST");
     }

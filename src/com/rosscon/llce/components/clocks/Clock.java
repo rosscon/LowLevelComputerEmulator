@@ -39,8 +39,8 @@ public class Clock {
      * @param ticks number of ticks to execute
      * @throws ClockException
      */
-    public void tick(int ticks) throws ClockException {
-        for (int t = 0; t < ticks; t++){
+    public void tick(long ticks) throws ClockException {
+        for (long t = 0; t < ticks; t++){
             tick();
         }
     }
