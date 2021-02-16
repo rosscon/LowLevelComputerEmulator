@@ -150,16 +150,16 @@ public class NES extends Computer {
          * Setup/Add the cartridge
          */
         Clock clock = new Clock();
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/donkey.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );*/
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        );
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/nestest.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );
+        );*/
 
 
         /*
@@ -169,7 +169,7 @@ public class NES extends Computer {
         this.cpuDivider = new Divider(12, masterClock);
         this.ppuDivider = new Divider(4, masterClock);
 
-        this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
+        this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true);
 
         long cycles = 100000000;
         long start = System.nanoTime();

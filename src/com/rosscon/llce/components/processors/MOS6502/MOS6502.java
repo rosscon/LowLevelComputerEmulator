@@ -10,6 +10,8 @@ import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteUtils;
 
+import javax.crypto.spec.PSource;
+
 
 /**
  *      __  __  ____   _____     __ _____  ___ ___
@@ -165,6 +167,15 @@ public class MOS6502 extends Processor {
     }
 
     /**
+     * Determines wheter a flag is currently set on the CPU status register
+     * @param flag
+     * @return
+     */
+    private boolean isFlagSet(byte flag){
+        return (byte)(this.regStatus & flag) == flag;
+    }
+
+    /**
      * Pushes a value to the stack then decrements the stack pointer by 1
      * @param value value to push to the stack
      */
@@ -234,6 +245,7 @@ public class MOS6502 extends Processor {
             switch (this.addressingMode) {
                 case IMPLICIT:      // These modes do nothing with memory
                     break;
+                case RELATIVE:
                 case ACCUMULATOR:
                 case IMMEDIATE:     // Makes cpu request next address in memory
                     if (this.cycles == 1){
@@ -428,9 +440,10 @@ public class MOS6502 extends Processor {
                     }
                     break;
 
-                case RELATIVE:
-                    //TODO implement relative addressing, however will need to implement a branching instruction
-                    break;
+                /*case RELATIVE:
+                    if (this.cycles == 1){
+                        System.out.println();
+                    }*/
             }
         } catch (Exception ex){
             throw new ProcessorException(ex.getMessage());
@@ -488,6 +501,33 @@ public class MOS6502 extends Processor {
                 BRK();
                 break;
 
+            /*
+             * Branching conditions
+             */
+            case MOS6502Instructions.INS_BCC_REL:
+                branch(!isFlagSet(MOS6502Flags.CARRY_FLAG));
+                break;
+            case MOS6502Instructions.INS_BCS_REL:
+                branch(isFlagSet(MOS6502Flags.CARRY_FLAG));
+                break;
+            case MOS6502Instructions.INS_BEQ_REL:
+                branch(isFlagSet(MOS6502Flags.ZERO_FLAG));
+                break;
+            case MOS6502Instructions.INS_BMI_REL:
+                branch(isFlagSet(MOS6502Flags.NEGATIVE_FLAG));
+                break;
+            case MOS6502Instructions.INS_BNE_REL:
+                branch(!isFlagSet(MOS6502Flags.ZERO_FLAG));
+                break;
+            case MOS6502Instructions.INS_BPL_REL:
+                branch(!isFlagSet(MOS6502Flags.NEGATIVE_FLAG));
+                break;
+            case MOS6502Instructions.INS_BVC_REL:
+                branch(!isFlagSet(MOS6502Flags.OVERFLOW_FLAG));
+                break;
+            case MOS6502Instructions.INS_BVS_REL:
+                branch(isFlagSet(MOS6502Flags.OVERFLOW_FLAG));
+                break;
 
 
             case MOS6502Instructions.INS_CLC_IMP:
@@ -519,6 +559,14 @@ public class MOS6502 extends Processor {
                 DEY();
                 break;
 
+
+            case MOS6502Instructions.INS_INX_IMP:
+                INX();
+                break;
+
+            case MOS6502Instructions.INS_INY_IMP:
+                INY();
+                break;
 
 
             case MOS6502Instructions.INS_JMP_ABS:
@@ -561,6 +609,11 @@ public class MOS6502 extends Processor {
 
             case MOS6502Instructions.INS_RTI_IMP:
                 if (this.cycles == 0) RTI();
+                break;
+
+
+            case MOS6502Instructions.INS_NOP_IMP:
+                // No Operation
                 break;
 
 
@@ -639,7 +692,6 @@ public class MOS6502 extends Processor {
         else if ( this.cycles > 0 ) {
             addressing();
             execute();
-            //if (this.cycles == 0) execute();
         }
     }
 
@@ -658,6 +710,40 @@ public class MOS6502 extends Processor {
     private void clearFlag(byte flag) {
         if ((this.regStatus & flag) == flag){
             this.regStatus = (byte)(this.regStatus - flag);
+        }
+    }
+
+    /**
+     * Performs the necessary steps to complete a branching instruction
+     * Not being 100% cycle accurate on this one. Will perform all the functions of
+     * incrementing the program counter from value fetched in memory.
+     * Then increments the number of cycles +1 default, +2 if the page has changed
+     * Finally the current instruction is set to NOP and addressing mode to IMPLIED
+     * to prevent the program counter from also being affected.
+     */
+    private void branch(boolean branchSucceeded){
+        if (this.cycles == 0) {
+            if (branchSucceeded){
+                // Add a cycle just for branch occurring
+                this.cycles++;
+
+                long initialAddress = ByteArrayUtils.byteArrayToLong(this.regPC);
+                byte value = dataBus.readDataFromBus()[0];
+
+                //In this scenario we want to treat the value as a signed number;
+                long newAddress = initialAddress + value;
+                byte[] newPC = ByteArrayUtils.longToByteArray(newAddress, 2);
+
+                // Detect if the page has changed
+                if (newPC[0] != this.regPC[0])
+                    this.cycles++;
+
+                this.regPC = newPC;
+
+                // Set addressing mode to prevent any more fetches and instruction to NOP
+                this.addressingMode = MOS6502AddressingMode.IMPLICIT;
+                this.instruction = MOS6502Instructions.INS_NOP_IMP;
+            }
         }
     }
 
@@ -888,6 +974,52 @@ public class MOS6502 extends Processor {
     }
 
     /**
+     * Increments the X register by 1
+     * Sets ZERO_FLAG if == 0x0
+     * Sets NEGATIVE_FLAG if but 7 is set to a 1
+     */
+    private void INX() {
+        if (this.cycles == 0) {
+            this.regX = (byte) (this.regX + 0x01);
+
+            // Zero Flag
+            if (this.regX == 0x00)
+                enableFlag(MOS6502Flags.ZERO_FLAG);
+
+            // Negative Flag
+            if ((this.regX & 0b10000000) == 0b10000000)
+                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+            if (PRINT_TRACE)
+                System.out.println("INX : " + String.format("%02X", this.regX));
+        }
+    }
+
+
+    /**
+     * Increments the Y register by 1
+     * Sets ZERO_FLAG if == 0x0
+     * Sets NEGATIVE_FLAG if but 7 is set to a 1
+     */
+    private void INY() {
+        if (this.cycles == 0) {
+            this.regY = (byte) (this.regY + 0x01);
+
+            // Zero Flag
+            if (this.regY == 0x00)
+                enableFlag(MOS6502Flags.ZERO_FLAG);
+
+            // Negative Flag
+            if ((this.regY & 0b10000000) == 0b10000000)
+                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+            if (PRINT_TRACE)
+                System.out.println("INY : " + String.format("%02X", this.regY));
+        }
+    }
+
+
+    /**
      * Jumps the program counter to the value currently held on the address bus
      */
     private void JMP() {
@@ -898,33 +1030,39 @@ public class MOS6502 extends Processor {
 
     /**
      * Jumps to subroutine
-     * pushes the value of the program counter + 2 to the stack. Then sets the PC to what was read from memory
+     * pushes the PC pointing to the last byte of the instruction to the stack then sets the PC to the
+     * address that was read from memory + 1
      */
     private void JSR() throws ProcessorException {
 
         switch (this.cycles){
-            case 5:
-                this.regIntAddr[1] = (byte)(this.regPC[1] + 0x02);
-                break;
             case 4:
-                this.regIntAddr[0] = this.regPC[0];
-                if (this.regPC[1] == 0x00 || this.regPC[1] == 0x01 || this.regPC[1] == 0x02)
-                    this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
-                break;
             case 3:
-                pushToStack(regIntAddr[0]);
-                if (PRINT_TRACE)
-                    System.out.println("JSR Pushed : " + String.format("%02X", regIntAddr[0]));
-                break;
             case 2:
-                pushToStack(regIntAddr[1]);
                 if (PRINT_TRACE)
-                    System.out.println("JSR Pushed : " + String.format("%02X", regIntAddr[1]));
+                    System.out.println("JSR PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+                break;
+            case 1:
+                if (PRINT_TRACE)
+                    System.out.println("JSR PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+
+                pushToStack(this.regPC[0]);
+                if (PRINT_TRACE)
+                    System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[1]));
+
+                pushToStack(this.regPC[1]);
+                if (PRINT_TRACE)
+                    System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[0]));
+
                 break;
             case 0:
-                this.regPC = this.regIntAddr;
                 if (PRINT_TRACE)
-                    System.out.println("JSR Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[0]));
+                    System.out.println("JSR PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+
+                this.regPC = this.regIntAddr;
+                this.fetch();
+                if (PRINT_TRACE)
+                    System.out.println("JSR Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
                 break;
         }
     }

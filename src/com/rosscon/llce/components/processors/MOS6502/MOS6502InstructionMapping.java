@@ -55,17 +55,20 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * BCC
          */
-        //TODO BCC Instructions
+        this.put(MOS6502Instructions.INS_BCC_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * BCS
          */
-        //TODO BCS Instructions
+        this.put(MOS6502Instructions.INS_BCS_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * BEQ
          */
-        //TODO BEQ Instructions
+        this.put(MOS6502Instructions.INS_BEQ_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * BIT
@@ -75,17 +78,20 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * BMI
          */
-        //TODO BMI Instructions
+        this.put(MOS6502Instructions.INS_BMI_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * BNE
          */
-        //TODO BNE Instructions
+        this.put(MOS6502Instructions.INS_BNE_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * BPL
          */
-        //TODO BPL Instructions
+        this.put(MOS6502Instructions.INS_BPL_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * BRK
@@ -96,12 +102,14 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * BVC
          */
-        //TODO BVC Instructions
+        this.put(MOS6502Instructions.INS_BVC_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * BVS
          */
-        //TODO BVS Instructions
+        this.put(MOS6502Instructions.INS_BVS_REL,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.RELATIVE, 2, 2));
 
         /*
          * CLC
@@ -179,12 +187,14 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * INX
          */
-        //TODO INX Instructions
+        this.put(MOS6502Instructions.INS_INX_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 2));
 
         /*
          * INY
          */
-        //TODO INY Instructions
+        this.put(MOS6502Instructions.INS_INY_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 2));
 
 
         /*
@@ -257,7 +267,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * NOP
          */
-        //TODO NOP Instructions
+        this.put(MOS6502Instructions.INS_NOP_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 2));
 
         /*
          * ORA

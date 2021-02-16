@@ -6,9 +6,6 @@ import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.memory.Memory;
 import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.utils.ByteArrayUtils;
-import com.rosscon.llce.utils.ByteArrayWrapper;
-
-import java.util.*;
 
 /**
  * A simple mirrored mapper to mirror addresses in memory.
@@ -25,12 +22,6 @@ public class MirroredMapper extends Mapper {
      * Mask to AND with requested address in order to address the memory.
      */
     private long mask;
-
-    /**
-     * Set of valid addresses, this is to simplify the check if an address is associated with mapper
-     */
-    protected Set<ByteArrayWrapper> validAddresses = new HashSet<>();
-
 
     /**
      * A mirrored mapper, Works by using a bitmask to determine the true memory address

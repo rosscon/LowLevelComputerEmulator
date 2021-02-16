@@ -67,7 +67,7 @@ public class MOS6502TestJSR {
 
         clock.tick(6);
         assertEquals((byte)0xFD, cpu.getRegSP());
-        assertArrayEquals(new byte[]{(byte)0x12, (byte)0x34}, cpu.getRegPC());
+        assertArrayEquals(new byte[]{(byte)0x12, (byte)0x35}, cpu.getRegPC());
     }
 
 

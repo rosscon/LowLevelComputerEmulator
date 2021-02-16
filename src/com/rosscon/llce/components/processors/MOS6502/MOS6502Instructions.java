@@ -34,17 +34,17 @@ public class MOS6502Instructions {
     /**
      * BCC Instructions
      */
-    //TODO BCC Instructions
+    public static final byte INS_BCC_REL  = (byte)0x90;
 
     /**
      * BCS Instructions
      */
-    //TODO BCS Instructions
+    public static final byte INS_BCS_REL  = (byte)0xB0;
 
     /**
      * BEQ Instructions
      */
-    //TODO BEQ Instructions
+    public static final byte INS_BEQ_REL  = (byte)0xF0;
 
     /**
      * BIT Instructions
@@ -54,17 +54,17 @@ public class MOS6502Instructions {
     /**
      * BMI Instructions
      */
-    //TODO BMI Instructions
+    public static final byte INS_BMI_REL  = (byte)0x30;
 
     /**
      * BNE Instructions
      */
-    //TODO BNE Instructions
+    public static final byte INS_BNE_REL  = (byte)0xD0;
 
     /**
      * BPL Instructions
      */
-    //TODO BPL Instructions
+    public static final byte INS_BPL_REL  = (byte)0x10;
 
     /**
      * BRK Instructions
@@ -74,12 +74,12 @@ public class MOS6502Instructions {
     /**
      * BVC Instructions
      */
-    //TODO BVC Instructions
+    public static final byte INS_BVC_REL  = (byte)0x50;
 
     /**
      * BVS Instructions
      */
-    //TODO BVS Instructions
+    public static final byte INS_BVS_REL  = (byte)0x70;
 
     /**
      * CLC Instructions
@@ -147,12 +147,12 @@ public class MOS6502Instructions {
     /**
      * INX Instructions
      */
-    //TODO INX Instructions
+    public static final byte INS_INX_IMP    = (byte)0xE8;
 
     /**
      * INY Instructions
      */
-    //TODO INY Instructions
+    public static final byte INS_INY_IMP    = (byte)0xC8;
 
     /**
      * JMP Instructions
@@ -204,7 +204,7 @@ public class MOS6502Instructions {
     /**
      * NOP Instructions
      */
-    //TODO NOP Instructions
+    public static final byte INS_NOP_IMP    = (byte)0xEA;
 
     /**
      * ORA Instructions
