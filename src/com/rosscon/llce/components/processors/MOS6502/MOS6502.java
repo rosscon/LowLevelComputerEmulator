@@ -10,8 +10,6 @@ import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteUtils;
 
-import javax.crypto.spec.PSource;
-
 
 /**
  *      __  __  ____   _____     __ _____  ___ ___
@@ -201,7 +199,7 @@ public class MOS6502 extends Processor {
         try {
             this.regSP = (byte)(this.regSP + 0x01);
             byte[] readAddress = new byte[] { this.STACK_PAGE, this.regSP };
-            readAddress = ByteArrayUtils.increment(readAddress);
+            //readAddress = ByteArrayUtils.increment(readAddress);
             this.addressBus.writeDataToBus(readAddress);
             this.rwFlag.setFlagValue(true);
             read = this.dataBus.readDataFromBus()[0];
@@ -614,6 +612,18 @@ public class MOS6502 extends Processor {
 
             case MOS6502Instructions.INS_NOP_IMP:
                 // No Operation
+                break;
+
+
+            case MOS6502Instructions.INS_PHA_IMP:
+                if (this.cycles == 0)
+                    pushToStack(this.regACC);
+                break;
+
+
+            case MOS6502Instructions.INS_PLA_IMP:
+                if (this.cycles == 0)
+                    PLA();
                 break;
 
 
@@ -1152,6 +1162,28 @@ public class MOS6502 extends Processor {
 
         if (PRINT_TRACE)
             System.out.println("LDY : " + String.format("%02X", this.regY));
+    }
+
+    /**
+     * Pulls from the stack
+     * Sets ZERO_FLAG if accumulator becomes zero
+     * Sets NEGATIVE_FLAG if bit 7 of accumulator is a 1
+     * @throws ProcessorException
+     */
+    private void PLA() throws ProcessorException {
+
+        this.regACC = pullFromStack();
+
+        // Zero Flag
+        if (this.regACC == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        // Negative Flag
+        if ((this.regACC & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        if (PRINT_TRACE)
+            System.out.println("PLA : " + String.format("%02X", this.regY));
     }
 
     /**

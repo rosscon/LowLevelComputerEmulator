@@ -67,15 +67,15 @@ public class MOS6502TestRTI {
                 new byte[]{0x00, 0x00}, new byte[]{0x00, 0x00}, data);
 
         // Writing direct to stack
-        addressBus.writeDataToBus(new byte[]{(byte)0x01, (byte)0x01});
+        addressBus.writeDataToBus(new byte[]{(byte)0x01, (byte)0x00});
         dataBus.writeDataToBus(new byte[]{(byte) 0xFF});
         rwFlag.setFlagValue(false);
 
-        addressBus.writeDataToBus(new byte[]{(byte)0x01, (byte)0x02});
+        addressBus.writeDataToBus(new byte[]{(byte)0x01, (byte)0x01});
         dataBus.writeDataToBus(new byte[]{(byte) 0x42});
         rwFlag.setFlagValue(false);
 
-        addressBus.writeDataToBus(new byte[]{(byte)0x01, (byte)0x03});
+        addressBus.writeDataToBus(new byte[]{(byte)0x01, (byte)0x02});
         dataBus.writeDataToBus(new byte[]{(byte) 0x43});
         rwFlag.setFlagValue(false);
 

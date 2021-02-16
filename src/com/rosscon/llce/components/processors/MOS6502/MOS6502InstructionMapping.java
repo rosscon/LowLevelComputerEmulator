@@ -278,7 +278,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * PHA
          */
-        //TODO PHA Instructions
+        this.put(MOS6502Instructions.INS_PHA_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 3));
 
         /*
          * PHP
@@ -288,7 +289,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * PLA
          */
-        //TODO PLA Instructions
+        this.put(MOS6502Instructions.INS_PLA_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 4));
 
         /*
          * PLP
