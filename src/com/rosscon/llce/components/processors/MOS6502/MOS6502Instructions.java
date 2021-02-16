@@ -249,7 +249,7 @@ public class MOS6502Instructions {
     /**
      * RTS Instructions
      */
-    //TODO RTS Instructions
+    public static final byte INS_RTS_IMP    = (byte)0x60;
 
     /**
      * SBC Instructions

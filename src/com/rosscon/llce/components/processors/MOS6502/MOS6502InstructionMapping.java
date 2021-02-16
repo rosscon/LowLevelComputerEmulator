@@ -316,7 +316,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * RTS
          */
-        //TODO RTS Instructions
+        this.put(MOS6502Instructions.INS_RTS_IMP,
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 6));
 
         /*
          * SBC

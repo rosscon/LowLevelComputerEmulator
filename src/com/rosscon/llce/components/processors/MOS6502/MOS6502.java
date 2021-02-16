@@ -313,17 +313,18 @@ public class MOS6502 extends Processor {
                             this.regIntAddr[0] = this.fetch();
                             break;
                         case 1:
-                            if (!this.regIntCarry){
-                                // Extra cycle required on carry
-                                if (ByteUtils.willCarryOnAddition(this.regIntAddr[1], this.regX)) {
+                            if (!this.regIntCarry) {
+                                long previous = ByteArrayUtils.byteArrayToLong(this.regIntAddr);
+                                long calculated = previous + ByteUtils.byteToIntUnsigned(this.regX);
+                                byte[] tmp = ByteArrayUtils.longToByteArray(calculated, 2);
+                                if (tmp[0] != this.regIntAddr[0]){
                                     this.regIntCarry = true;
-                                    this.cycles ++;
+                                    this.cycles++;
                                 }
-                                this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regX);
-                            } else {
-                                this.regIntCarry = false;
-                                this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
+                                this.regIntAddr = tmp;
+                                this.fetch();
                             }
+
                             addressBus.writeDataToBus(regIntAddr);
                     }
                     break;
@@ -337,17 +338,18 @@ public class MOS6502 extends Processor {
                             this.regIntAddr[0] = this.fetch();
                             break;
                         case 1:
-                            if (!this.regIntCarry){
-                                // Extra cycle required on carry
-                                if (ByteUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
+                            if (!this.regIntCarry) {
+                                long previous = ByteArrayUtils.byteArrayToLong(this.regIntAddr);
+                                long calculated = previous + ByteUtils.byteToIntUnsigned(this.regY);
+                                byte[] tmp = ByteArrayUtils.longToByteArray(calculated, 2);
+                                if (tmp[0] != this.regIntAddr[0]){
                                     this.regIntCarry = true;
-                                    this.cycles ++;
+                                    this.cycles++;
                                 }
-                                this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regY);
-                            } else {
-                                this.regIntCarry = false;
-                                this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
+                                this.regIntAddr = tmp;
+                                this.fetch();
                             }
+
                             addressBus.writeDataToBus(regIntAddr);
                     }
                     break;
@@ -605,11 +607,6 @@ public class MOS6502 extends Processor {
                 break;
 
 
-            case MOS6502Instructions.INS_RTI_IMP:
-                if (this.cycles == 0) RTI();
-                break;
-
-
             case MOS6502Instructions.INS_NOP_IMP:
                 // No Operation
                 break;
@@ -624,6 +621,15 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_PLA_IMP:
                 if (this.cycles == 0)
                     PLA();
+                break;
+
+
+            case MOS6502Instructions.INS_RTI_IMP:
+                if (this.cycles == 0) RTI();
+                break;
+
+            case MOS6502Instructions.INS_RTS_IMP:
+                RTS();
                 break;
 
 
@@ -1207,7 +1213,34 @@ public class MOS6502 extends Processor {
         this.regPC[0] = pullFromStack();
 
         if (PRINT_TRACE)
-            System.out.println("RTI Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[0]));
+            System.out.println("RTI Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+    }
+
+    /**
+     * Pulls the program counter minus 1 from the stack
+     * For this emulator will also increment the PC after pulling from stack
+     * @throws ProcessorException Can throw a ProcessorException if there is an issue reading from memory
+     */
+    private void RTS() throws ProcessorException {
+
+        switch (this.cycles){
+            case 3:
+                // Fetch low byte
+                this.regPC[1] = pullFromStack();
+                break;
+            case 2:
+                // Fetch the high byte
+                this.regPC[0] = pullFromStack();
+                break;
+            case 1:
+                //Increment PC
+                fetch();
+                break;
+            case 0:
+                if (PRINT_TRACE)
+                    System.out.println("RTS Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+        }
+
     }
 
     /**
