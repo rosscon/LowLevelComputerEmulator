@@ -455,6 +455,18 @@ public class MOS6502 extends Processor {
                 clearFlag(MOS6502Flags.OVERFLOW_FLAG);
                 break;
 
+            case CMP:
+                CMP();
+                break;
+
+            case CPX:
+                CPX();
+                break;
+
+            case CPY:
+                CPY();
+                break;
+
 
             case DEC:
                 DEC();
@@ -802,13 +814,137 @@ public class MOS6502 extends Processor {
          */
         low = fetch();
         high = fetch();
-        this.regPC = ((high & 0xFF) << 8) | low;
+        this.regPC = (((high & 0xFF) << 8) | (low & 0xFF)) & 0xFFFF;
 
         /*
          * Clear flags
          */
         clearFlag(MOS6502Flags.BREAK_COMMAND);
         clearFlag(MOS6502Flags.IGNORED_FLAG);
+    }
+
+    /**
+     * Compares the contents of the accumulator with a value held in memory
+     * Sets CARRY_FLAG if Accumulator >= Memory Value
+     * Sets ZERO_FLAG if Accumulator == Memory Value
+     * Sets NEGATIVE_FLAG if Accumulator < Memory Value
+     * @throws ProcessorException Can throw ProcessorException on memory read error
+     */
+    private void CMP() throws ProcessorException {
+        try{
+            this.rwFlag.setFlagValue(true);
+            int value = (this.dataBus.readDataFromBus()[0] & 0xFF);
+            int acc = (this.regACC & 0xFF);
+
+            int result = acc - value;
+
+            // Zero Flag
+            if (result == 0) {
+                enableFlag(MOS6502Flags.ZERO_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.ZERO_FLAG);
+            }
+
+            // Negative Flag
+            if ((result & 0b10000000) == 0b10000000){
+                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+            }
+
+            // Carry Flag
+            if (result > 0){
+                enableFlag(MOS6502Flags.CARRY_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.CARRY_FLAG);
+            }
+
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+    }
+
+    /**
+     * Compares the contents of the X register with a value held in memory
+     * Sets CARRY_FLAG if X >= Memory Value
+     * Sets ZERO_FLAG if X == Memory Value
+     * Sets NEGATIVE_FLAG if X < Memory Value
+     * @throws ProcessorException Can throw ProcessorException on memory read error
+     */
+    private void CPX() throws ProcessorException {
+        try{
+            this.rwFlag.setFlagValue(true);
+            int value = (this.dataBus.readDataFromBus()[0] & 0xFF);
+            int x = (this.regX & 0xFF);
+
+            int result = x - value;
+
+            // Zero Flag
+            if (result == 0) {
+                enableFlag(MOS6502Flags.ZERO_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.ZERO_FLAG);
+            }
+
+            // Negative Flag
+            if ((result & 0b10000000) == 0b10000000){
+                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+            }
+
+            // Carry Flag
+            if (result > 0){
+                enableFlag(MOS6502Flags.CARRY_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.CARRY_FLAG);
+            }
+
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+    }
+
+    /**
+     * Compares the contents of the Y register with a value held in memory
+     * Sets CARRY_FLAG if Y >= Memory Value
+     * Sets ZERO_FLAG if Y == Memory Value
+     * Sets NEGATIVE_FLAG if Y < Memory Value
+     * @throws ProcessorException Can throw ProcessorException on memory read error
+     */
+    private void CPY() throws ProcessorException {
+
+        try{
+            this.rwFlag.setFlagValue(true);
+            int value = (this.dataBus.readDataFromBus()[0] & 0xFF);
+            int y = (this.regY & 0xFF);
+
+            int result = y - value;
+
+            // Zero Flag
+            if (result == 0) {
+                enableFlag(MOS6502Flags.ZERO_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.ZERO_FLAG);
+            }
+
+            // Negative Flag
+            if ((result & 0b10000000) == 0b10000000){
+                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+            }
+
+            // Carry Flag
+            if (result > 0){
+                enableFlag(MOS6502Flags.CARRY_FLAG);
+            } else {
+                clearFlag(MOS6502Flags.CARRY_FLAG);
+            }
+
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
     }
 
     /**

@@ -104,17 +104,28 @@ public class MOS6502Instructions {
     /**
      * CMP Instructions
      */
-    //TODO CMP Instructions
+    public static final byte INS_CMP_IMM  = (byte)0xC9;
+    public static final byte INS_CMP_ZP   = (byte)0xC5;
+    public static final byte INS_CMP_ZPX  = (byte)0xD5;
+    public static final byte INS_CMP_ABS  = (byte)0xCD;
+    public static final byte INS_CMP_ABX  = (byte)0xDD;
+    public static final byte INS_CMP_ABY  = (byte)0xD9;
+    public static final byte INS_CMP_INX  = (byte)0xC1;
+    public static final byte INS_CMP_INY  = (byte)0xD1;
 
     /**
      * CPX Instructions
      */
-    //TODO CPX Instructions
+    public static final byte INS_CPX_IMM  = (byte)0xE0;
+    public static final byte INS_CPX_ZP   = (byte)0xE4;
+    public static final byte INS_CPX_ABS  = (byte)0xEC;
 
     /**
      * CPY Instructions
      */
-    //TODO CPY Instructions
+    public static final byte INS_CPY_IMM  = (byte)0xC0;
+    public static final byte INS_CPY_ZP   = (byte)0xC4;
+    public static final byte INS_CPY_ABS  = (byte)0xCC;
 
     /**
      * DEC Instructions

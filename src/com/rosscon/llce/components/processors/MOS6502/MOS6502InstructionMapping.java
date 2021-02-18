@@ -142,17 +142,42 @@ public class MOS6502InstructionMapping  {
         /*
          * CMP
          */
-        //TODO CMP Instructions
+        details[MOS6502Instructions.INS_CMP_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_CMP_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_CMP_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_CMP_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_CMP_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
+        details[MOS6502Instructions.INS_CMP_ABY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4);
+        details[MOS6502Instructions.INS_CMP_INX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6);
+        details[MOS6502Instructions.INS_CMP_INY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CMP, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5);
 
         /*
          * CPX
          */
-        //TODO CPX Instructions
+        details[MOS6502Instructions.INS_CPX_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CPX, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_CPX_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CPX, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_CPX_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CPX, MOS6502AddressingMode.ABSOLUTE, 3, 4);
 
         /*
          * CPY
          */
-        //TODO CPY Instructions
+        details[MOS6502Instructions.INS_CPY_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CPY, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_CPY_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CPY, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_CPY_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CPY, MOS6502AddressingMode.ABSOLUTE, 3, 4);
 
         /*
          * DEC
