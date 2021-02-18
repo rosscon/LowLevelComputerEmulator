@@ -110,7 +110,8 @@ public class MOS6502 extends Processor {
     /**
      * Current Instruction
      */
-    private byte instruction;
+    //private byte instruction;
+    private MOS6502Instruction instruction;
 
     /**
      * Addressing Mode
@@ -381,10 +382,9 @@ public class MOS6502 extends Processor {
      * @param instruction instruction to decode
      */
     private void decode(byte instruction) throws ProcessorException {
-        this.instruction = instruction;
-
         if (this.instructionMapping.containsKey(instruction)){
             MOS6502InstructionDetails details = (MOS6502InstructionDetails) this.instructionMapping.get(instruction);
+            this.instruction = details.instruction;
             this.addressingMode = details.addressingMode;
             this.cycles = details.cycles;
             this.cycles --;
@@ -399,215 +399,177 @@ public class MOS6502 extends Processor {
     private void execute() throws ProcessorException {
 
         switch (this.instruction){
-            case MOS6502Instructions.INS_ADC_IMM:
-            case MOS6502Instructions.INS_ADC_ZP:
-            case MOS6502Instructions.INS_ADC_ZPX:
-            case MOS6502Instructions.INS_ADC_ABS:
-            case MOS6502Instructions.INS_ADC_ABX:
-            case MOS6502Instructions.INS_ADC_ABY:
-            case MOS6502Instructions.INS_ADC_INX:
-            case MOS6502Instructions.INS_ADC_INY:
+            case ADC:
                 ADC();
                 break;
 
-            case MOS6502Instructions.INS_AND_IMM:
-            case MOS6502Instructions.INS_AND_ZP:
-            case MOS6502Instructions.INS_AND_ZPX:
-            case MOS6502Instructions.INS_AND_ABS:
-            case MOS6502Instructions.INS_AND_ABX:
-            case MOS6502Instructions.INS_AND_ABY:
-            case MOS6502Instructions.INS_AND_INX:
-            case MOS6502Instructions.INS_AND_INY:
+            case AND:
                 AND();
                 break;
 
-            case MOS6502Instructions.INS_BRK_IMP:
+            case BRK:
                 BRK();
                 break;
 
             /*
              * Branching conditions
              */
-            case MOS6502Instructions.INS_BCC_REL:
+            case BCC:
                 branch(!isFlagSet(MOS6502Flags.CARRY_FLAG));
                 break;
-            case MOS6502Instructions.INS_BCS_REL:
+            case BCS:
                 branch(isFlagSet(MOS6502Flags.CARRY_FLAG));
                 break;
-            case MOS6502Instructions.INS_BEQ_REL:
+            case BEQ:
                 branch(isFlagSet(MOS6502Flags.ZERO_FLAG));
                 break;
-            case MOS6502Instructions.INS_BMI_REL:
+            case BMI:
                 branch(isFlagSet(MOS6502Flags.NEGATIVE_FLAG));
                 break;
-            case MOS6502Instructions.INS_BNE_REL:
+            case BNE:
                 branch(!isFlagSet(MOS6502Flags.ZERO_FLAG));
                 break;
-            case MOS6502Instructions.INS_BPL_REL:
+            case BPL:
                 branch(!isFlagSet(MOS6502Flags.NEGATIVE_FLAG));
                 break;
-            case MOS6502Instructions.INS_BVC_REL:
+            case BVC:
                 branch(!isFlagSet(MOS6502Flags.OVERFLOW_FLAG));
                 break;
-            case MOS6502Instructions.INS_BVS_REL:
+            case BVS:
                 branch(isFlagSet(MOS6502Flags.OVERFLOW_FLAG));
                 break;
 
 
-            case MOS6502Instructions.INS_CLC_IMP:
+            case CLC:
                 clearFlag(MOS6502Flags.CARRY_FLAG);
                 break;
-            case MOS6502Instructions.INS_CLD_IMP:
+            case CLD:
                 clearFlag(MOS6502Flags.DECIMAL_MODE);
                 break;
-            case MOS6502Instructions.INS_CLI_IMP:
+            case CLI:
                 clearFlag(MOS6502Flags.INTERRUPT_DIS);
                 break;
-            case MOS6502Instructions.INS_CLV_IMP:
+            case CLV:
                 clearFlag(MOS6502Flags.OVERFLOW_FLAG);
                 break;
 
 
-            case MOS6502Instructions.INS_DEC_ZP:
-            case MOS6502Instructions.INS_DEC_ZPX:
-            case MOS6502Instructions.INS_DEC_ABS:
-            case MOS6502Instructions.INS_DEC_ABX:
+            case DEC:
                 DEC();
                 break;
 
-            case MOS6502Instructions.INS_DEX_IMP:
+            case DEX:
                 DEX();
                 break;
 
-            case MOS6502Instructions.INS_DEY_IMP:
+            case DEY:
                 DEY();
                 break;
 
 
-            case MOS6502Instructions.INS_INX_IMP:
+            case INX:
                 INX();
                 break;
 
-            case MOS6502Instructions.INS_INY_IMP:
+            case INY:
                 INY();
                 break;
 
 
-            case MOS6502Instructions.INS_JMP_ABS:
-            case MOS6502Instructions.INS_JMP_IND:
+            case JMP:
                 JMP();
                 break;
 
 
-            case MOS6502Instructions.INS_JSR_ABS:
+            case JSR:
                 JSR();
                 break;
 
-            case MOS6502Instructions.INS_LDA_IMM:
-            case MOS6502Instructions.INS_LDA_ZP:
-            case MOS6502Instructions.INS_LDA_ZPX:
-            case MOS6502Instructions.INS_LDA_ABS:
-            case MOS6502Instructions.INS_LDA_ABX:
-            case MOS6502Instructions.INS_LDA_ABY:
-            case MOS6502Instructions.INS_LDA_INX:
-            case MOS6502Instructions.INS_LDA_INY:
+            case LDA:
                 LDA();
                 break;
 
-            case MOS6502Instructions.INS_LDY_IMM:
-            case MOS6502Instructions.INS_LDY_ZP:
-            case MOS6502Instructions.INS_LDY_ZPX:
-            case MOS6502Instructions.INS_LDY_ABS:
-            case MOS6502Instructions.INS_LDY_ABX:
+            case LDY:
                 LDY();
                 break;
 
-            case MOS6502Instructions.INS_LDX_IMM:
-            case MOS6502Instructions.INS_LDX_ZP:
-            case MOS6502Instructions.INS_LDX_ZPY:
-            case MOS6502Instructions.INS_LDX_ABS:
-            case MOS6502Instructions.INS_LDX_ABY:
+            case LDX:
                 LDX();
                 break;
 
 
-            case MOS6502Instructions.INS_NOP_IMP:
+            case NOP:
                 // No Operation
                 break;
 
+            case ORA:
+                ORA();
+                break;
 
-            case MOS6502Instructions.INS_PHA_IMP:
+
+
+            case PHA:
                 pushToStack(this.regACC);
                 break;
 
 
-            case MOS6502Instructions.INS_PLA_IMP:
+            case PLA:
                 PLA();
                 break;
 
 
-            case MOS6502Instructions.INS_RTI_IMP:
+            case RTI:
                 RTI();
                 break;
 
-            case MOS6502Instructions.INS_RTS_IMP:
+            case RTS:
                 RTS();
                 break;
 
 
-            case MOS6502Instructions.INS_SEC_IMP:
+            case SEC:
                 enableFlag(MOS6502Flags.CARRY_FLAG);
                 break;
-            case MOS6502Instructions.INS_SED_IMP:
+            case SED:
                 enableFlag(MOS6502Flags.DECIMAL_MODE);
                 break;
-            case MOS6502Instructions.INS_SEI_IMP:
+            case SEI:
                 enableFlag(MOS6502Flags.INTERRUPT_DIS);
                 break;
 
-            case MOS6502Instructions.INS_STA_ZP:
-            case MOS6502Instructions.INS_STA_ZPX:
-            case MOS6502Instructions.INS_STA_ABS:
-            case MOS6502Instructions.INS_STA_ABX:
-            case MOS6502Instructions.INS_STA_ABY:
-            case MOS6502Instructions.INS_STA_INX:
-            case MOS6502Instructions.INS_STA_INY:
+            case STA:
                 ST(this.regACC);
                 break;
 
-            case MOS6502Instructions.INS_STX_ZP:
-            case MOS6502Instructions.INS_STX_ZPY:
-            case MOS6502Instructions.INS_STX_ABS:
+            case STX:
                 ST(this.regX);
                 break;
 
-            case MOS6502Instructions.INS_STY_ZP:
-            case MOS6502Instructions.INS_STY_ZPX:
-            case MOS6502Instructions.INS_STY_ABS:
+            case STY:
                 ST(this.regY);
                 break;
 
-            case MOS6502Instructions.INS_TAX:
+            case TAX:
                 this.regX = this.regACC;
                 break;
 
-            case MOS6502Instructions.INS_TAY:
+            case TAY:
                 this.regY = this.regACC;
                 break;
 
-            case MOS6502Instructions.INS_TSX:
+            case TSX:
                 this.regX = this.regSP;
                 break;
 
-            case MOS6502Instructions.INS_TXA:
+            case TXA:
                 this.regACC = this.regX;
                 break;
 
-            case MOS6502Instructions.INS_TXS:
+            case TXS:
                 this.regSP = this.regX;
                 break;
 
-            case MOS6502Instructions.INS_TYA:
+            case TYA:
                 this.regACC = this.regY;
                 break;
 
@@ -680,7 +642,7 @@ public class MOS6502 extends Processor {
 
             // Set addressing mode to prevent any more fetches and instruction to NOP
             this.addressingMode = MOS6502AddressingMode.IMPLICIT;
-            this.instruction = MOS6502Instructions.INS_NOP_IMP;
+            this.instruction = MOS6502Instruction.NOP;
         }
     }
 
@@ -1086,6 +1048,33 @@ public class MOS6502 extends Processor {
 
         if (PRINT_TRACE)
             System.out.println("LDY : " + String.format("%02X", this.regY));
+    }
+
+    /**
+     * Performs an inclusive OR operation on a value in memory and
+     * the accumulator string the result in the accumulator
+     * Sets ZERO_FLAG if accumulator becomes zero
+     * Sets NEGATIVE_FLAG if bit 7 of accumulator becomes a 1
+     * @throws ProcessorException Can throw a ProcessorException when issues reading memory
+     */
+    private void ORA() throws ProcessorException {
+        try {
+            rwFlag.setFlagValue(true);
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+
+        byte value = this.dataBus.readDataFromBus()[0];
+
+        this.regACC = (byte)(this.regPC | value);
+
+        // Zero Flag
+        if (this.regACC == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        // Negative Flag
+        if ((this.regACC & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
     }
 
     /**

@@ -209,7 +209,15 @@ public class MOS6502Instructions {
     /**
      * ORA Instructions
      */
-    //TODO ORA Instructions
+    public static final byte INS_ORA_IMM    = (byte)0x09;
+    public static final byte INS_ORA_ZP     = (byte)0x05;
+    public static final byte INS_ORA_ZPX    = (byte)0x15;
+    public static final byte INS_ORA_ABS    = (byte)0x0D;
+    public static final byte INS_ORA_ABX    = (byte)0x1D;
+    public static final byte INS_ORA_ABY    = (byte)0x19;
+    public static final byte INS_ORA_INX    = (byte)0x01;
+    public static final byte INS_ORA_INY    = (byte)0x11;
+
 
     /**
      * PHA Instructions

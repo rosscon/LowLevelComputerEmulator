@@ -20,9 +20,16 @@ public class MOS6502InstructionDetails {
      */
     public int cycles;
 
-    public MOS6502InstructionDetails(MOS6502AddressingMode addressingMode,
+    /**
+     * Instruction
+     */
+    public MOS6502Instruction instruction;
+
+    public MOS6502InstructionDetails(MOS6502Instruction instruction,
+                                     MOS6502AddressingMode addressingMode,
                                      int instructionSize,
                                      int cycles ){
+        this.instruction = instruction;
         this.addressingMode = addressingMode;
         this.instructionSize = instructionSize;
         this.cycles = cycles;
