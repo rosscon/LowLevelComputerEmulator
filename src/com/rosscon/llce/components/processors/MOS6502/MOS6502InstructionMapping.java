@@ -1,51 +1,55 @@
 package com.rosscon.llce.components.processors.MOS6502;
 
-import java.util.HashMap;
+public class MOS6502InstructionMapping  {
 
-public class MOS6502InstructionMapping extends HashMap {
+    private MOS6502InstructionDetails[] details;
 
     public MOS6502InstructionMapping(){
+
+        this.details = new MOS6502InstructionDetails[256];
 
         /*
          * ADC
          */
-        this.put(MOS6502Instructions.INS_ADC_IMM,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.IMMEDIATE, 2, 2));
-        this.put(MOS6502Instructions.INS_ADC_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_ADC_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_ADC_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ABSOLUTE, 3, 4));
-        this.put(MOS6502Instructions.INS_ADC_ABX,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ABSOLUTE_X, 3, 4));
-        this.put(MOS6502Instructions.INS_ADC_ABY,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4));
-        this.put(MOS6502Instructions.INS_ADC_INX,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
-        this.put(MOS6502Instructions.INS_ADC_INY,
-                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5));
+        details[(MOS6502Instructions.INS_ADC_IMM & 0xFF)] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_ADC_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_ADC_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_ADC_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_ADC_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_ADC_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
+        details[MOS6502Instructions.INS_ADC_ABY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4);
+        details[MOS6502Instructions.INS_ADC_INX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6);
+        details[MOS6502Instructions.INS_ADC_INY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ADC, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5);
 
 
         /*
          * AND
          */
-        this.put(MOS6502Instructions.INS_AND_IMM,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.IMMEDIATE, 2, 2));
-        this.put(MOS6502Instructions.INS_AND_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_AND_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_AND_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ABSOLUTE, 3, 4));
-        this.put(MOS6502Instructions.INS_AND_ABX,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ABSOLUTE_X, 3, 4));
-        this.put(MOS6502Instructions.INS_AND_ABY,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4));
-        this.put(MOS6502Instructions.INS_AND_INX,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
-        this.put(MOS6502Instructions.INS_AND_INY,
-                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5));
+        details[MOS6502Instructions.INS_AND_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_AND_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_AND_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_AND_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_AND_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
+        details[MOS6502Instructions.INS_AND_ABY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4);
+        details[MOS6502Instructions.INS_AND_INX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6);
+        details[MOS6502Instructions.INS_AND_INY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.AND, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5);
 
         /*
          * ASL
@@ -55,20 +59,20 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * BCC
          */
-        this.put(MOS6502Instructions.INS_BCC_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BCC, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BCC_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BCC, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * BCS
          */
-        this.put(MOS6502Instructions.INS_BCS_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BCS, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BCS_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BCS, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * BEQ
          */
-        this.put(MOS6502Instructions.INS_BEQ_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BEQ, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BEQ_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BEQ, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * BIT
@@ -78,62 +82,62 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * BMI
          */
-        this.put(MOS6502Instructions.INS_BMI_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BMI, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BMI_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BMI, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * BNE
          */
-        this.put(MOS6502Instructions.INS_BNE_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BNE, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BNE_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BNE, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * BPL
          */
-        this.put(MOS6502Instructions.INS_BPL_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BPL, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BPL_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BPL, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * BRK
          */
-        this.put(MOS6502Instructions.INS_BRK_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.BRK, MOS6502AddressingMode.IMPLICIT, 1, 7));
+        details[MOS6502Instructions.INS_BRK_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BRK, MOS6502AddressingMode.IMPLICIT, 1, 7);
 
         /*
          * BVC
          */
-        this.put(MOS6502Instructions.INS_BVC_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BVC, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BVC_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BVC, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * BVS
          */
-        this.put(MOS6502Instructions.INS_BVS_REL,
-                new MOS6502InstructionDetails(MOS6502Instruction.BVS, MOS6502AddressingMode.RELATIVE, 2, 2));
+        details[MOS6502Instructions.INS_BVS_REL & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.BVS, MOS6502AddressingMode.RELATIVE, 2, 2);
 
         /*
          * CLC
          */
-        this.put(MOS6502Instructions.INS_CLC_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.CLC, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_CLC_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CLC, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * CLD
          */
-        this.put(MOS6502Instructions.INS_CLD_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.CLD, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_CLD_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CLD, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * CLI
          */
-        this.put(MOS6502Instructions.INS_CLI_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.CLI, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_CLI_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CLI, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * CLV
          */
-        this.put(MOS6502Instructions.INS_CLV_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.CLV, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_CLV_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.CLV, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * CMP
@@ -153,26 +157,26 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * DEC
          */
-        this.put(MOS6502Instructions.INS_DEC_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ZERO_PAGE, 2, 5));
-        this.put(MOS6502Instructions.INS_DEC_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ZERO_PAGE_X, 2, 6));
-        this.put(MOS6502Instructions.INS_DEC_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ABSOLUTE, 1, 6));
-        this.put(MOS6502Instructions.INS_DEC_ABX,
-                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ABSOLUTE_X, 1, 7));
+        details[MOS6502Instructions.INS_DEC_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ZERO_PAGE, 2, 5);
+        details[MOS6502Instructions.INS_DEC_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ZERO_PAGE_X, 2, 6);
+        details[MOS6502Instructions.INS_DEC_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ABSOLUTE, 1, 6);
+        details[MOS6502Instructions.INS_DEC_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.DEC, MOS6502AddressingMode.ABSOLUTE_X, 1, 7);
 
         /*
          * DEX
          */
-        this.put(MOS6502Instructions.INS_DEX_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.DEX, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_DEX_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.DEX, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * DEY
          */
-        this.put(MOS6502Instructions.INS_DEY_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.DEY, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_DEY_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.DEY, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * EOR
@@ -187,77 +191,77 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * INX
          */
-        this.put(MOS6502Instructions.INS_INX_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.INX, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_INX_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.INX, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * INY
          */
-        this.put(MOS6502Instructions.INS_INY_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.INY, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_INY_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.INY, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
 
         /*
          * JMP
          */
-        this.put(MOS6502Instructions.INS_JMP_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.JMP, MOS6502AddressingMode.ABSOLUTE, 3, 3));
-        this.put(MOS6502Instructions.INS_JMP_IND,
-                new MOS6502InstructionDetails(MOS6502Instruction.JMP, MOS6502AddressingMode.INDIRECT, 3, 5));
+        details[MOS6502Instructions.INS_JMP_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.JMP, MOS6502AddressingMode.ABSOLUTE, 3, 3);
+        details[MOS6502Instructions.INS_JMP_IND & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.JMP, MOS6502AddressingMode.INDIRECT, 3, 5);
 
         /*
          * JSR
          */
-        this.put(MOS6502Instructions.INS_JSR_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.JSR, MOS6502AddressingMode.ABSOLUTE, 3, 6));
+        details[MOS6502Instructions.INS_JSR_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.JSR, MOS6502AddressingMode.ABSOLUTE, 3, 6);
 
         /*
          * LDA
          */
-        this.put(MOS6502Instructions.INS_LDA_IMM,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.IMMEDIATE, 2, 2));
-        this.put(MOS6502Instructions.INS_LDA_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_LDA_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_LDA_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ABSOLUTE, 3, 4));
-        this.put(MOS6502Instructions.INS_LDA_ABX,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ABSOLUTE_X, 3, 4));
-        this.put(MOS6502Instructions.INS_LDA_ABY,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4));
-        this.put(MOS6502Instructions.INS_LDA_INX,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
-        this.put(MOS6502Instructions.INS_LDA_INY,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5));
+        details[MOS6502Instructions.INS_LDA_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_LDA_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_LDA_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_LDA_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_LDA_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
+        details[MOS6502Instructions.INS_LDA_ABY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4);
+        details[MOS6502Instructions.INS_LDA_INX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6);
+        details[MOS6502Instructions.INS_LDA_INY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDA, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5);
 
         /*
          * LDX
          */
-        this.put(MOS6502Instructions.INS_LDX_IMM,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.IMMEDIATE, 2, 2));
-        this.put(MOS6502Instructions.INS_LDX_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_LDX_ZPY,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_LDX_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ABSOLUTE, 3, 4));
-        this.put(MOS6502Instructions.INS_LDX_ABY,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ABSOLUTE_X, 3, 4));
+        details[MOS6502Instructions.INS_LDX_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_LDX_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_LDX_ZPY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_LDX_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_LDX_ABY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
 
         /*
          * LDY
          */
-        this.put(MOS6502Instructions.INS_LDY_IMM,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.IMMEDIATE, 2, 2));
-        this.put(MOS6502Instructions.INS_LDY_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_LDY_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_LDY_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ABSOLUTE, 3, 4));
-        this.put(MOS6502Instructions.INS_LDY_ABX,
-                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ABSOLUTE_X, 3, 4));
+        details[MOS6502Instructions.INS_LDY_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_LDY_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_LDY_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_LDY_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_LDY_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LDY, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
 
         /*
          * LSR
@@ -267,34 +271,34 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * NOP
          */
-        this.put(MOS6502Instructions.INS_NOP_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_NOP_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * ORA
          */
-        this.put(MOS6502Instructions.INS_ORA_IMM,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.IMMEDIATE, 2, 2));
-        this.put(MOS6502Instructions.INS_ORA_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_ORA_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_ORA_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ABSOLUTE, 3, 4));
-        this.put(MOS6502Instructions.INS_ORA_ABX,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ABSOLUTE_X, 3, 4));
-        this.put(MOS6502Instructions.INS_ORA_ABY,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4));
-        this.put(MOS6502Instructions.INS_ORA_INX,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
-        this.put(MOS6502Instructions.INS_ORA_INY,
-                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5));
+        details[MOS6502Instructions.INS_ORA_IMM & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[MOS6502Instructions.INS_ORA_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_ORA_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_ORA_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_ORA_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
+        details[MOS6502Instructions.INS_ORA_ABY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4);
+        details[MOS6502Instructions.INS_ORA_INX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6);
+        details[MOS6502Instructions.INS_ORA_INY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ORA, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 5);
 
         /*
          * PHA
          */
-        this.put(MOS6502Instructions.INS_PHA_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.PHA, MOS6502AddressingMode.IMPLICIT, 1, 3));
+        details[MOS6502Instructions.INS_PHA_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.PHA, MOS6502AddressingMode.IMPLICIT, 1, 3);
 
         /*
          * PHP
@@ -304,8 +308,8 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * PLA
          */
-        this.put(MOS6502Instructions.INS_PLA_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.PLA, MOS6502AddressingMode.IMPLICIT, 1, 4));
+        details[MOS6502Instructions.INS_PLA_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.PLA, MOS6502AddressingMode.IMPLICIT, 1, 4);
 
         /*
          * PLP
@@ -325,14 +329,14 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * RTI
          */
-        this.put(MOS6502Instructions.INS_RTI_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.RTI, MOS6502AddressingMode.IMPLICIT, 1, 6));
+        details[MOS6502Instructions.INS_RTI_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.RTI, MOS6502AddressingMode.IMPLICIT, 1, 6);
 
         /*
          * RTS
          */
-        this.put(MOS6502Instructions.INS_RTS_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.RTS, MOS6502AddressingMode.IMPLICIT, 1, 6));
+        details[MOS6502Instructions.INS_RTS_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.RTS, MOS6502AddressingMode.IMPLICIT, 1, 6);
 
         /*
          * SBC
@@ -342,94 +346,98 @@ public class MOS6502InstructionMapping extends HashMap {
         /*
          * SEC
          */
-        this.put(MOS6502Instructions.INS_SEC_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.SEC, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_SEC_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.SEC, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * SED
          */
-        this.put(MOS6502Instructions.INS_SED_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.SED, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_SED_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.SED, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * SEI
          */
-        this.put(MOS6502Instructions.INS_SEI_IMP,
-                new MOS6502InstructionDetails(MOS6502Instruction.SEI, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_SEI_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.SEI, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * STA
          */
-        this.put(MOS6502Instructions.INS_STA_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_STA_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_STA_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ABSOLUTE, 3, 4));
-        this.put(MOS6502Instructions.INS_STA_ABX,
-                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ABSOLUTE_X, 3, 5));
-        this.put(MOS6502Instructions.INS_STA_ABY,
-                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ABSOLUTE_Y, 3, 5));
-        this.put(MOS6502Instructions.INS_STA_INX,
-                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6));
-        this.put(MOS6502Instructions.INS_STA_INY,
-                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 6));
+        details[MOS6502Instructions.INS_STA_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_STA_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_STA_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[MOS6502Instructions.INS_STA_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ABSOLUTE_X, 3, 5);
+        details[MOS6502Instructions.INS_STA_ABY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.ABSOLUTE_Y, 3, 5);
+        details[MOS6502Instructions.INS_STA_INX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.INDEXED_INDIRECT_X, 2, 6);
+        details[MOS6502Instructions.INS_STA_INY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STA, MOS6502AddressingMode.INDIRECT_INDEXED_Y, 2, 6);
 
         /*
          * STX
          */
-        this.put(MOS6502Instructions.INS_STX_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.STX, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_STX_ZPY,
-                new MOS6502InstructionDetails(MOS6502Instruction.STX, MOS6502AddressingMode.ZERO_PAGE_Y, 2, 4));
-        this.put(MOS6502Instructions.INS_STX_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.STX, MOS6502AddressingMode.ABSOLUTE, 3, 4));
+        details[MOS6502Instructions.INS_STX_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STX, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_STX_ZPY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STX, MOS6502AddressingMode.ZERO_PAGE_Y, 2, 4);
+        details[MOS6502Instructions.INS_STX_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STX, MOS6502AddressingMode.ABSOLUTE, 3, 4);
 
         /*
          * STY
          */
-        this.put(MOS6502Instructions.INS_STY_ZP,
-                new MOS6502InstructionDetails(MOS6502Instruction.STY, MOS6502AddressingMode.ZERO_PAGE, 2, 3));
-        this.put(MOS6502Instructions.INS_STY_ZPX,
-                new MOS6502InstructionDetails(MOS6502Instruction.STY, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4));
-        this.put(MOS6502Instructions.INS_STY_ABS,
-                new MOS6502InstructionDetails(MOS6502Instruction.STY, MOS6502AddressingMode.ABSOLUTE, 3, 4));
+        details[MOS6502Instructions.INS_STY_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STY, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
+        details[MOS6502Instructions.INS_STY_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STY, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+        details[MOS6502Instructions.INS_STY_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.STY, MOS6502AddressingMode.ABSOLUTE, 3, 4);
 
         /*
          * TAX
          */
-        this.put(MOS6502Instructions.INS_TAX,
-                new MOS6502InstructionDetails(MOS6502Instruction.TAX, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_TAX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.TAX, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * TAY
          */
-        this.put(MOS6502Instructions.INS_TAY,
-                new MOS6502InstructionDetails(MOS6502Instruction.TAY, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_TAY & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.TAY, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * TSX
          */
-        this.put(MOS6502Instructions.INS_TSX,
-                new MOS6502InstructionDetails(MOS6502Instruction.TSX, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_TSX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.TSX, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * TXA
          */
-        this.put(MOS6502Instructions.INS_TXA,
-                new MOS6502InstructionDetails(MOS6502Instruction.TXA, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_TXA & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.TXA, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * TXS
          */
-        this.put(MOS6502Instructions.INS_TXS,
-                new MOS6502InstructionDetails(MOS6502Instruction.TXS, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_TXS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.TXS, MOS6502AddressingMode.IMPLICIT, 1, 2);
 
         /*
          * TYA
          */
-        this.put(MOS6502Instructions.INS_TYA,
-                new MOS6502InstructionDetails(MOS6502Instruction.TYA, MOS6502AddressingMode.IMPLICIT, 1, 2));
+        details[MOS6502Instructions.INS_TYA & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.TYA, MOS6502AddressingMode.IMPLICIT, 1, 2);
     }
 
+
+    public MOS6502InstructionDetails getInstructionDetails(byte instruction){
+        return this.details[instruction & 0xFF];
+    }
 }

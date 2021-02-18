@@ -382,8 +382,10 @@ public class MOS6502 extends Processor {
      * @param instruction instruction to decode
      */
     private void decode(byte instruction) throws ProcessorException {
-        if (this.instructionMapping.containsKey(instruction)){
-            MOS6502InstructionDetails details = (MOS6502InstructionDetails) this.instructionMapping.get(instruction);
+
+        MOS6502InstructionDetails details = this.instructionMapping.getInstructionDetails(instruction);
+
+        if ( details != null ){
             this.instruction = details.instruction;
             this.addressingMode = details.addressingMode;
             this.cycles = details.cycles;
@@ -1066,7 +1068,7 @@ public class MOS6502 extends Processor {
 
         byte value = this.dataBus.readDataFromBus()[0];
 
-        this.regACC = (byte)(this.regPC | value);
+        this.regACC = (byte)(this.regACC | value);
 
         // Zero Flag
         if (this.regACC == 0x00)
