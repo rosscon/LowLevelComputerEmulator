@@ -220,7 +220,7 @@ public class MOS6502TestADC {
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, data);
 
-        clock.tick(7);
+        clock.tick(6);
         assertEquals((byte)0x43, cpu.getRegACC());
     }
 
@@ -262,7 +262,7 @@ public class MOS6502TestADC {
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, data);
 
-        clock.tick(7);
+        clock.tick(6);
         assertEquals((byte)0x43, cpu.getRegACC());
     }
 
@@ -346,7 +346,7 @@ public class MOS6502TestADC {
 
         ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, data);
 
-        clock.tick(8);
+        clock.tick(7);
         assertEquals((byte)0x42, cpu.getRegACC());
     }
 

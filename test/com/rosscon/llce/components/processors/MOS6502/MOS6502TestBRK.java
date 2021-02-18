@@ -56,7 +56,7 @@ public class MOS6502TestBRK {
     public void testBRK() throws MemoryException, ClockException {
 
         Map<ByteArrayWrapper, byte[]> data = new HashMap<>(){{
-            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
+            put(new ByteArrayWrapper(new byte[]{ (byte)0x00, (byte) 0x00 }),
                     new byte[]{ MOS6502Instructions.INS_BRK_IMP });
             put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFE }),
                     new byte[]{ 0x34 });

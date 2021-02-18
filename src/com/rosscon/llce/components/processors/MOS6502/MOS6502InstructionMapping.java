@@ -166,13 +166,13 @@ public class MOS6502InstructionMapping extends HashMap {
          * DEX
          */
         this.put(MOS6502Instructions.INS_DEX_IMP,
-                new MOS6502InstructionDetails(MOS6502AddressingMode.ZERO_PAGE, 1, 2));
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 2));
 
         /*
          * DEY
          */
         this.put(MOS6502Instructions.INS_DEY_IMP,
-                new MOS6502InstructionDetails(MOS6502AddressingMode.ZERO_PAGE, 1, 2));
+                new MOS6502InstructionDetails(MOS6502AddressingMode.IMPLICIT, 1, 2));
 
         /*
          * EOR

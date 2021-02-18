@@ -7,7 +7,6 @@ import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
-import com.rosscon.llce.utils.ByteArrayUtils;
 import com.rosscon.llce.utils.ByteUtils;
 
 
@@ -49,30 +48,40 @@ public class MOS6502 extends Processor {
     /**
      * Registers
      */
-    private byte[]  regPC;      // Program Counter
+    private long    regPC;      // Program Counter
     private byte    regSP;      // Stack Pointer
     private byte    regACC;     // Accumulator;
     private byte    regX;       // Index Register X
     private byte    regY;       // Index Register Y
     private byte    regStatus;  // Processor Status [C][Z][I][D][B][V][N]
-    private byte[]  regIntAddr; // Custom register used for building addresses over multiple cycles
-    private boolean regIntCarry;// Custom carry register for handling ABS X,Y
+    private long    regIntAddr; // Custom register used for building addresses over multiple cycles
 
     /**
      * Vectors / Pages
      */
     private final byte STACK_PAGE       = (byte)0x01;
-    private final byte[] VECTOR_NMI     = new byte[]{ (byte)0xFF, (byte)0xFFB };
-    private final byte[] VECTOR_RESET   = new byte[]{ (byte)0xFF, (byte)0xFFC };
-    private final byte[] VECTOR_IRQ_BRK = new byte[]{ (byte)0xFF, (byte)0xFFE };
+    private final int VECTOR_NMI       = 0xFFFB;
+    private final int VECTOR_RESET     = 0xFFFC;
+    private final int VECTOR_IRQ_BRK   = 0xFFFE;
+
+
+    public byte[] getRegPC() {
+        return new byte[] {
+                (byte) ((this.regPC >>> 8) & 0xFF),
+                (byte) (this.regPC & 0xFF)
+        };
+    }
+
+    public byte[] getRegIntAddr() {
+        return new byte[] {
+                (byte) ((this.regIntAddr >>> 8) & 0xFF),
+                (byte) (this.regIntAddr & 0xFF)
+        };
+    }
 
     /**
      * Getters for unit testing
      */
-    public byte[] getRegPC() {
-        return regPC;
-    }
-
     public byte getRegSP() {
         return regSP;
     }
@@ -142,21 +151,24 @@ public class MOS6502 extends Processor {
             regY        = (byte) 0x00;
             regStatus   = (byte) 0x00;
             cycles      = 0;
-            regIntAddr  = new byte[2];
+            regIntAddr  = 0x000;
 
             /*
              * Read the reset vector
              * TODO make this timing specific following https://www.pagetable.com/?p=410
              */
-            this.addressBus.writeDataToBus(regPC);
+            this.addressBus.writeDataToBus(getRegPC());
             rwFlag.setFlagValue(true);
-            regIntAddr[1] = this.dataBus.readDataFromBus()[0];
+            int low = (this.dataBus.readDataFromBus()[0] & 0xFF);
 
-            this.regPC = ByteArrayUtils.increment(this.regPC);
-            this.addressBus.writeDataToBus(regPC);
+            this.regPC = (this.regPC + 1) & 0xFFFF;
+            this.addressBus.writeDataToBus(getRegPC());
             rwFlag.setFlagValue(true);
-            regIntAddr[0] = this.dataBus.readDataFromBus()[0];
+            int high = (this.dataBus.readDataFromBus()[0] & 0xFF);
+
+            regIntAddr = low | (high << 8);
             this.regPC = regIntAddr;
+            //this.regPC = 0xC000;
         } catch (MemoryException | InvalidBusDataException ex){
             throw new ProcessorException(EX_RESET_ERROR + " : " + ex.getMessage());
         }
@@ -199,7 +211,6 @@ public class MOS6502 extends Processor {
         try {
             this.regSP = (byte)(this.regSP + 0x01);
             byte[] readAddress = new byte[] { this.STACK_PAGE, this.regSP };
-            //readAddress = ByteArrayUtils.increment(readAddress);
             this.addressBus.writeDataToBus(readAddress);
             this.rwFlag.setFlagValue(true);
             read = this.dataBus.readDataFromBus()[0];
@@ -217,20 +228,21 @@ public class MOS6502 extends Processor {
         byte fetchedData;
 
         try{
-            addressBus.writeDataToBus(regPC);
+            addressBus.writeDataToBus(getRegPC());
             rwFlag.setFlagValue(true);
             fetchedData = dataBus.readDataFromBus()[0];
             if (PRINT_TRACE)
-                System.out.print("Fetch : [" + String.format("%02X", this.regPC[0]) +
-                    String.format("%02X", this.regPC[1]) + "] ");
+                System.out.print("Fetch : [" + String.format("%02X", this.regPC) + "] ");
 
-            regPC = ByteArrayUtils.increment(regPC);
+            this.regPC = ((this.regPC + 1) & 0xFFFF);
         } catch ( Exception ex){
             throw new ProcessorException(ex.getMessage());
         }
 
-        if (PRINT_TRACE)
-            System.out.printf("%02X%n", fetchedData);
+        if (PRINT_TRACE) {
+            System.out.printf("%02X", fetchedData);
+            System.out.println();
+        }
         return fetchedData;
     }
 
@@ -246,208 +258,120 @@ public class MOS6502 extends Processor {
                 case RELATIVE:
                 case ACCUMULATOR:
                 case IMMEDIATE:     // Makes cpu request next address in memory
-                    if (this.cycles == 1){
-                        this.fetch();
-                    }
+                    this.fetch();
                     break;
 
                 case ZERO_PAGE:     // Move to next address in memory, read contents, build zero page address from it
-                    switch(this.cycles){
-                        case 2:
-                            this.regIntAddr[1] = this.fetch();
-                            this.regIntAddr[0] = 0x00;
-                            break;
-                        case 1:
-                            addressBus.writeDataToBus(regIntAddr);
-                            break;
-                    }
+                    this.regIntAddr = (this.fetch() & 0xFF);
+                    addressBus.writeDataToBus(getRegIntAddr());
+                    break;
 
                 case ZERO_PAGE_X:
-                    switch(this.cycles){
-                        case 3:
-                            this.regIntAddr[1] = this.fetch();
-                            break;
-                        case 2:
-                            this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regX);
-                            this.regIntAddr[0] = 0x00;
-                            break;
-                        case 1:
-                            addressBus.writeDataToBus(regIntAddr);
-                            break;
-                    }
+                    this.regIntAddr = ((this.fetch() & 0xFF) + (this.regX & 0xFF) & 0x00FF);
+                    addressBus.writeDataToBus(getRegIntAddr());
                     break;
 
                 case ZERO_PAGE_Y:
-                    switch(this.cycles){
-                        case 3:
-                            this.regIntAddr[1] = this.fetch();
-                            break;
-                        case 2:
-                            this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regY);
-                            this.regIntAddr[0] = 0x00;
-                            break;
-                        case 1:
-                            addressBus.writeDataToBus(regIntAddr);
-                            break;
-                    }
+                    this.regIntAddr = ((this.fetch() & 0xFF) + (this.regY & 0xFF) & 0x00FF);
+                    addressBus.writeDataToBus(getRegIntAddr());
                     break;
 
                 case ABSOLUTE:
-                    switch(this.cycles){
-                        case 2:
-                            this.regIntAddr[1] = this.fetch();
-                            break;
-                        case 1:
-                            this.regIntAddr[0] = this.fetch();
-                            addressBus.writeDataToBus(regIntAddr);
-                            break;
-                    }
+                    this.regIntAddr = (this.fetch() & 0xFF);
+                    this.regIntAddr = this.regIntAddr | ((this.fetch() & 0xFF) << 8);
+                    addressBus.writeDataToBus(getRegIntAddr());
                     break;
 
                 case ABSOLUTE_X:
-                    switch (this.cycles){
-                        case 3:
-                            this.regIntAddr[1] = this.fetch();
-                            break;
-                        case 2:
-                            this.regIntAddr[0] = this.fetch();
-                            break;
-                        case 1:
-                            if (!this.regIntCarry) {
-                                long previous = ByteArrayUtils.byteArrayToLong(this.regIntAddr);
-                                long calculated = previous + ByteUtils.byteToIntUnsigned(this.regX);
-                                byte[] tmp = ByteArrayUtils.longToByteArray(calculated, 2);
-                                if (tmp[0] != this.regIntAddr[0]){
-                                    this.regIntCarry = true;
-                                    this.cycles++;
-                                }
-                                this.regIntAddr = tmp;
-                                this.fetch();
-                            }
+                    this.regIntAddr = (this.fetch() & 0xFF);
+                    this.regIntAddr = this.regIntAddr | ((this.fetch() & 0xFF) << 8);
+                    long tmpAbx = this.regIntAddr;
+                    this.regIntAddr = this.regIntAddr + (this.regX & 0xFF);
 
-                            addressBus.writeDataToBus(regIntAddr);
-                    }
+                    if ((this.regIntAddr & 0xFF00) != (tmpAbx & 0xFF00))
+                        cycles++;
+                    addressBus.writeDataToBus(getRegIntAddr());
                     break;
 
                 case ABSOLUTE_Y:
-                    switch (this.cycles){
-                        case 3:
-                            this.regIntAddr[1] = this.fetch();
-                            break;
-                        case 2:
-                            this.regIntAddr[0] = this.fetch();
-                            break;
-                        case 1:
-                            if (!this.regIntCarry) {
-                                long previous = ByteArrayUtils.byteArrayToLong(this.regIntAddr);
-                                long calculated = previous + ByteUtils.byteToIntUnsigned(this.regY);
-                                byte[] tmp = ByteArrayUtils.longToByteArray(calculated, 2);
-                                if (tmp[0] != this.regIntAddr[0]){
-                                    this.regIntCarry = true;
-                                    this.cycles++;
-                                }
-                                this.regIntAddr = tmp;
-                                this.fetch();
-                            }
+                    this.regIntAddr = (this.fetch() & 0xFF);
+                    this.regIntAddr = this.regIntAddr | ((this.fetch() & 0xFF) << 8);
+                    long tmpAby = this.regIntAddr;
+                    this.regIntAddr = this.regIntAddr + (this.regY & 0xFF);
 
-                            addressBus.writeDataToBus(regIntAddr);
-                    }
+                    if ((this.regIntAddr & 0xFF00) != (tmpAby & 0xFF00))
+                        cycles++;
+                    addressBus.writeDataToBus(getRegIntAddr());
                     break;
 
                 case INDIRECT:
-                    switch (this.cycles){
-                        case 4:
-                            this.regIntAddr[1] = this.fetch();
-                            break;
-                        case 3:
-                            this.regIntAddr[0] = this.fetch();
-                            addressBus.writeDataToBus(regIntAddr);
-                            break;
-                        case 2:
-                            rwFlag.setFlagValue(true);
-                            this.regIntAddr[1] = dataBus.readDataFromBus()[0];
-                            break;
-                        case 1:
-                            addressBus.writeDataToBus(ByteArrayUtils.increment(addressBus.readDataFromBus()));
-                            rwFlag.setFlagValue(true);
-                            this.regIntAddr[0] = dataBus.readDataFromBus()[0];
-                            addressBus.writeDataToBus(this.regIntAddr);
-                            break;
-                    }
+                    // Set internal memory pointer reading from memory
+                    this.regIntAddr = (this.fetch() & 0xFF);
+                    this.regIntAddr = this.regIntAddr | ((this.fetch() & 0xFF) << 8);
+                    addressBus.writeDataToBus(getRegIntAddr());
+                    rwFlag.setFlagValue(true);
+
+                    // Read low byte from memory
+                    long tmp = (dataBus.readDataFromBus()[0] & 0xFF);
+
+                    // Read high byte from memory
+                    this.regIntAddr += 1;
+                    addressBus.writeDataToBus(getRegIntAddr());
+                    rwFlag.setFlagValue(true);
+                    this.regIntAddr = ((dataBus.readDataFromBus()[0] & 0xFF) << 8) | tmp;
                     break;
 
                 case INDEXED_INDIRECT_X:
-                    switch (this.cycles){
-                        case 5:
-                            this.regIntAddr[1] = this.fetch();
-                            this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regX);
-                            break;
-                        case 4:
-                            this.regIntAddr[0] = 0x00;
-                            this.addressBus.writeDataToBus(this.regIntAddr);
-                            break;
-                        case 3:
-                            this.rwFlag.setFlagValue(true);
-                            this.regIntAddr[1] = dataBus.readDataFromBus()[0];
-                            break;
-                        case 2:
-                            byte[] next = addressBus.readDataFromBus();
-                            next = ByteArrayUtils.increment(next);
-                            this.addressBus.writeDataToBus(next);
-                            break;
-                        case 1:
-                            this.rwFlag.setFlagValue(true);
-                            this.regIntAddr[0] = dataBus.readDataFromBus()[0];
-                            this.addressBus.writeDataToBus(this.regIntAddr);
-                            break;
-                    }
+                    this.regIntAddr = ((this.fetch() & 0xFF) + (this.regX & 0xFF)) & 0xFF;
+
+                    // Read Low byte
+                    addressBus.writeDataToBus(getRegIntAddr());
+                    rwFlag.setFlagValue(true);
+                    long tmpInx = (dataBus.readDataFromBus()[0] & 0xFF);
+
+                    // Read high byte
+                    this.regIntAddr++;
+                    addressBus.writeDataToBus(getRegIntAddr());
+                    rwFlag.setFlagValue(true);
+                    this.regIntAddr = ((dataBus.readDataFromBus()[0] & 0xFF) << 8) | tmpInx;
+
+                    this.addressBus.writeDataToBus(getRegIntAddr());
                     break;
 
                 case INDIRECT_INDEXED_Y:
-                    switch (this.cycles){
-                        case 4:
-                            this.regIntAddr[0] = 0x00;
-                            this.regIntAddr[1] = this.fetch();
-                            this.addressBus.writeDataToBus(this.regIntAddr);
-                            break;
-                        case 3:
-                            this.rwFlag.setFlagValue(true);
-                            this.regIntAddr[1] = dataBus.readDataFromBus()[0];
-                            break;
-                        case 2:
-                            byte[] next = addressBus.readDataFromBus();
-                            next = ByteArrayUtils.increment(next);
-                            this.addressBus.writeDataToBus(next);
-                            break;
-                        case 1:
-                            this.rwFlag.setFlagValue(true);
-                            this.regIntAddr[0] = dataBus.readDataFromBus()[0];
+                    // Step 1, get zero page address
+                    this.regIntAddr = this.fetch() & 0xFF;
 
-                            if (!this.regIntCarry){
-                                if (ByteUtils.willCarryOnAddition(this.regIntAddr[1], this.regY)) {
-                                    this.regIntCarry = true;
-                                    this.cycles ++;
-                                }
-                                this.regIntAddr[1] = (byte)(this.regIntAddr[1] + this.regY);
-                            }
-                            else {
-                                this.regIntCarry = false;
-                                this.regIntAddr[0] = (byte)(this.regIntAddr[0] + 0x01);
-                            }
-                            addressBus.writeDataToBus(regIntAddr);
+                    // Step 2, read low byte
+                    addressBus.writeDataToBus(getRegIntAddr());
+                    rwFlag.setFlagValue(true);
+                    long tmpIny = (dataBus.readDataFromBus()[0] & 0xFF);
 
-                            break;
-                    }
+                    // Step 3, read high byte
+                    this.regIntAddr++;
+                    addressBus.writeDataToBus(getRegIntAddr());
+                    rwFlag.setFlagValue(true);
+                    this.regIntAddr = ((dataBus.readDataFromBus()[0] & 0xFF) << 8) | tmpIny;
+
+                    // Step 4, add Y register
+                    tmpIny = this.regIntAddr;
+                    this.regIntAddr = this.regIntAddr + (this.regY & 0xFF);
+
+                    // Step 5, increment cycle count if page crossed
+                    if ((this.regIntAddr & 0xFF00) != (tmpIny & 0xFF00))
+                        cycles++;
+
+                    addressBus.writeDataToBus(getRegIntAddr());
                     break;
-
-                /*case RELATIVE:
-                    if (this.cycles == 1){
-                        System.out.println();
-                    }*/
             }
         } catch (Exception ex){
             throw new ProcessorException(ex.getMessage());
         }
+
+        /*
+         * Stops the process of reading address if clock cycles increased
+         */
+        this.addressingMode = MOS6502AddressingMode.IMPLICIT;
 
         this.cycles--;
     }
@@ -483,7 +407,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_ADC_ABY:
             case MOS6502Instructions.INS_ADC_INX:
             case MOS6502Instructions.INS_ADC_INY:
-                if (this.cycles == 0) ADC();
+                ADC();
                 break;
 
             case MOS6502Instructions.INS_AND_IMM:
@@ -494,7 +418,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_AND_ABY:
             case MOS6502Instructions.INS_AND_INX:
             case MOS6502Instructions.INS_AND_INY:
-                if (this.cycles == 0) AND();
+                AND();
                 break;
 
             case MOS6502Instructions.INS_BRK_IMP:
@@ -571,7 +495,7 @@ public class MOS6502 extends Processor {
 
             case MOS6502Instructions.INS_JMP_ABS:
             case MOS6502Instructions.INS_JMP_IND:
-                if (this.cycles == 0) JMP();
+                JMP();
                 break;
 
 
@@ -587,7 +511,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_LDA_ABY:
             case MOS6502Instructions.INS_LDA_INX:
             case MOS6502Instructions.INS_LDA_INY:
-                if (this.cycles == 0) LDA();
+                LDA();
                 break;
 
             case MOS6502Instructions.INS_LDY_IMM:
@@ -595,7 +519,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_LDY_ZPX:
             case MOS6502Instructions.INS_LDY_ABS:
             case MOS6502Instructions.INS_LDY_ABX:
-                if (this.cycles == 0) LDY();
+                LDY();
                 break;
 
             case MOS6502Instructions.INS_LDX_IMM:
@@ -603,7 +527,7 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_LDX_ZPY:
             case MOS6502Instructions.INS_LDX_ABS:
             case MOS6502Instructions.INS_LDX_ABY:
-                if (this.cycles == 0) LDX();
+                LDX();
                 break;
 
 
@@ -613,19 +537,17 @@ public class MOS6502 extends Processor {
 
 
             case MOS6502Instructions.INS_PHA_IMP:
-                if (this.cycles == 0)
-                    pushToStack(this.regACC);
+                pushToStack(this.regACC);
                 break;
 
 
             case MOS6502Instructions.INS_PLA_IMP:
-                if (this.cycles == 0)
-                    PLA();
+                PLA();
                 break;
 
 
             case MOS6502Instructions.INS_RTI_IMP:
-                if (this.cycles == 0) RTI();
+                RTI();
                 break;
 
             case MOS6502Instructions.INS_RTS_IMP:
@@ -650,19 +572,19 @@ public class MOS6502 extends Processor {
             case MOS6502Instructions.INS_STA_ABY:
             case MOS6502Instructions.INS_STA_INX:
             case MOS6502Instructions.INS_STA_INY:
-                if (this.cycles == 0) ST(this.regACC);
+                ST(this.regACC);
                 break;
 
             case MOS6502Instructions.INS_STX_ZP:
             case MOS6502Instructions.INS_STX_ZPY:
             case MOS6502Instructions.INS_STX_ABS:
-                if (this.cycles == 0) ST(this.regX);
+                ST(this.regX);
                 break;
 
             case MOS6502Instructions.INS_STY_ZP:
             case MOS6502Instructions.INS_STY_ZPX:
             case MOS6502Instructions.INS_STY_ABS:
-                if (this.cycles == 0) ST(this.regY);
+                ST(this.regY);
                 break;
 
             case MOS6502Instructions.INS_TAX:
@@ -705,9 +627,11 @@ public class MOS6502 extends Processor {
                 throw new ProcessorException(EX_TICK_FETCH_ERROR);
             }
         }
-        else if ( this.cycles > 0 ) {
+        else if ( this.cycles == 1 ) {
             addressing();
             execute();
+        } else {
+            this.cycles--;
         }
     }
 
@@ -738,28 +662,25 @@ public class MOS6502 extends Processor {
      * to prevent the program counter from also being affected.
      */
     private void branch(boolean branchSucceeded){
-        if (this.cycles == 0) {
-            if (branchSucceeded){
-                // Add a cycle just for branch occurring
+        if (branchSucceeded){
+            // Add a cycle just for branch occurring
+            this.cycles++;
+
+            long initialAddress = this.regPC;
+            byte value = dataBus.readDataFromBus()[0];
+
+            //In this scenario we want to treat the value as a signed number;
+            long newAddress = initialAddress + value;
+
+            // Detect if the page has changed
+            if ((this.regIntAddr & 0xFF00) != (newAddress & 0xFF00))
                 this.cycles++;
 
-                long initialAddress = ByteArrayUtils.byteArrayToLong(this.regPC);
-                byte value = dataBus.readDataFromBus()[0];
+            this.regPC = newAddress;
 
-                //In this scenario we want to treat the value as a signed number;
-                long newAddress = initialAddress + value;
-                byte[] newPC = ByteArrayUtils.longToByteArray(newAddress, 2);
-
-                // Detect if the page has changed
-                if (newPC[0] != this.regPC[0])
-                    this.cycles++;
-
-                this.regPC = newPC;
-
-                // Set addressing mode to prevent any more fetches and instruction to NOP
-                this.addressingMode = MOS6502AddressingMode.IMPLICIT;
-                this.instruction = MOS6502Instructions.INS_NOP_IMP;
-            }
+            // Set addressing mode to prevent any more fetches and instruction to NOP
+            this.addressingMode = MOS6502AddressingMode.IMPLICIT;
+            this.instruction = MOS6502Instructions.INS_NOP_IMP;
         }
     }
 
@@ -876,45 +797,54 @@ public class MOS6502 extends Processor {
      * "The B Flag" bits 4 and 5 are only set in the stack and not in the register.
      */
     private void BRK() throws ProcessorException {
-        switch (this.cycles){
-            case 5:
-                // Push PC high to stack
-                pushToStack(this.regPC[0]);
-                if (PRINT_TRACE)
-                    System.out.println("BRK Pushed : " + String.format("%02X", this.regPC[0]));
-                // Push PC low to stack
-                pushToStack(this.regPC[1]);
-                if (PRINT_TRACE)
-                    System.out.println("BRK Pushed : " + String.format("%02X", this.regPC[1]));
-                break;
-            case 4:
-                // Set flags
-                enableFlag(MOS6502Flags.BREAK_COMMAND);
-                enableFlag(MOS6502Flags.IGNORED_FLAG);
-                // Push status to stack
-                pushToStack(this.regStatus);
-                if (PRINT_TRACE)
-                    System.out.println("BRK Pushed : " + String.format("%02X", this.regStatus));
-                break;
-            case 3:
-                this.regPC = VECTOR_IRQ_BRK;
-                break;
-            case 2:
-                // Set PC low
-                this.regIntAddr[1] = fetch();
-                break;
-            case 1:
-                // Set PC high
-                this.regIntAddr[0] = fetch();
-                break;
-            case 0:
-                // Set PC
-                this.regPC = this.regIntAddr;
-                // Clear Flags
-                clearFlag(MOS6502Flags.BREAK_COMMAND);
-                clearFlag(MOS6502Flags.IGNORED_FLAG);
-                break;
-        }
+
+        /*
+         * Push PC high byte to stack
+         */
+        byte high = (byte)((this.regPC >>> 8) & 0xFF);
+        pushToStack(high);
+        if (PRINT_TRACE)
+            System.out.println("JSR Pushed : " + String.format("%02X", high));
+
+        /*
+         * Push PC low byte to stack
+         */
+        byte low = (byte)(this.regPC & 0xFF);
+        pushToStack(low);
+        if (PRINT_TRACE)
+            System.out.println("JSR Pushed : " + String.format("%02X", low));
+
+        /*
+         * Set flags
+         */
+        enableFlag(MOS6502Flags.BREAK_COMMAND);
+        enableFlag(MOS6502Flags.IGNORED_FLAG);
+
+        /*
+         * Push flags to stack
+         */
+        pushToStack(this.regStatus);
+        if (PRINT_TRACE)
+            System.out.println("BRK Pushed : " + String.format("%02X", this.regStatus));
+
+
+        /*
+         * Set PC to IRQ_BRK vector
+         */
+        this.regPC = VECTOR_IRQ_BRK;
+
+        /*
+         * Set PC
+         */
+        low = fetch();
+        high = fetch();
+        this.regPC = ((high & 0xFF) << 8) | low;
+
+        /*
+         * Clear flags
+         */
+        clearFlag(MOS6502Flags.BREAK_COMMAND);
+        clearFlag(MOS6502Flags.IGNORED_FLAG);
     }
 
     /**
@@ -924,28 +854,26 @@ public class MOS6502 extends Processor {
      * Sets NEGATIVE_FLAG if but 7 is set to a 1
      */
     private void DEC() throws ProcessorException {
-        if (this.cycles == 0){
-            try{
-                this.rwFlag.setFlagValue(true);
-                byte value = this.dataBus.readDataFromBus()[0];
+        try{
+            this.rwFlag.setFlagValue(true);
+            byte value = this.dataBus.readDataFromBus()[0];
 
-                value = (byte)(value + 0xFF);
-                this.dataBus.writeDataToBus(new byte[]{value});
-                this.rwFlag.setFlagValue(false);
+            value = (byte)(value + 0xFF);
+            this.dataBus.writeDataToBus(new byte[]{value});
+            this.rwFlag.setFlagValue(false);
 
-                // Zero Flag
-                if (this.dataBus.readDataFromBus()[0] == 0x00)
-                    enableFlag(MOS6502Flags.ZERO_FLAG);
+            // Zero Flag
+            if (this.dataBus.readDataFromBus()[0] == 0x00)
+                enableFlag(MOS6502Flags.ZERO_FLAG);
 
-                // Negative Flag
-                if ((this.dataBus.readDataFromBus()[0] & 0b10000000) == 0b10000000)
-                    enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+            // Negative Flag
+            if ((this.dataBus.readDataFromBus()[0] & 0b10000000) == 0b10000000)
+                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
 
-                if (PRINT_TRACE)
-                    System.out.println("DEC : " + String.format("%02X", this.dataBus.readDataFromBus()[0]));
-            } catch (MemoryException | InvalidBusDataException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
+            if (PRINT_TRACE)
+                System.out.println("DEC : " + String.format("%02X", this.dataBus.readDataFromBus()[0]));
+        } catch (MemoryException | InvalidBusDataException ex){
+            throw new ProcessorException(ex.getMessage());
         }
     }
 
@@ -995,20 +923,18 @@ public class MOS6502 extends Processor {
      * Sets NEGATIVE_FLAG if but 7 is set to a 1
      */
     private void INX() {
-        if (this.cycles == 0) {
-            this.regX = (byte) (this.regX + 0x01);
+        this.regX = (byte) (this.regX + 0x01);
 
-            // Zero Flag
-            if (this.regX == 0x00)
-                enableFlag(MOS6502Flags.ZERO_FLAG);
+        // Zero Flag
+        if (this.regX == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
 
-            // Negative Flag
-            if ((this.regX & 0b10000000) == 0b10000000)
-                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        // Negative Flag
+        if ((this.regX & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
 
-            if (PRINT_TRACE)
-                System.out.println("INX : " + String.format("%02X", this.regX));
-        }
+        if (PRINT_TRACE)
+            System.out.println("INX : " + String.format("%02X", this.regX));
     }
 
 
@@ -1018,20 +944,18 @@ public class MOS6502 extends Processor {
      * Sets NEGATIVE_FLAG if but 7 is set to a 1
      */
     private void INY() {
-        if (this.cycles == 0) {
-            this.regY = (byte) (this.regY + 0x01);
+        this.regY = (byte) (this.regY + 0x01);
 
-            // Zero Flag
-            if (this.regY == 0x00)
-                enableFlag(MOS6502Flags.ZERO_FLAG);
+        // Zero Flag
+        if (this.regY == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
 
-            // Negative Flag
-            if ((this.regY & 0b10000000) == 0b10000000)
-                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        // Negative Flag
+        if ((this.regY & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
 
-            if (PRINT_TRACE)
-                System.out.println("INY : " + String.format("%02X", this.regY));
-        }
+        if (PRINT_TRACE)
+            System.out.println("INY : " + String.format("%02X", this.regY));
     }
 
 
@@ -1041,7 +965,7 @@ public class MOS6502 extends Processor {
     private void JMP() {
         this.regPC = this.regIntAddr;
         if (PRINT_TRACE)
-            System.out.println("JMP : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+            System.out.println("JMP : " + String.format("%02X", this.regPC));
     }
 
     /**
@@ -1051,36 +975,30 @@ public class MOS6502 extends Processor {
      */
     private void JSR() throws ProcessorException {
 
-        switch (this.cycles){
-            case 4:
-            case 3:
-            case 2:
-                if (PRINT_TRACE)
-                    System.out.println("JSR PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
-                break;
-            case 1:
-                if (PRINT_TRACE)
-                    System.out.println("JSR PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+        if (PRINT_TRACE)
+            System.out.println("JSR PC : " + String.format("%02X", this.regPC));
 
-                pushToStack(this.regPC[0]);
-                if (PRINT_TRACE)
-                    System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[1]));
+        /*
+         * Push PC high byte to stack
+         */
+        long tmp = (this.regPC - 1) & 0xFFFF;
+        byte high = (byte)((tmp >>> 8) & 0xFF);
+        pushToStack(high);
+        if (PRINT_TRACE)
+            System.out.println("JSR Pushed : " + String.format("%02X", high));
 
-                pushToStack(this.regPC[1]);
-                if (PRINT_TRACE)
-                    System.out.println("JSR Pushed : " + String.format("%02X", this.regPC[0]));
+        /*
+         * Push PC low byte to stack
+         */
+        byte low = (byte)(tmp & 0xFF);
+        pushToStack(low);
+        if (PRINT_TRACE)
+            System.out.println("JSR Pushed : " + String.format("%02X", low));
 
-                break;
-            case 0:
-                if (PRINT_TRACE)
-                    System.out.println("JSR PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
-
-                this.regPC = this.regIntAddr;
-                this.fetch();
-                if (PRINT_TRACE)
-                    System.out.println("JSR Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
-                break;
-        }
+        this.regPC = this.regIntAddr;
+        //this.fetch();
+        if (PRINT_TRACE)
+            System.out.println("JSR Set PC : " + String.format("%02X", this.regPC));
     }
 
     /**
@@ -1209,11 +1127,12 @@ public class MOS6502 extends Processor {
 
         this.regStatus = flags;
 
-        this.regPC[1] = pullFromStack();
-        this.regPC[0] = pullFromStack();
+        this.regPC = pullFromStack() & 0xFF;
+        this.regPC = this.regPC | ((pullFromStack() & 0xFF) << 8);
+        fetch();
 
         if (PRINT_TRACE)
-            System.out.println("RTI Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
+            System.out.println("RTI Set PC : " + String.format("%02X", this.regPC));
     }
 
     /**
@@ -1223,23 +1142,12 @@ public class MOS6502 extends Processor {
      */
     private void RTS() throws ProcessorException {
 
-        switch (this.cycles){
-            case 3:
-                // Fetch low byte
-                this.regPC[1] = pullFromStack();
-                break;
-            case 2:
-                // Fetch the high byte
-                this.regPC[0] = pullFromStack();
-                break;
-            case 1:
-                //Increment PC
-                fetch();
-                break;
-            case 0:
-                if (PRINT_TRACE)
-                    System.out.println("RTS Set PC : " + String.format("%02X", this.regPC[0]) + String.format("%02X", this.regPC[1]));
-        }
+        this.regPC = pullFromStack() & 0xFF;
+        this.regPC = this.regPC | ((pullFromStack() & 0xFF) << 8);
+        this.regPC++;
+
+        if (PRINT_TRACE)
+            System.out.println("RTS Set PC : " + String.format("%02X", this.regPC));
 
     }
 
