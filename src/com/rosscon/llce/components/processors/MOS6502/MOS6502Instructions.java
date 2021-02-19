@@ -165,7 +165,10 @@ public class MOS6502Instructions {
     /**
      * INC Instructions
      */
-    //TODO INC Instructions
+    public static final byte INS_INC_ZP     = (byte)0xE6;
+    public static final byte INS_INC_ZPX    = (byte)0xF6;
+    public static final byte INS_INC_ABS    = (byte)0xEE;
+    public static final byte INS_INC_ABX    = (byte)0xFE;
 
     /**
      * INX Instructions

@@ -238,7 +238,14 @@ public class MOS6502InstructionMapping  {
         /*
          * INC
          */
-        //TODO INC Instructions
+        details[MOS6502Instructions.INS_INC_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.INC, MOS6502AddressingMode.ZERO_PAGE, 2, 5);
+        details[MOS6502Instructions.INS_INC_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.INC, MOS6502AddressingMode.ZERO_PAGE_X, 2, 6);
+        details[MOS6502Instructions.INS_INC_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.INC, MOS6502AddressingMode.ABSOLUTE, 3, 6);
+        details[MOS6502Instructions.INS_INC_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.INC, MOS6502AddressingMode.ABSOLUTE_X, 3, 7);
 
         /*
          * INX

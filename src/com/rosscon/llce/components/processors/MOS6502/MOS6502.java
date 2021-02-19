@@ -480,7 +480,9 @@ public class MOS6502 extends Processor {
                 EOR();
                 break;
 
-
+            case INC:
+                INC();
+                break;
 
             case INX:
                 INX();
@@ -1156,6 +1158,44 @@ public class MOS6502 extends Processor {
         // Negative Flag
         if ((this.regACC & 0b10000000) == 0b10000000)
             enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+    }
+
+    /**
+     * Adds one to a value held in memory
+     * Sets ZERO_FLAG if result == 0x00
+     * Sets NEGATIVE_FLAG to bit 7
+     * @throws ProcessorException Can throw processor exception on memory errors
+     */
+    private void INC() throws ProcessorException {
+        try {
+            rwFlag.setFlagValue(true);
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+
+        byte value = this.dataBus.readDataFromBus()[0];
+
+        value = (byte)((value + 0x01) & 0xFF);
+
+        // Zero Flag
+        if (value == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+        else
+            clearFlag(MOS6502Flags.ZERO_FLAG);
+
+        // Negative Flag
+        if ((value & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        else
+            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        try {
+            dataBus.writeDataToBus(new byte[]{value});
+            rwFlag.setFlagValue(false);
+        } catch (InvalidBusDataException | MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+
     }
 
     /**
