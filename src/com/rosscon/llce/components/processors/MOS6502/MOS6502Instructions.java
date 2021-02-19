@@ -149,7 +149,14 @@ public class MOS6502Instructions {
     /**
      * EOR Instructions
      */
-    //TODO INC Instructions
+    public static final byte INS_EOR_IMM    = (byte)0x49;
+    public static final byte INS_EOR_ZP     = (byte)0x45;
+    public static final byte INS_EOR_ZPX    = (byte)0x55;
+    public static final byte INS_EOR_ABS    = (byte)0x4D;
+    public static final byte INS_EOR_ABX    = (byte)0x5D;
+    public static final byte INS_EOR_ABY    = (byte)0x59;
+    public static final byte INS_EOR_INX    = (byte)0x41;
+    public static final byte INS_EOR_INY    = (byte)0x51;
 
     /**
      * INC Instructions
@@ -274,7 +281,7 @@ public class MOS6502Instructions {
     /**
      * SBC Instructions
      */
-    public static final byte INS_SBC_IMM    = (byte)0x59;
+    public static final byte INS_SBC_IMM    = (byte)0xE9;
     public static final byte INS_SBC_ZP     = (byte)0xE5;
     public static final byte INS_SBC_ZPX    = (byte)0xF5;
     public static final byte INS_SBC_ABS    = (byte)0xED;

@@ -30,22 +30,6 @@ public class MOS6502 extends Processor {
     private MOS6502InstructionMapping instructionMapping;
 
     /**
-     * Error Messages
-     */
-    private final String EX_INVALID_INSTRUCTION =
-            "Invalid or unknown instruction";
-
-    private final String EX_TICK_FETCH_ERROR =
-            "Error fetching instruction";
-
-    private final String EX_RESET_ERROR =
-            "Unable to perform reset";
-
-    private final String EX_STACK_PUSH_ERROR =
-            "Unable to push to stack";
-
-
-    /**
      * Registers
      */
     private long    regPC;      // Program Counter
@@ -56,13 +40,6 @@ public class MOS6502 extends Processor {
     private byte    regStatus;  // Processor Status [C][Z][I][D][B][V][N]
     private long    regIntAddr; // Custom register used for building addresses over multiple cycles
 
-    /**
-     * Vectors / Pages
-     */
-    private final byte STACK_PAGE       = (byte)0x01;
-    private final int VECTOR_NMI       = 0xFFFB;
-    private final int VECTOR_RESET     = 0xFFFC;
-    private final int VECTOR_IRQ_BRK   = 0xFFFE;
 
 
     public byte[] getRegPC() {
@@ -152,7 +129,7 @@ public class MOS6502 extends Processor {
     private void reset() throws ProcessorException {
 
         try {
-            regPC       = VECTOR_RESET;
+            regPC       = MOS6502Constants.VECTOR_RESET;
             regSP       = (byte) 0xFF;
             regACC      = (byte) 0x00;
             regX        = (byte) 0x00;
@@ -177,16 +154,16 @@ public class MOS6502 extends Processor {
             regIntAddr = low | (high << 8);
             this.regPC = regIntAddr;
         } catch (MemoryException | InvalidBusDataException ex){
-            throw new ProcessorException(EX_RESET_ERROR + " : " + ex.getMessage());
+            throw new ProcessorException(MOS6502Constants.EX_RESET_ERROR + " : " + ex.getMessage());
         }
 
         instructionMapping = new MOS6502InstructionMapping();
     }
 
     /**
-     * Determines wheter a flag is currently set on the CPU status register
-     * @param flag
-     * @return
+     * Determines whether a flag is currently set on the CPU status register
+     * @param flag Flag to check
+     * @return true = flag set, false = flag not set
      */
     private boolean isFlagSet(byte flag){
         return (byte)(this.regStatus & flag) == flag;
@@ -198,31 +175,31 @@ public class MOS6502 extends Processor {
      */
     private void pushToStack(byte value) throws ProcessorException {
         try {
-            byte[] freeAddress = new byte[] { this.STACK_PAGE, this.regSP };
+            byte[] freeAddress = new byte[] { MOS6502Constants.STACK_PAGE, this.regSP };
             this.addressBus.writeDataToBus(freeAddress);
             this.dataBus.writeDataToBus(new byte[] {value});
             this.rwFlag.setFlagValue(false);
             this.regSP = (byte)(this.regSP + 0xFF); // Adding FF allowing a wrap around is easier than subtraction
         } catch (MemoryException | InvalidBusDataException e) {
-            throw new ProcessorException(this.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
+            throw new ProcessorException(MOS6502Constants.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
         }
     }
 
     /**
      * Pulls a byte of data from the stack
      * Increases the stack pointer by 1 then reads the value at that address
-     * @return
+     * @return returns the byte read from the stack
      */
     private byte pullFromStack() throws ProcessorException {
         byte read;
         try {
             this.regSP = (byte)(this.regSP + 0x01);
-            byte[] readAddress = new byte[] { this.STACK_PAGE, this.regSP };
+            byte[] readAddress = new byte[] { MOS6502Constants.STACK_PAGE, this.regSP };
             this.addressBus.writeDataToBus(readAddress);
             this.rwFlag.setFlagValue(true);
             read = this.dataBus.readDataFromBus()[0];
         } catch (MemoryException | InvalidBusDataException e) {
-            throw new ProcessorException(this.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
+            throw new ProcessorException(MOS6502Constants.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
         }
         return read;
     }
@@ -403,7 +380,7 @@ public class MOS6502 extends Processor {
             }
 
         } else {
-            throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + instruction);
+            throw new ProcessorException(MOS6502Constants.EX_INVALID_INSTRUCTION + " : " + instruction);
         }
     }
 
@@ -493,6 +470,10 @@ public class MOS6502 extends Processor {
 
             case DEY:
                 DEY();
+                break;
+
+            case EOR:
+                EOR();
                 break;
 
 
@@ -610,7 +591,7 @@ public class MOS6502 extends Processor {
                 break;
 
             default:
-                throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + this.instruction);
+                throw new ProcessorException(MOS6502Constants.EX_INVALID_INSTRUCTION + " : " + this.instruction);
         }
     }
 
@@ -621,7 +602,7 @@ public class MOS6502 extends Processor {
                 byte instruction = fetch();
                 decode(instruction);
             } catch (Exception ex){
-                throw new ProcessorException(EX_TICK_FETCH_ERROR);
+                throw new ProcessorException(MOS6502Constants.EX_TICK_FETCH_ERROR);
             }
         }
         else if ( this.cycles == 1 ) {
@@ -875,7 +856,7 @@ public class MOS6502 extends Processor {
         /*
          * Set PC to IRQ_BRK vector
          */
-        this.regPC = VECTOR_IRQ_BRK;
+        this.regPC = MOS6502Constants.VECTOR_IRQ_BRK;
 
         /*
          * Set PC
@@ -1083,6 +1064,33 @@ public class MOS6502 extends Processor {
 
         if (PRINT_TRACE)
             System.out.println("DEY : " + String.format("%02X", this.regY));
+    }
+
+    /**
+     * Exclusive OR is performed on the accumulator and a value from memory
+     * the result is stored in the accumulator
+     * Sets the ZERO_FLAG if the accumulator becomes 0
+     * Sets the NEGATIVE_FLAG if bit 7 of the accumulator becomes a 1
+     * @throws ProcessorException If there is an issue reading from memory
+     */
+    private void EOR() throws ProcessorException {
+        try {
+            rwFlag.setFlagValue(true);
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+
+        byte value = this.dataBus.readDataFromBus()[0];
+
+        this.regACC = (byte)(this.regACC ^ value);
+
+        // Zero Flag
+        if (this.regACC == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        // Negative Flag
+        if ((this.regACC & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
     }
 
     /**
@@ -1359,7 +1367,7 @@ public class MOS6502 extends Processor {
 
         this.regPC = pullFromStack() & 0xFF;
         this.regPC = this.regPC | ((pullFromStack() & 0xFF) << 8);
-        fetch();
+        //fetch();
 
         if (PRINT_TRACE)
             System.out.println("RTI Set PC : " + String.format("%02X", this.regPC));
