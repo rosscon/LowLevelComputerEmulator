@@ -139,6 +139,13 @@ public class MOS6502 extends Processor {
         this.PRINT_TRACE = printTrace;
     }
 
+    public MOS6502(Clock clock, Bus addressBus, Bus dataBus, Flag rwFlag, boolean printTrace, long pcOverride) throws ProcessorException {
+        super(clock, addressBus, dataBus, rwFlag);
+        reset();
+        this.PRINT_TRACE = printTrace;
+        this.regPC = pcOverride;
+    }
+
     /**
      * Reset/Initialise registers
      */
@@ -169,7 +176,6 @@ public class MOS6502 extends Processor {
 
             regIntAddr = low | (high << 8);
             this.regPC = regIntAddr;
-            //this.regPC = 0xC000;
         } catch (MemoryException | InvalidBusDataException ex){
             throw new ProcessorException(EX_RESET_ERROR + " : " + ex.getMessage());
         }
@@ -251,6 +257,10 @@ public class MOS6502 extends Processor {
      * Follows the addressing mode that has been set in order to set the address bus
      */
     private void addressing() throws ProcessorException {
+
+        if (PRINT_TRACE) {
+            System.out.println("Addressing Mode: " + this.addressingMode.name());
+        }
 
         try {
             switch (this.addressingMode) {
@@ -400,6 +410,10 @@ public class MOS6502 extends Processor {
      */
     private void execute() throws ProcessorException {
 
+        if (PRINT_TRACE) {
+            System.out.println("Instruction: " + this.instruction.name());
+        }
+
         switch (this.instruction){
             case ADC:
                 ADC();
@@ -407,6 +421,10 @@ public class MOS6502 extends Processor {
 
             case AND:
                 AND();
+                break;
+
+            case BIT:
+                BIT();
                 break;
 
             case BRK:
@@ -540,6 +558,10 @@ public class MOS6502 extends Processor {
                 RTS();
                 break;
 
+            case SBC:
+                SBC();
+                break;
+
 
             case SEC:
                 enableFlag(MOS6502Flags.CARRY_FLAG);
@@ -606,6 +628,8 @@ public class MOS6502 extends Processor {
         else if ( this.cycles == 1 ) {
             addressing();
             execute();
+            if (PRINT_TRACE)
+                System.out.println();
         } else {
             this.cycles--;
         }
@@ -764,6 +788,51 @@ public class MOS6502 extends Processor {
         }
         if (PRINT_TRACE)
             System.out.println("AND : " + String.format("%02X", this.regACC));
+    }
+
+    /**
+     * Tests if one or more bits are set in the memory location.
+     * The accumulator is used as the mask pattern and AND'd with the memory
+     * value.
+     * Sets the ZERO_FLAG if the result of AND == 0x00
+     * Sets the OVERFLOW flag if bit 6 is set in the value from memory
+     * Sets the NEGATIVE_FLAG if bit 7 is set in the value from memory
+     * @throws ProcessorException Can throw a processor exception if there is an issue reading from memory
+     */
+    private void BIT() throws ProcessorException {
+        try {
+            rwFlag.setFlagValue(true);
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+
+        byte value = dataBus.readDataFromBus()[0];
+
+        byte result = (byte)((this.regACC & value) & 0xFF);
+
+        // Zero Flag
+        if (result == 0x00) {
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+        } else {
+            clearFlag(MOS6502Flags.ZERO_FLAG);
+        }
+
+        // Overflow Flag based on memory value
+        if ((value & 0b01000000) == 0b01000000){
+            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
+        } else {
+            clearFlag(MOS6502Flags.OVERFLOW_FLAG);
+        }
+
+        // Negative Flag based on memory value
+        if ((value & 0b10000000) == 0b10000000){
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        } else {
+            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        }
+
+        if (PRINT_TRACE)
+            System.out.println("BIT (Flags) : " + String.format("%02X", this.getRegStatus()));
     }
 
     /**
@@ -1276,6 +1345,84 @@ public class MOS6502 extends Processor {
         if (PRINT_TRACE)
             System.out.println("RTS Set PC : " + String.format("%02X", this.regPC));
 
+    }
+
+    /**
+     * Perform a subtraction with carry
+     * Acc = Acc - Value - (1 - Carry)
+     * Simplifies to
+     * Acc = A + -Value + 1 + Carry
+     * Can take the 2's compliment of value from memory then perform same steps as ADC
+     * Sets the ZERO_FLAG if Accumulator becomes 0
+     * Sets the NEGATIVE_FLAG if bit 7 is set
+     *
+     * @throws ProcessorException Can throw a ProcessorException if there is an issue writing to memory
+     */
+    private void SBC() throws ProcessorException {
+        try {
+            rwFlag.setFlagValue(true);
+        } catch (MemoryException ex){
+            throw new ProcessorException(ex.getMessage());
+        }
+
+        byte value = this.dataBus.readDataFromBus()[0];
+        // perform 2's compliment
+        value = (byte)(~value & 0xFF);
+        value = (byte)((value + 0x01)& 0xFF);
+
+        byte result = 0x00;
+
+        if ((this.regStatus & MOS6502Flags.DECIMAL_MODE) == MOS6502Flags.DECIMAL_MODE){
+            // BCD addition
+            // TODO BCD addition
+        } else {
+            // Binary addition
+            result = (byte)(value + this.regACC);
+
+            if ((this.regStatus & MOS6502Flags.CARRY_FLAG) == MOS6502Flags.CARRY_FLAG)
+                result = (byte)(result + 0x01);
+        }
+
+        /*
+         * Set Flags
+         */
+        // Carry Flag
+        if (ByteUtils.willCarryOnAddition(value, this.regACC)) {
+            enableFlag(MOS6502Flags.CARRY_FLAG);
+        } else {
+            clearFlag(MOS6502Flags.CARRY_FLAG);
+        }
+
+        // Zero Flag
+        if (result == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        /*
+         * Overflow flag
+         * based on the following logic to detect n overflow situation
+         * Pos + Pos = Pos -> OK
+         * Pos + Pos = Neg -> FAIL Set flag
+         * Pos + Neg = OK -> Cannot overflow
+         * Neg + Neg = Neg -> OK
+         * Neg + Neg = Pos - FAIL Set flag
+         * Only need to look at the MSB of the ACC, Value, Result
+         * HEX 80 = BIN 10000000
+         */
+        if (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)){
+            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
+        }
+        else if (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)){
+            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
+        }
+
+        // Negative Flag
+        if ((result & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        // Finally set accumulator with new value
+        this.regACC = result;
+        if (PRINT_TRACE)
+            System.out.println("SBC : " + String.format("%02X", this.regACC));
     }
 
     /**

@@ -49,7 +49,8 @@ public class MOS6502Instructions {
     /**
      * BIT Instructions
      */
-    //TODO BIT Instructions
+    public static final byte INS_BIT_ZP   = (byte)0x24;
+    public static final byte INS_BIT_ABS  = (byte)0x2C;
 
     /**
      * BMI Instructions
@@ -273,7 +274,14 @@ public class MOS6502Instructions {
     /**
      * SBC Instructions
      */
-    //TODO SBC Instructions
+    public static final byte INS_SBC_IMM    = (byte)0x59;
+    public static final byte INS_SBC_ZP     = (byte)0xE5;
+    public static final byte INS_SBC_ZPX    = (byte)0xF5;
+    public static final byte INS_SBC_ABS    = (byte)0xED;
+    public static final byte INS_SBC_ABX    = (byte)0xFD;
+    public static final byte INS_SBC_ABY    = (byte)0xF9;
+    public static final byte INS_SBC_INX    = (byte)0xE1;
+    public static final byte INS_SBC_INY    = (byte)0xF1;
 
     /**
      * SEC Instructions

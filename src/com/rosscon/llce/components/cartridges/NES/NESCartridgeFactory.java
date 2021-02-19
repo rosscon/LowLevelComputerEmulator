@@ -81,7 +81,7 @@ public class NESCartridgeFactory {
     /**
      * Default start location for PRG ROM
      */
-    private static final int PRG_ROM_START = 17;
+    private static final int PRG_ROM_START = 16;
 
     /**
      * Size of trainer if it is present
