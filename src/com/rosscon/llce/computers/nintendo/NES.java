@@ -114,7 +114,7 @@ public class NES extends Computer {
 
     private MOS6502 cpu;
 
-    public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException, ClockException {
+    public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException {
 
         /*
          * Main bus
@@ -174,18 +174,33 @@ public class NES extends Computer {
         this.cpuDivider = new Divider(12, masterClock);
         this.ppuDivider = new Divider(4, masterClock);
 
-        //this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true, 0xC000);
-        this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
+        this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true, 0xC000);
+        //this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
 
-        //long cycles = 100000000;
-        long cycles = 100000000;
-        long start = System.nanoTime();
-        this.masterClock.tick(cycles);
-        long finish = System.nanoTime();
-        float difference = finish - start;
-        System.out.println(((float)cycles / (difference / 1000000000f)) / 1000000f + "MHz");
+        try {
+            //long cycles = 100000000;
+            long cycles = 100000000;
+            long start = System.nanoTime();
+            this.masterClock.tick(cycles);
+            long finish = System.nanoTime();
+            float difference = finish - start;
+            System.out.println(((float) cycles / (difference / 1000000000f)) / 1000000f + "MHz");
+        } catch (Exception ex){
+            try {
+                System.out.println("\n\n");
+                System.out.println("==========ERROR CODES==========");
+                this.cpuAddressBus.writeDataToBus(new byte[]{0x00, (byte)0x02});
+                rwFlagCpu.setFlagValue(true);
+                System.out.println("0x02 : " + String.format("%02X", this.cpuDataBus.readDataFromBus()[0]));
+                this.cpuAddressBus.writeDataToBus(new byte[]{0x00, (byte)0x03});
+                rwFlagCpu.setFlagValue(true);
+                System.out.println("0x03 : " + String.format("%02X", this.cpuDataBus.readDataFromBus()[0]));
+            } catch (Exception ex2){
+                System.out.println("OOPS");
+            }
+        }
 
-        System.out.println("TEST");
+        System.out.println("DONE");
     }
 
 }

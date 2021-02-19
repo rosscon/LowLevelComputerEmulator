@@ -537,6 +537,73 @@ public class MOS6502InstructionMapping  {
          */
         details[MOS6502Instructions.INS_TYA & 0xFF] =
                 new MOS6502InstructionDetails(MOS6502Instruction.TYA, MOS6502AddressingMode.IMPLICIT, 1, 2);
+
+        /*
+         * Undocumented / Illegal Opcodes
+         * http://www.ffd2.com/fridge/docs/6502-NMOS.extra.opcodes
+         *
+         */
+        //NOP, perform no memory operations and take 2 cycles to execute
+        details[0x1A] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2);
+        details[0x3A] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2);
+        details[0x5A] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2);
+        details[0x7A] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2);
+        details[0xDA] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2);
+        details[0xFA] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMPLICIT, 1, 2);
+
+        //SBC 0xEB is an undocumented instruction that appears to do the same as SBC Immediate mode
+        details[0xEB] =
+                new MOS6502InstructionDetails(MOS6502Instruction.SBC, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        // SKB Opcodes - Skip Next byte, can take 2,3 or 4 cycles to execute
+        details[0x80] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x82] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0xC2] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0xE2] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x04] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x14] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x34] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x44] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x54] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x64] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0x74] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0xD4] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+        details[0xF4] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.IMMEDIATE, 2, 2);
+
+        // SKW Opcodes - Skip next word (2, bytes) always takes 4 cycles
+        details[0x0C] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[0x1C] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[0x3C] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[0x5C] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[0x7C] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[0xDC] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+        details[0xFC] =
+                new MOS6502InstructionDetails(MOS6502Instruction.NOP, MOS6502AddressingMode.ABSOLUTE, 3, 4);
+
     }
 
 
