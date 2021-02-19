@@ -239,7 +239,7 @@ public class MOS6502Instructions {
     /**
      * PHP Instructions
      */
-    //TODO PHP Instructions
+    public static final byte INS_PHP_IMP    = (byte)0x08;
 
     /**
      * PLA Instructions
@@ -249,7 +249,7 @@ public class MOS6502Instructions {
     /**
      * PLP Instructions
      */
-    //TODO PLP Instructions
+    public static final byte INS_PLP_IMP    = (byte)0x28;
 
     /**
      * ROL Instructions

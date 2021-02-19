@@ -331,7 +331,8 @@ public class MOS6502InstructionMapping  {
         /*
          * PHP
          */
-        //TODO PHP Instructions
+        details[MOS6502Instructions.INS_PHP_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.PHP, MOS6502AddressingMode.IMPLICIT, 1, 3);
 
         /*
          * PLA
@@ -342,7 +343,8 @@ public class MOS6502InstructionMapping  {
         /*
          * PLP
          */
-        //TODO PLP Instructions
+        details[MOS6502Instructions.INS_PLP_IMP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.PLP, MOS6502AddressingMode.IMPLICIT, 1, 4);
 
         /*
          * ROL

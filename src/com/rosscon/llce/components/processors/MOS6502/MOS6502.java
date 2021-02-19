@@ -258,10 +258,6 @@ public class MOS6502 extends Processor {
      */
     private void addressing() throws ProcessorException {
 
-        if (PRINT_TRACE) {
-            System.out.println("Addressing Mode: " + this.addressingMode.name());
-        }
-
         try {
             switch (this.addressingMode) {
                 case IMPLICIT:      // These modes do nothing with memory
@@ -400,6 +396,12 @@ public class MOS6502 extends Processor {
             this.addressingMode = details.addressingMode;
             this.cycles = details.cycles;
             this.cycles --;
+
+            if (PRINT_TRACE) {
+                System.out.println("Instruction: " + this.instruction.name());
+                System.out.println("Addressing Mode: " + this.addressingMode.name());
+            }
+
         } else {
             throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + instruction);
         }
@@ -409,10 +411,6 @@ public class MOS6502 extends Processor {
      * Executes the current instruction and decrements the remaining cycles
      */
     private void execute() throws ProcessorException {
-
-        if (PRINT_TRACE) {
-            System.out.println("Instruction: " + this.instruction.name());
-        }
 
         switch (this.instruction){
             case ADC:
@@ -485,7 +483,6 @@ public class MOS6502 extends Processor {
                 CPY();
                 break;
 
-
             case DEC:
                 DEC();
                 break;
@@ -499,6 +496,7 @@ public class MOS6502 extends Processor {
                 break;
 
 
+
             case INX:
                 INX();
                 break;
@@ -507,11 +505,9 @@ public class MOS6502 extends Processor {
                 INY();
                 break;
 
-
             case JMP:
                 JMP();
                 break;
-
 
             case JSR:
                 JSR();
@@ -521,12 +517,12 @@ public class MOS6502 extends Processor {
                 LDA();
                 break;
 
-            case LDY:
-                LDY();
-                break;
-
             case LDX:
                 LDX();
+                break;
+
+            case LDY:
+                LDY();
                 break;
 
 
@@ -538,15 +534,20 @@ public class MOS6502 extends Processor {
                 ORA();
                 break;
 
-
-
             case PHA:
                 pushToStack(this.regACC);
                 break;
 
+            case PHP:
+                PHP();
+                break;
 
             case PLA:
                 PLA();
+                break;
+
+            case PLP:
+                PLP();
                 break;
 
 
@@ -561,7 +562,6 @@ public class MOS6502 extends Processor {
             case SBC:
                 SBC();
                 break;
-
 
             case SEC:
                 enableFlag(MOS6502Flags.CARRY_FLAG);
@@ -608,7 +608,6 @@ public class MOS6502 extends Processor {
             case TYA:
                 this.regACC = this.regY;
                 break;
-
 
             default:
                 throw new ProcessorException(EX_INVALID_INSTRUCTION + " : " + this.instruction);
@@ -1285,10 +1284,26 @@ public class MOS6502 extends Processor {
     }
 
     /**
-     * Pulls from the stack
+     * Pushes a copy of the status flag onto the stack
+     * Note the is a caveat with this instruction that bits 4 and 5
+     * are always set in the stack but not on the actual flags
+     * http://wiki.nesdev.com/w/index.php/Status_flags
+     */
+    private void PHP() throws ProcessorException {
+
+        byte value = (byte)(this.regStatus | 0b00110000);
+
+        pushToStack(value);
+
+        if (PRINT_TRACE)
+            System.out.println("PHP Pushed : " + String.format("%02X", value));
+    }
+
+    /**
+     * Pulls Accumulator from the stack
      * Sets ZERO_FLAG if accumulator becomes zero
      * Sets NEGATIVE_FLAG if bit 7 of accumulator is a 1
-     * @throws ProcessorException
+     * @throws ProcessorException Can throw memory exception on error reading memory
      */
     private void PLA() throws ProcessorException {
 
@@ -1304,6 +1319,25 @@ public class MOS6502 extends Processor {
 
         if (PRINT_TRACE)
             System.out.println("PLA : " + String.format("%02X", this.regY));
+    }
+
+    /**
+     * Pulls processor status from the stack
+     * Note bits 4 and 5 are ignored when pulled
+     * http://wiki.nesdev.com/w/index.php/Status_flags
+     * @throws ProcessorException Can throw memory exception on error reading memory
+     */
+    private void PLP() throws ProcessorException {
+        byte flags = pullFromStack();
+        if (PRINT_TRACE)
+            System.out.println("PLPFlags Pulled: " + String.format("%02X", flags));
+
+        flags = (byte)(flags & 0b11001111);
+
+        if (PRINT_TRACE)
+            System.out.println("PLP Flags Masked: " + String.format("%02X", flags));
+
+        this.regStatus = flags;
     }
 
     /**
