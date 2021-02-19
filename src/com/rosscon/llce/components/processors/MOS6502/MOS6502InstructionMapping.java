@@ -309,7 +309,16 @@ public class MOS6502InstructionMapping  {
         /*
          * LSR
          */
-        //TODO LSR Instructions
+        details[MOS6502Instructions.INS_LSR_ACC & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LSR, MOS6502AddressingMode.ACCUMULATOR, 1, 2);
+        details[MOS6502Instructions.INS_LSR_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LSR, MOS6502AddressingMode.ZERO_PAGE, 2, 5);
+        details[MOS6502Instructions.INS_LSR_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LSR, MOS6502AddressingMode.ZERO_PAGE_X, 2, 6);
+        details[MOS6502Instructions.INS_LSR_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LSR, MOS6502AddressingMode.ABSOLUTE, 3, 6);
+        details[MOS6502Instructions.INS_LSR_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.LSR, MOS6502AddressingMode.ABSOLUTE_X, 3, 7);
 
         /*
          * NOP

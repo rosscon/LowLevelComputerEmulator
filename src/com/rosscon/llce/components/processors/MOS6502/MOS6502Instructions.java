@@ -218,7 +218,11 @@ public class MOS6502Instructions {
     /**
      * LSR Instructions
      */
-    //TODO LSR Instructions
+    public static final byte INS_LSR_ACC    = (byte)0x4A;
+    public static final byte INS_LSR_ZP     = (byte)0x46;
+    public static final byte INS_LSR_ZPX    = (byte)0x56;
+    public static final byte INS_LSR_ABS    = (byte)0x4E;
+    public static final byte INS_LSR_ABX    = (byte)0x5E;
 
     /**
      * NOP Instructions

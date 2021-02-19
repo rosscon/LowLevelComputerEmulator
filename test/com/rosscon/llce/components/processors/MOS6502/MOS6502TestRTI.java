@@ -84,6 +84,6 @@ public class MOS6502TestRTI {
         assertEquals((byte)0xCF, cpu.getRegStatus());
 
         // Is 0x4343 as PC is incremented post instructions
-        assertArrayEquals(new byte[]{(byte)0x43, (byte)0x43}, cpu.getRegPC());
+        assertArrayEquals(new byte[]{(byte)0x43, (byte)0x42}, cpu.getRegPC());
     }
 }

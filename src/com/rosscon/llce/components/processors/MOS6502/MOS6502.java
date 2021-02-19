@@ -238,9 +238,9 @@ public class MOS6502 extends Processor {
         try {
             switch (this.addressingMode) {
                 case IMPLICIT:      // These modes do nothing with memory
+                case ACCUMULATOR:
                     break;
                 case RELATIVE:
-                case ACCUMULATOR:
                 case IMMEDIATE:     // Makes cpu request next address in memory
                     this.fetch();
                     break;
@@ -353,9 +353,9 @@ public class MOS6502 extends Processor {
         }
 
         /*
-         * Stops the process of reading address if clock cycles increased
+         * Stops the process of reading address if clock cycles increased, Leave ACCUMULATOR as used later
          */
-        this.addressingMode = MOS6502AddressingMode.IMPLICIT;
+        this.addressingMode = (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR) ? MOS6502AddressingMode.IMPLICIT : this.addressingMode;
 
         this.cycles--;
     }
@@ -506,6 +506,9 @@ public class MOS6502 extends Processor {
                 LDY();
                 break;
 
+            case LSR:
+                LSR();
+                break;
 
             case NOP:
                 // No Operation
@@ -1262,6 +1265,54 @@ public class MOS6502 extends Processor {
 
         if (PRINT_TRACE)
             System.out.println("LDY : " + String.format("%02X", this.regY));
+    }
+
+    /**
+     * Performs a logical shift right on the value
+     * Where the result is stored depends on the addressing mode used
+     * Sets the CARRY_FLAG to whatever was in bit 0
+     * Bit 7 will always be set to 0
+     * @throws ProcessorException
+     */
+    private void LSR() throws ProcessorException {
+        byte value = this.regACC;
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                rwFlag.setFlagValue(true);
+            } catch (MemoryException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+            value = this.dataBus.readDataFromBus()[0];
+        }
+
+        // Negative Flag
+        if ((value & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        // Carry Flag
+        if ((value & 0b00000001) == 0b00000001)
+            enableFlag(MOS6502Flags.CARRY_FLAG);
+
+        value = (byte)(((value & 0xFF) >>> 1) & 0xFF);
+
+        // Zero Flag
+        if (value == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                this.dataBus.writeDataToBus(new byte[]{value});
+                rwFlag.setFlagValue(false);
+            } catch (MemoryException | InvalidBusDataException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+        } else {
+            this.regACC = value;
+        }
+
+        if (PRINT_TRACE)
+            System.out.println("LSR Result : " + String.format("%02X", value));
     }
 
     /**
