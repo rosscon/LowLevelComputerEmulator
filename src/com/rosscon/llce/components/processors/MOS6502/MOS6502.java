@@ -368,6 +368,10 @@ public class MOS6502 extends Processor {
 
         MOS6502InstructionDetails details = this.instructionMapping.getInstructionDetails(instruction);
 
+        if (details == null){
+            details = this.instructionMapping.getInstructionDetails(MOS6502Instructions.INS_NOP_IMP);
+        }
+
         if ( details != null ){
             this.instruction = details.instruction;
             this.addressingMode = details.addressingMode;
