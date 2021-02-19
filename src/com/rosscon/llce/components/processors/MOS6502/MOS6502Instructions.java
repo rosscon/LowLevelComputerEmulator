@@ -29,7 +29,11 @@ public class MOS6502Instructions {
     /**
      * ASL Instructions
      */
-    //TODO ASL Instructions
+    public static final byte INS_ASL_ACC    = (byte)0x0A;
+    public static final byte INS_ASL_ZP     = (byte)0x06;
+    public static final byte INS_ASL_ZPX    = (byte)0x16;
+    public static final byte INS_ASL_ABS    = (byte)0x0E;
+    public static final byte INS_ASL_ABX    = (byte)0x1E;
 
     /**
      * BCC Instructions

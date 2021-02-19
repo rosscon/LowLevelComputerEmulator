@@ -398,6 +398,10 @@ public class MOS6502 extends Processor {
                 AND();
                 break;
 
+            case ASL:
+                ASL();
+                break;
+
             case BIT:
                 BIT();
                 break;
@@ -771,6 +775,57 @@ public class MOS6502 extends Processor {
         }
         if (PRINT_TRACE)
             System.out.println("AND : " + String.format("%02X", this.regACC));
+    }
+
+    /**
+     * Performs an arithmetic shift left i.e multiplies by 2
+     * Where the result is stored depends on the addressing mode used
+     * Sets the CARRY_FLAG to whatever was in bit 7
+     * Arts the ZERO_FLAG if the result is 0x00
+     * Sets the NEGATIVE_FLAG to the value of bit 7
+     * @throws ProcessorException Can throw processor exception if there is a memory error
+     */
+    private void ASL() throws ProcessorException {
+        byte value = this.regACC;
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                rwFlag.setFlagValue(true);
+            } catch (MemoryException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+            value = this.dataBus.readDataFromBus()[0];
+        }
+
+        // Carry Flag
+        if ((value & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.CARRY_FLAG);
+
+        value = (byte)(((value & 0xFF) << 1) & 0xFF);
+
+        // Negative Flag
+        if ((value & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        else
+            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        // Zero Flag
+        if (value == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                this.dataBus.writeDataToBus(new byte[]{value});
+                rwFlag.setFlagValue(false);
+            } catch (MemoryException | InvalidBusDataException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+        } else {
+            this.regACC = value;
+        }
+
+        if (PRINT_TRACE)
+            System.out.println("ASL Result : " + String.format("%02X", value));
     }
 
     /**
