@@ -382,12 +382,30 @@ public class MOS6502InstructionMapping  {
         /*
          * ROL
          */
-        //TODO ROL Instructions
+        details[MOS6502Instructions.INS_ROL_ACC & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROL, MOS6502AddressingMode.ACCUMULATOR, 1, 2);
+        details[MOS6502Instructions.INS_ROL_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROL, MOS6502AddressingMode.ZERO_PAGE, 2, 5);
+        details[MOS6502Instructions.INS_ROL_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROL, MOS6502AddressingMode.ZERO_PAGE_X, 2, 6);
+        details[MOS6502Instructions.INS_ROL_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROL, MOS6502AddressingMode.ABSOLUTE, 3, 6);
+        details[MOS6502Instructions.INS_ROL_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROL, MOS6502AddressingMode.ABSOLUTE_X, 3, 7);
 
         /*
          * ROR
          */
-        //TODO ROR Instructions
+        details[MOS6502Instructions.INS_ROR_ACC & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROR, MOS6502AddressingMode.ACCUMULATOR, 1, 2);
+        details[MOS6502Instructions.INS_ROR_ZP & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROR, MOS6502AddressingMode.ZERO_PAGE, 2, 5);
+        details[MOS6502Instructions.INS_ROR_ZPX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROR, MOS6502AddressingMode.ZERO_PAGE_X, 2, 6);
+        details[MOS6502Instructions.INS_ROR_ABS & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROR, MOS6502AddressingMode.ABSOLUTE, 3, 6);
+        details[MOS6502Instructions.INS_ROR_ABX & 0xFF] =
+                new MOS6502InstructionDetails(MOS6502Instruction.ROR, MOS6502AddressingMode.ABSOLUTE_X, 3, 7);
 
         /*
          * RTI

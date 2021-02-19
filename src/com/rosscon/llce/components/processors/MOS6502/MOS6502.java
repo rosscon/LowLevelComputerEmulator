@@ -538,6 +538,13 @@ public class MOS6502 extends Processor {
                 PLP();
                 break;
 
+            case ROL:
+                ROL();
+                break;
+
+            case ROR:
+                ROR();
+                break;
 
             case RTI:
                 RTI();
@@ -1452,6 +1459,111 @@ public class MOS6502 extends Processor {
             System.out.println("PLP Flags Masked: " + String.format("%02X", flags));
 
         this.regStatus = flags;
+    }
+
+    /**
+     * Moves each bit in a value one place to the left
+     * Bit 0 is set by the CARRY_FLAG
+     * Sets CARRY_FLAG to original bit 7
+     * @throws ProcessorException Can throw processor exception on memory errors
+     */
+    private void ROL() throws ProcessorException {
+        byte value = this.regACC;
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                rwFlag.setFlagValue(true);
+            } catch (MemoryException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+            value = this.dataBus.readDataFromBus()[0];
+        }
+
+        byte tmp = 0x00;
+        if (isFlagSet(MOS6502Flags.CARRY_FLAG))
+            tmp = (byte)0x01;
+
+        // Carry Flag
+        if ((value & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.CARRY_FLAG);
+        else
+            clearFlag(MOS6502Flags.CARRY_FLAG);
+
+        value = (byte)((((value & 0xFF)  << 1) + tmp) & 0xFF);
+
+
+        // Negative Flag
+        if ((value & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        else
+            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        // Zero Flag
+        if (value == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                this.dataBus.writeDataToBus(new byte[]{value});
+                rwFlag.setFlagValue(false);
+            } catch (MemoryException | InvalidBusDataException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+        } else {
+            this.regACC = value;
+        }
+
+        if (PRINT_TRACE)
+            System.out.println("ROL Result : " + String.format("%02X", value));
+    }
+
+    private void ROR() throws ProcessorException {
+        byte value = this.regACC;
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                rwFlag.setFlagValue(true);
+            } catch (MemoryException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+            value = this.dataBus.readDataFromBus()[0];
+        }
+
+        byte tmp = 0x00;
+        if (isFlagSet(MOS6502Flags.CARRY_FLAG))
+            tmp = (byte)0x80;
+
+        // Carry Flag
+        if ((value & 0b00000001) == 0b00000001)
+            enableFlag(MOS6502Flags.CARRY_FLAG);
+        else
+            clearFlag(MOS6502Flags.CARRY_FLAG);
+
+        value = (byte)((((value & 0xFF) >> 1) + tmp) & 0xFF);
+
+        // Negative Flag
+        if ((value & 0b10000000) == 0b10000000)
+            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        else
+            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+
+        // Zero Flag
+        if (value == 0x00)
+            enableFlag(MOS6502Flags.ZERO_FLAG);
+
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
+            try {
+                this.dataBus.writeDataToBus(new byte[]{value});
+                rwFlag.setFlagValue(false);
+            } catch (MemoryException | InvalidBusDataException ex){
+                throw new ProcessorException(ex.getMessage());
+            }
+        } else {
+            this.regACC = value;
+        }
+
+        if (PRINT_TRACE)
+            System.out.println("ROL Result : " + String.format("%02X", value));
     }
 
     /**

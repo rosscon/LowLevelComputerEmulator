@@ -269,12 +269,20 @@ public class MOS6502Instructions {
     /**
      * ROL Instructions
      */
-    //TODO ROL Instructions
+    public static final byte INS_ROL_ACC    = (byte)0x2A;
+    public static final byte INS_ROL_ZP     = (byte)0x26;
+    public static final byte INS_ROL_ZPX    = (byte)0x36;
+    public static final byte INS_ROL_ABS    = (byte)0x2E;
+    public static final byte INS_ROL_ABX    = (byte)0x3E;
 
     /**
      * ROR Instructions
      */
-    //TODO ROR Instructions
+    public static final byte INS_ROR_ACC    = (byte)0x6A;
+    public static final byte INS_ROR_ZP     = (byte)0x66;
+    public static final byte INS_ROR_ZPX    = (byte)0x76;
+    public static final byte INS_ROR_ABS    = (byte)0x6E;
+    public static final byte INS_ROR_ABX    = (byte)0x7E;
 
     /**
      * RTI Instructions
