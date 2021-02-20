@@ -7,14 +7,16 @@ import com.rosscon.llce.components.cartridges.CartridgeException;
 import com.rosscon.llce.components.cartridges.NES.NESCartridge;
 import com.rosscon.llce.components.cartridges.NES.NESCartridgeFactory;
 import com.rosscon.llce.components.clocks.Clock;
-import com.rosscon.llce.components.clocks.ClockException;
+import com.rosscon.llce.components.clocks.ClockThreaded;
 import com.rosscon.llce.components.clocks.dividers.Divider;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.graphics.NESPPU;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.Computer;
+import javafx.scene.image.PixelWriter;
 
 import java.io.IOException;
 
@@ -108,13 +110,15 @@ public class NES extends Computer {
     private NESCartridge cartridge;
 
 
-    private Clock masterClock;
+    private ClockThreaded masterClock;
     private Divider cpuDivider;
     private Divider ppuDivider;
 
     private MOS6502 cpu;
 
-    public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException {
+    private NESPPU ppu;
+
+    public NES (PixelWriter pixelwriter) throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException {
 
         /*
          * Main bus
@@ -150,58 +154,38 @@ public class NES extends Computer {
          * Setup/Add the cartridge
          */
         Clock clock = new Clock();
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/donkey.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );*/
+        );
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/mario.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
         );*/
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/nestest.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );
+        );*/
 
 
         /*
          * Lastly add the CPU as it will call reset() on start
          */
-        this.masterClock = new Clock();
+        this.masterClock = new ClockThreaded(10);
         this.cpuDivider = new Divider(12, masterClock);
         this.ppuDivider = new Divider(4, masterClock);
 
-        this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, false, 0xC000);
-        //this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
+        //this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true, 0xC000);
+        this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
+        this.ppu = new NESPPU(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, pixelwriter);
 
-        try {
-            //long cycles = 100000000;
-            long cycles = 1000000;
-            long start = System.nanoTime();
-            this.masterClock.tick(cycles);
-            long finish = System.nanoTime();
-            float difference = finish - start;
-            System.out.println(((float) cycles / (difference / 1000000000f)) / 1000000f + "MHz");
-            throw new Exception("FORCE CATCH");
-        } catch (Exception ex){
-            try {
-                System.out.println("\n\n");
-                System.out.println("==========ERROR CODES==========");
-                this.cpuAddressBus.writeDataToBus(new byte[]{0x00, (byte)0x02});
-                rwFlagCpu.setFlagValue(true);
-                System.out.println("0x02 : " + String.format("%02X", this.cpuDataBus.readDataFromBus()[0]));
-                this.cpuAddressBus.writeDataToBus(new byte[]{0x00, (byte)0x03});
-                rwFlagCpu.setFlagValue(true);
-                System.out.println("0x03 : " + String.format("%02X", this.cpuDataBus.readDataFromBus()[0]));
-            } catch (Exception ex2){
-                System.out.println("OOPS");
-            }
-        }
+        Thread thread = new Thread(this.masterClock);
+        thread.start();
 
-        System.out.println("DONE");
+        System.out.println("Started");
     }
 
 }
