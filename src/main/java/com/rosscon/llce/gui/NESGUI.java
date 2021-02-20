@@ -2,10 +2,12 @@ package com.rosscon.llce.gui;
 
 import com.rosscon.llce.computers.nintendo.NES;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 public class NESGUI extends Application {
 
@@ -21,6 +23,13 @@ public class NESGUI extends Application {
         primaryStage.setMaxWidth(1500);
         primaryStage.setWidth(1500);
         primaryStage.show();
+
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent windowEvent) {
+                System.exit(0);
+            }
+        });
 
         NES console = new NES(ImageController.pixelWriter);
     }

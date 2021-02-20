@@ -10,7 +10,7 @@ import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockThreaded;
 import com.rosscon.llce.components.clocks.dividers.Divider;
 import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.graphics.NESPPU;
+import com.rosscon.llce.components.graphics.NES2C02.NES2C02;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502;
@@ -116,7 +116,7 @@ public class NES extends Computer {
 
     private MOS6502 cpu;
 
-    private NESPPU ppu;
+    private NES2C02 ppu;
 
     public NES (PixelWriter pixelwriter) throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException {
 
@@ -180,7 +180,8 @@ public class NES extends Computer {
 
         //this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true, 0xC000);
         this.cpu = new MOS6502(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
-        this.ppu = new NESPPU(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, pixelwriter);
+        this.ppu = new NES2C02(masterClock, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU, pixelwriter);
 
         Thread thread = new Thread(this.masterClock);
         thread.start();
