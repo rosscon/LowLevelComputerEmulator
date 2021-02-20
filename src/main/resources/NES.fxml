@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="1638.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="768.0" prefWidth="1486.0" style="-fx-background-color: white; -fx-max-height: 768; -fx-min-height: 768; -fx-min-width: 1024; -fx-max-width: 1500; -fx-pref-height: 768; -fx-pref-width: 1500;" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.rosscon.llce.gui.ImageController">
+   <children>
+      <AnchorPane id="gameScreen" prefHeight="746.0" prefWidth="798.0" style="-fx-background-color: black; -fx-max-height: 768; -fx-min-height: 768; -fx-max-width: 1024; -fx-min-width: 1024;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <ImageView fx:id="imageView" fitHeight="757.0" fitWidth="1015.0" layoutX="61.0" layoutY="83.0" pickOnBounds="true" smooth="false" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+         </ImageView>
+      </AnchorPane>
+   </children>
+</AnchorPane>
