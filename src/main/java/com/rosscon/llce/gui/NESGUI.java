@@ -2,6 +2,7 @@ package com.rosscon.llce.gui;
 
 import com.rosscon.llce.computers.nintendo.NES;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -32,6 +33,23 @@ public class NESGUI extends Application {
         });
 
         NES console = new NES(ImageController.pixelWriter);
+
+        new Thread(() -> {
+            try {
+                while(true) {
+                    Thread.sleep(10000);
+                    System.out.println("\n");
+                    System.out.println("Used Memory: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1000000.0) + "MB");
+                    System.out.println("Free Memory: " + (Runtime.getRuntime().freeMemory() / 1000000.0) + "MB");
+                    System.out.println("Total Memory: " + (Runtime.getRuntime().totalMemory() / 1000000.0) + "MB");
+
+                    System.gc();
+                }
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     public static void main(String[] args){

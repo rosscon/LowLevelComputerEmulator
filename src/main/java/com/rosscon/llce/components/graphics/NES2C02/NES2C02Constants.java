@@ -11,6 +11,9 @@ public class NES2C02Constants {
     public static final int GRAPHICS_SCALING = 1;
     public static final int WIDTH_VISIBLE_PIXELS = 256;
     public static final int HEIGHT_VISIBLE_SCANLINES = 240;
+    public static final int WIDTH_TOTAL_PIXELS = 320;
+    public static final int HEIGHT_TOTAL_SCANLINES = 261;
+
 
     /**
      * Color palette of the NES only has 0x40 colours

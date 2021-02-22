@@ -76,4 +76,6 @@ public abstract class NESCartridge extends Cartridge {
         this.ppuAddressBus = ppuAddressBus;
         this.ppuDataBus = ppuDataBus;
     }
+
+    public abstract NESNametableMirroring getNametableMapper();
 }

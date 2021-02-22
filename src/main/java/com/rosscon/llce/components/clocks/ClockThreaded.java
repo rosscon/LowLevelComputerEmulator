@@ -20,6 +20,7 @@ public class ClockThreaded extends Clock implements Runnable {
             try {
                 this.tick();
             } catch (ClockException e) {
+                System.out.println("ERRRRRRRR");
                 e.printStackTrace();
             }
         }

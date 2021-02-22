@@ -72,4 +72,13 @@ public class NESCartridge_001 extends NESCartridge {
     public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
         // This is a very simple mapper so relies on the MirroredMapper to handle the onFlagChange
     }
+
+    /**
+     * Gets the nametable mapper mode of the cartridge (Horizontal / Vertical)
+     * @return Nametable
+     */
+    @Override
+    public NESNametableMirroring getNametableMapper() {
+        return mirroring;
+    }
 }

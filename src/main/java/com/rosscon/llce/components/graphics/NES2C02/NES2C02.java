@@ -1,6 +1,6 @@
 package com.rosscon.llce.components.graphics.NES2C02;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagListener;
@@ -8,8 +8,6 @@ import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 import javafx.scene.image.PixelWriter;
-
-import java.util.Random;
 
 public class NES2C02 extends Processor implements FlagListener {
 
@@ -50,8 +48,8 @@ public class NES2C02 extends Processor implements FlagListener {
      * @param ppuRwFlag PPU RW flag
      * @param pixelWriter PixelWriter to display graphics
      */
-    public NES2C02(Clock clock, Bus addressBus, Bus dataBus, Flag cpuRwFlag,
-                   Bus ppuAddressBus, Bus ppuDataBus, Flag ppuRwFlag, PixelWriter pixelWriter){
+    public NES2C02(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag cpuRwFlag,
+                   IntegerBus ppuAddressBus, IntegerBus ppuDataBus, Flag ppuRwFlag, PixelWriter pixelWriter){
         super(clock, addressBus, dataBus, cpuRwFlag);
         this.pixelWriter = pixelWriter;
         this.rwFlag.addListener(this::onFlagChange);
@@ -80,24 +78,21 @@ public class NES2C02 extends Processor implements FlagListener {
 
             int c = NES2C02Constants.PALETTE[(this.y + this.count) % 0x40];
 
-            for (int dx = 0; dx < NES2C02Constants.GRAPHICS_SCALING; dx ++){
-                for (int dy = 0; dy < NES2C02Constants.GRAPHICS_SCALING; dy++){
-                    this.pixelWriter.setArgb(this.x + dx, this.y + dy, c);
-                }
+            if (x < NES2C02Constants.WIDTH_VISIBLE_PIXELS & y < NES2C02Constants.HEIGHT_VISIBLE_SCANLINES) {
+                this.pixelWriter.setArgb(this.x, this.y, c);
             }
 
-            this.x += NES2C02Constants.GRAPHICS_SCALING;
-            if (this.x >= NES2C02Constants.GRAPHICS_SCALING * NES2C02Constants.WIDTH_VISIBLE_PIXELS) {
+            this.x++;
+
+            if (this.x > NES2C02Constants.WIDTH_TOTAL_PIXELS){
                 this.x = 0;
-                this.y += NES2C02Constants.GRAPHICS_SCALING;
+                this.y++;
             }
-            if (this.y >= NES2C02Constants.GRAPHICS_SCALING * NES2C02Constants.HEIGHT_VISIBLE_SCANLINES) {
-                this.y = 0;
-                this.endOfFrame = System.nanoTime();
-                count++;
-                count = count % (0x40 * NES2C02Constants.GRAPHICS_SCALING);
 
-                //System.out.println(((float) 1 / ((this.endOfFrame - this.startOfFrame) / 1000000000f)) + "FPS");
+            if (y > NES2C02Constants.HEIGHT_TOTAL_SCANLINES){
+                y = 0;
+                this.count = (this.count + 1) % 0x40;
+                this.endOfFrame = System.nanoTime();
             }
         }
     }

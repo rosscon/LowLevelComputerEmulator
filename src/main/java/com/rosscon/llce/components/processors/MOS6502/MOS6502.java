@@ -5,7 +5,7 @@ import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
-import com.rosscon.llce.components.processors.IntegerProcessor;
+import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 
 
@@ -19,7 +19,7 @@ import com.rosscon.llce.components.processors.ProcessorException;
  *
  * Emulates the functions of an MOS 6502 processor
  */
-public class MOS6502 extends IntegerProcessor {
+public class MOS6502 extends Processor {
 
     /**
      * Debugging
