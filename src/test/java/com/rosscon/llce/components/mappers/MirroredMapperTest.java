@@ -1,13 +1,12 @@
 package com.rosscon.llce.components.mappers;
 
-
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.mappers.MirroredMapper;
-import com.rosscon.llce.components.memory.MemoryException;
+import com.rosscon.llce.components.flags.FlagException;
 import com.rosscon.llce.components.memory.ReadOnlyMemory;
+import com.rosscon.llce.components.memory.MemoryException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -19,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class MirroredMapperTest {
 
-    Bus addressBus;
-    Bus dataBus;
+    IntegerBus addressBus;
+    IntegerBus dataBus;
     Flag rwFlag;
 
     private Flag rwFlagMapper;
     private ReadOnlyMemory mappedRom;
-    private Bus internalROMAddressBus;
-    private Bus internalROMDataBus;
+    private IntegerBus internalROMAddressBus;
+    private IntegerBus internalROMDataBus;
 
     private MirroredMapper mapper;
 
@@ -36,65 +35,65 @@ public class MirroredMapperTest {
         /*
          * Main bus side of mapper
          */
-        this.addressBus = new Bus(16);
-        this.dataBus = new Bus(8);
+        this.addressBus = new IntegerBus(16);
+        this.dataBus = new IntegerBus(8);
         this.rwFlag = new Flag();
 
         /*
          * Mapper to ROM side
          */
         this.rwFlagMapper = new Flag();
-        this.internalROMAddressBus = new Bus(16);
-        this.internalROMDataBus = new Bus(8);
+        this.internalROMAddressBus = new IntegerBus(16);
+        this.internalROMDataBus = new IntegerBus(8);
 
         /*
          * Test ROM
          */
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
                 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
         };
         this.mappedRom = new ReadOnlyMemory(internalROMAddressBus, internalROMDataBus, rwFlagMapper,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x0F}, data);
+                0x0000, 0x000F, data);
 
         this.mapper = new MirroredMapper(this.addressBus, this.dataBus, this.rwFlag,
-                this.mappedRom, new byte[] {0x00, 0x00},
-                new byte[] { 0x1F, (byte)0xFF}, new byte[] { 0x07, (byte)0xFF});
+                this.mappedRom, 0x0000,
+                0x1FFF, 0x07FF);
     }
 
     @Test
     @DisplayName("Mapper should return what is in ROM when address is in original range")
-    public void TestMapperWorksNonMirroredAddress() throws InvalidBusDataException, MemoryException {
+    public void TestMapperWorksNonMirroredAddress() throws InvalidBusDataException, MemoryException, FlagException {
 
-        addressBus.writeDataToBus(new byte[]{0x00, 0x01});
+        addressBus.writeDataToBus(0x0001);
         rwFlag.setFlagValue(true);
 
-        assertEquals(0x01, dataBus.readDataFromBus()[0]);
+        assertEquals(0x01, dataBus.readDataFromBus());
     }
 
     @Test
     @DisplayName("Mapper should return what is in ROM when address is a mirror location")
-    public void TestMapperWorksMirroredAddress() throws InvalidBusDataException, MemoryException {
+    public void TestMapperWorksMirroredAddress() throws InvalidBusDataException, MemoryException, FlagException {
 
-        addressBus.writeDataToBus(new byte[]{0x08, 0x02});
+        addressBus.writeDataToBus(0x0802);
         rwFlag.setFlagValue(true);
 
-        assertEquals(0x02, dataBus.readDataFromBus()[0]);
+        assertEquals(0x02, dataBus.readDataFromBus());
     }
 
     @Test
     @DisplayName("Mapper should return not respond if the address is outside of its range")
-    public void TestMapperIgnoreOutOfRangeAddress() throws InvalidBusDataException, MemoryException {
+    public void TestMapperIgnoreOutOfRangeAddress() throws InvalidBusDataException, MemoryException, FlagException {
 
         // Need to do an in range one first to populate the data bus with an old value
-        addressBus.writeDataToBus(new byte[]{0x08, 0x02});
+        addressBus.writeDataToBus(0x0802);
         rwFlag.setFlagValue(true);
-        assertEquals(0x02, dataBus.readDataFromBus()[0]);
+        assertEquals(0x02, dataBus.readDataFromBus());
 
         // Now the out of range
-        addressBus.writeDataToBus(new byte[]{0x40, 0x03});
+        addressBus.writeDataToBus(0x4003);
         rwFlag.setFlagValue(true);
-        assertEquals(0x02, dataBus.readDataFromBus()[0]);
+        assertEquals(0x02, dataBus.readDataFromBus());
     }
 
 }

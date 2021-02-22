@@ -1,6 +1,7 @@
 package com.rosscon.llce.components.cartridges.NES;
 
 import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.cartridges.Cartridge;
 import com.rosscon.llce.components.flags.Flag;
 
@@ -16,22 +17,22 @@ public abstract class NESCartridge extends Cartridge {
     /**
      * PPU Address Bus
      */
-    protected Bus ppuAddressBus;
+    protected IntegerBus ppuAddressBus;
 
     /**
      * PPU Data Bus
      */
-    protected Bus ppuDataBus;
+    protected IntegerBus ppuDataBus;
 
     /**
      * First address of PRG ROM
      */
-    protected final byte[] PRG_ROM_START = new byte[]{ (byte)0x80, (byte)0x00};
+    protected final int PRG_ROM_START = 0x8000;
 
     /**
      * Last address of PRG ROM
      */
-    protected final byte[] PRG_ROM_END = new byte[]{ (byte)0xFF, (byte)0xFF};
+    protected final int PRG_ROM_END = 0xFFFF;
 
     /**
      * Maximum (Addressable) size for PRG ROM, May be larger with bank switching
@@ -47,12 +48,12 @@ public abstract class NESCartridge extends Cartridge {
     /**
      * First address of CHR ROM
      */
-    protected final byte[] CHR_ROM_START = new byte[]{ (byte)0x00, (byte)0x00};
+    protected final int CHR_ROM_START = 0x0000;
 
     /**
      * Last address of CHR_ROM
      */
-    protected final byte[] CHR_ROM_END = new byte[]{ (byte)0x01, (byte)0xFF};
+    protected final int CHR_ROM_END = 0x01FF;
 
 
 
@@ -68,8 +69,8 @@ public abstract class NESCartridge extends Cartridge {
      * @param prgRAM Program RAM ad byte array
      * @param chrROM Character ROM
      */
-    public NESCartridge(Bus addressBus, Bus dataBus, Flag rwFlagCPU,
-                        Bus ppuAddressBus, Bus ppuDataBus, Flag rwFlagPPU,
+    public NESCartridge(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlagCPU,
+                        IntegerBus ppuAddressBus, IntegerBus ppuDataBus, Flag rwFlagPPU,
                         byte[] prgROM, byte[] prgRAM, byte[] chrROM) {
         super(addressBus, dataBus, rwFlagCPU);
         this.ppuAddressBus = ppuAddressBus;

@@ -1,137 +1,74 @@
 package com.rosscon.llce.components.memory;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.utils.ByteArrayUtils;
-import com.rosscon.llce.utils.ByteArrayWrapper;
 
-import java.util.*;
-
-/**
- * Emulate behaviour of read only memory
- */
 public class ReadOnlyMemory extends Memory {
 
-    /**
-     * Error message when provided data does not match address size
-     */
-    private final String DATA_SIZE_ADDRESS_MISMATCH =
-        "Size of supplied data does not match the address range provided";
-
 
     /**
-     * Error message when bus size does not match the provided data
-     */
-    private final String BUS_SIZE_MISMATCH =
-            "Size of supplied data does not match the address range provided";
-
-
-
-    /**
-     * Instantiate read only memory with empty contents
+     * Construct Read Only Memory that is empty and fills the full address range
      * @param addressBus address bus to attach to
      * @param dataBus data bus to attach to
-     * @param rwFlag flag to listen to R/W status and indicate when to write data to data bus
+     * @param rwFlag R/W flag to attach to
+     * @throws MemoryException Thrown when any bus of flag is null
      */
-    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag) {
+    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag) throws MemoryException {
         super(addressBus, dataBus, rwFlag);
     }
 
-
     /**
-     * Instantiate read only memory with some initial data that is pre-mapped to memory locations
+     * Construct Read Only Memory that is empty for a given address range
      * @param addressBus address bus to attach to
      * @param dataBus data bus to attach to
-     * @param rwFlag flag to listen to R/W status and indicate when to write data to data bus
-     * @param init initial memory mapping
+     * @param rwFlag R/W flag to attach to
+     * @param startAddress address of the first value in memory
+     * @param lastAddress address of the last value in memory
+     * @throws MemoryException Thrown when any bus of flag is null or an invalid address range provided
      */
-    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag, Map<ByteArrayWrapper, byte[]> init) throws MemoryException {
-        super(addressBus, dataBus, rwFlag);
-
-        this.start = Long.MAX_VALUE;
-        long end = Long.MIN_VALUE;
-
-        for (ByteArrayWrapper key : init.keySet()) {
-
-            if (key.getData().length != addressBus.readDataFromBus().length)
-                throw new MemoryException(this.BUS_SIZE_MISMATCH);
-
-            long address = ByteArrayUtils.byteArrayToLong(key.getData());
-            this.start = Math.min(address, start);
-            end = Math.max(address, end);
-        }
-
-        int size = (int) ((end - start) + 1);
-        this.contentsArr = new byte[size][dataBus.readDataFromBus().length];
-
-        for (Map.Entry<ByteArrayWrapper, byte[]> entry : init.entrySet()) {
-            long address = ByteArrayUtils.byteArrayToLong(entry.getKey().getData());
-            address -= start;
-            this.contentsArr[(int)address] = entry.getValue();
-        }
+    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag,
+                          int startAddress, int lastAddress) throws MemoryException {
+        super(addressBus, dataBus, rwFlag, startAddress, lastAddress);
     }
 
     /**
-     * Instantiate read only memory with initial data based on start and end addresses inclusive.
-     * For areas outside of the address range instantiate the contents with zeros.
-     * If data is larger than the address range then throws an exception.
+     * Construct Read Only Memory with predefined contents
      * @param addressBus address bus to attach to
      * @param dataBus data bus to attach to
-     * @param rwFlag flag to listen to R/W status and indicate when to write data to data bus
-     * @param startAddress address of beginning of memory
-     * @param endAddress address of last memory location
-     * @param data data to write to memory.
+     * @param rwFlag R/W flag to attach to
+     * @param startAddress address of the first value in memory
+     * @param lastAddress address of the last value in memory
+     * @param contents predefined contents of the Read Only Memory
+     * @throws MemoryException Thrown when any bus of flag is null, or an invalid address range provided, or provided data size mismatches address range
      */
-    public ReadOnlyMemory(Bus addressBus, Bus dataBus, Flag rwFlag,
-                          byte[] startAddress, byte[] endAddress, byte[] data) throws MemoryException {
-        super(addressBus, dataBus, rwFlag);
+    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag,
+                          int startAddress, int lastAddress, int[] contents) throws MemoryException {
+        super(addressBus, dataBus, rwFlag, startAddress, lastAddress);
 
-        // Change to storing into a normal array
-        this.start = ByteArrayUtils.byteArrayToLong(startAddress);
-        long end = ByteArrayUtils.byteArrayToLong(endAddress);
-        int size = (int) ((end - start) + 1);
+        if (contents.length > (lastAddress - startAddress + 1))
+            throw new MemoryException(ReadOnlyMemoryConstants.EX_PROVIDED_DATA_TOO_LARGE);
 
-        int dataByteWidth = dataBus.readDataFromBus().length;
-        this.contentsArr = new byte[size][dataBus.readDataFromBus().length];
+        if (contents.length < (lastAddress - startAddress))
+            throw new MemoryException(ReadOnlyMemoryConstants.EX_PROVIDED_DATA_TOO_SMALL);
 
-        if (size * dataByteWidth != data.length) {
-            throw new MemoryException(this.BUS_SIZE_MISMATCH);
-        }
-
-        for (int i = 0; i < size; i++){
-            byte[] tmp = new byte[dataByteWidth];
-            for (int j = 0; j < dataByteWidth; j++){
-                int dataIndex = (i * dataByteWidth) + j;
-                tmp[j] = data[dataIndex];
-                this.contentsArr[i] = tmp;
-            }
-        }
+        this.contents = contents;
     }
 
     /**
-     * On notify of flag change write to data bus if flag is set to high and has valid address on address bus
-     * @param newValue flag value
-     * @param flag which flag fired the event
-     * @throws MemoryException might throw memory exception if error with busses
+     * Read only memory will only respond to read flags, write flags are ignored
+     * @param newValue new value of RW flag
+     * @param flag flag that fired event
+     * @throws MemoryException thrown when error reading memory
+     * @throws InvalidBusDataException thrown by bus
      */
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
+    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException, InvalidBusDataException {
 
         // On R/W flag being set to true write contents at address on address bus to data bus if within range
-        if (flag == rwFlag && newValue){
-
-            long address = ByteArrayUtils.byteArrayToLong(this.addressBus.readDataFromBus());
-
-            if (address >= this.start && address < this.start + contentsArr.length){
-                address -= start;
-                try {
-                    this.dataBus.writeDataToBus(this.contentsArr[(int) address]);
-                } catch (InvalidBusDataException ex) {
-                    throw new MemoryException(ex.getMessage());
-                }
-            }
+        if (flag == this.rwFlag && newValue){
+            int address = this.addressBus.readDataFromBus();
+            if (addressIsInRange(address)) this.dataBus.writeDataToBus(readValueFromAddress(address));
         }
-
     }
 }

@@ -6,6 +6,13 @@ package com.rosscon.llce.components.graphics.NES2C02;
 public class NES2C02Constants {
 
     /**
+     * Drawing to Screen
+     */
+    public static final int GRAPHICS_SCALING = 1;
+    public static final int WIDTH_VISIBLE_PIXELS = 256;
+    public static final int HEIGHT_VISIBLE_SCANLINES = 240;
+
+    /**
      * Color palette of the NES only has 0x40 colours
      * available 0x00 to 3f inclusive. these have been
      * converted to ARGB values using a spreadsheet

@@ -28,4 +28,12 @@ public class MOS6502Constants {
     public static final int  VECTOR_RESET     = 0xFFFC;
     public static final int  VECTOR_IRQ_BRK   = 0xFFFE;
 
+
+    /**
+     * Masks
+     */
+    public static final int MASK_LAST_BYTE  = 0x000000FF;
+    public static final int MASK_NEGATIVE   = 0x00000080;
+    public static final int MASK_OVERFLOWED = 0xFFFFFF00;
+
 }

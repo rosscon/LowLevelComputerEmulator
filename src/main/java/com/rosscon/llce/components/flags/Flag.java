@@ -48,11 +48,17 @@ public class Flag {
      * Sets the flag value
      * @param flagValue value to set flag to
      */
-    public void setFlagValue (boolean flagValue) throws MemoryException {
+    public void setFlagValue (boolean flagValue) throws FlagException {
         this.flagValue = flagValue;
 
         for (FlagListener fl : listeners){
-            fl.onFlagChange(flagValue == true, this);
+            try {
+                fl.onFlagChange(flagValue == true, this);
+            } catch (Exception ex){
+                FlagException fx = new FlagException(ex.getMessage());
+                fx.addSuppressed(ex);
+                throw fx;
+            }
         }
     }
 

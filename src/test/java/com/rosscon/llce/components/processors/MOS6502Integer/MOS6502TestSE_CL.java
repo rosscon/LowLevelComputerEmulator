@@ -1,24 +1,21 @@
-package com.rosscon.llce.components.processors.MOS6502;
+package com.rosscon.llce.components.processors.MOS6502Integer;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.memory.ReadOnlyMemory;
-import com.rosscon.llce.components.processors.MOS6502.MOS6502;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502Flags;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502Instructions;
+import com.rosscon.llce.components.processors.MOS6502.MOS6502;
 import com.rosscon.llce.components.processors.ProcessorException;
-import com.rosscon.llce.utils.ByteArrayWrapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -28,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  */
 public class MOS6502TestSE_CL {
 
-    Bus addressBus;
-    Bus dataBus;
+    IntegerBus addressBus;
+    IntegerBus dataBus;
     Flag rwFlag;
     Clock clock;
     MOS6502 cpu;
@@ -38,33 +35,27 @@ public class MOS6502TestSE_CL {
     @Before
     public void reset() throws InvalidBusWidthException, MemoryException, ProcessorException {
 
-        addressBus = new Bus(16);
-        dataBus = new Bus(8);
+        addressBus = new IntegerBus(16);
+        dataBus = new IntegerBus(8);
         rwFlag = new Flag();
         clock = new Clock();
 
-        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
-            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
-                    new byte[]{ 0x00 });
-            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
-                    new byte[]{ 0x00 });
-        }};
-
-        bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
+        bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0xFFFC, 0xFFFD, new int[]{0, 0});
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, true);
     }
 
     @Test
     @DisplayName("SEC and CLC")
     public void testSECandCLC() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_SEC_IMP,
                 MOS6502Instructions.INS_CLC_IMP
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         Assertions.assertEquals((cpu.getRegStatus() & MOS6502Flags.CARRY_FLAG), MOS6502Flags.CARRY_FLAG);
@@ -76,13 +67,13 @@ public class MOS6502TestSE_CL {
     @DisplayName("SED and CLD")
     public void testSEDandCLD() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_SED_IMP,
                 MOS6502Instructions.INS_CLD_IMP
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals((cpu.getRegStatus() & MOS6502Flags.DECIMAL_MODE), MOS6502Flags.DECIMAL_MODE);
@@ -94,13 +85,13 @@ public class MOS6502TestSE_CL {
     @DisplayName("SEI and CLI")
     public void testSEIandCLI() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_SEI_IMP,
                 MOS6502Instructions.INS_CLI_IMP
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals((cpu.getRegStatus() & MOS6502Flags.INTERRUPT_DIS), MOS6502Flags.INTERRUPT_DIS);
@@ -112,14 +103,14 @@ public class MOS6502TestSE_CL {
     @DisplayName("CLV")
     public void testCLV() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_ADC_IMM, 0x40,
                 MOS6502Instructions.INS_ADC_IMM, 0x40,
                 MOS6502Instructions.INS_CLV_IMP,
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x04}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0004, data);
 
         clock.tick(4);
         assertEquals((cpu.getRegStatus() & MOS6502Flags.OVERFLOW_FLAG), MOS6502Flags.OVERFLOW_FLAG);

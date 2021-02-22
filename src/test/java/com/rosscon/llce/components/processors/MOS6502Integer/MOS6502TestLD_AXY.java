@@ -1,24 +1,22 @@
-package com.rosscon.llce.components.processors.MOS6502;
+package com.rosscon.llce.components.processors.MOS6502Integer;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.memory.MemoryException;
+import com.rosscon.llce.components.memory.RandomAccessMemory;
 import com.rosscon.llce.components.memory.ReadOnlyMemory;
-import com.rosscon.llce.components.processors.MOS6502.MOS6502;
+import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502Flags;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502Instructions;
+import com.rosscon.llce.components.processors.MOS6502.MOS6502;
 import com.rosscon.llce.components.processors.ProcessorException;
-import com.rosscon.llce.utils.ByteArrayWrapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -28,42 +26,41 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MOS6502TestLD_AXY {
 
-    Bus addressBus;
-    Bus dataBus;
+    IntegerBus addressBus;
+    IntegerBus dataBus;
     Flag rwFlag;
     Clock clock;
     MOS6502 cpu;
     ReadOnlyMemory bootRom;
+    RandomAccessMemory randomAccessMemory;
 
     @Before
     public void reset() throws InvalidBusWidthException, MemoryException, ProcessorException {
 
-        addressBus = new Bus(16);
-        dataBus = new Bus(8);
+        addressBus = new IntegerBus(16);
+        dataBus = new IntegerBus(8);
         rwFlag = new Flag();
         clock = new Clock();
 
-        Map<ByteArrayWrapper, byte[]> initROM = new HashMap<>(){{
-            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFC }),
-                    new byte[]{ 0x00 });
-            put(new ByteArrayWrapper(new byte[]{ (byte)0xFF, (byte) 0xFD }),
-                    new byte[]{ 0x00 });
-        }};
+        bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0xFFFC, 0xFFFD, new int[]{0, 0});
 
-        bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag, initROM);
-        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag);
+        randomAccessMemory = new RandomAccessMemory(addressBus, dataBus,rwFlag,
+                0x0010, 0x00FF);
+
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, true);
     }
 
     @Test
     @DisplayName("LDA Immediate Mode should load the next memory value into the accumulator")
     public void testLDAImmediate() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_LDA_IMM, 0x42
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals(0x42, cpu.getRegACC());
@@ -73,12 +70,12 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDA Immediate Mode should set the ZERO flag when writing a zero")
     public void testLDAImmediateZeroFlag() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_LDA_IMM, 0x00
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals(0x00, cpu.getRegACC());
@@ -89,15 +86,15 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDA Immediate Mode should set the NEGATIVE flag when writing a zero")
     public void testLDAImmediateNegFlag() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
-                MOS6502Instructions.INS_LDA_IMM, (byte)0xFF
+        int[] data = new int[]{
+                MOS6502Instructions.INS_LDA_IMM, 0xFF
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
-        assertEquals((byte)0xFF, cpu.getRegACC());
+        assertEquals(0xFF, cpu.getRegACC());
         assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 
@@ -105,12 +102,12 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDX Immediate Mode should load the next memory value into the accumulator")
     public void testLDXImmediate() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_LDX_IMM, 0x42
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals(0x42, cpu.getRegX());
@@ -120,12 +117,12 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDX Immediate Mode should set the ZERO flag when writing a zero")
     public void testLDXImmediateZeroFlag() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_LDX_IMM, 0x00
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals(0x00, cpu.getRegX());
@@ -136,15 +133,15 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDA Immediate Mode should set the NEGATIVE flag when writing a zero")
     public void testLDXImmediateNegFlag() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
-                MOS6502Instructions.INS_LDX_IMM, (byte)0xFF
+        int[] data = new int[]{
+                MOS6502Instructions.INS_LDX_IMM, 0xFF
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
-        assertEquals((byte)0xFF, cpu.getRegX());
+        assertEquals(0xFF, cpu.getRegX());
         assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 
@@ -152,12 +149,12 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDY Immediate Mode should load the next memory value into the accumulator")
     public void testLDYImmediate() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_LDY_IMM, 0x42
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals(0x42, cpu.getRegY());
@@ -167,12 +164,12 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDY Immediate Mode should set the ZERO flag when writing a zero")
     public void testLDYImmediateZeroFlag() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
+        int[] data = new int[]{
                 MOS6502Instructions.INS_LDY_IMM, 0x00
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
         assertEquals(0x00, cpu.getRegY());
@@ -183,15 +180,15 @@ public class MOS6502TestLD_AXY {
     @DisplayName("LDA Immediate Mode should set the NEGATIVE flag when writing a zero")
     public void testLDYImmediateNegFlag() throws MemoryException, ClockException {
 
-        byte[] data = new byte[]{
-                MOS6502Instructions.INS_LDY_IMM, (byte)0xFF
+        int[] data = new int[]{
+                MOS6502Instructions.INS_LDY_IMM, 0xFF
         };
 
-        ReadOnlyMemory testADCRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
-                new byte[]{0x00, 0x00}, new byte[]{0x00, 0x01}, data);
+        ReadOnlyMemory testRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
+                0x0000, 0x0001, data);
 
         clock.tick(2);
-        assertEquals((byte)0xFF, cpu.getRegY());
+        assertEquals(0xFF, cpu.getRegY());
         assertEquals(MOS6502Flags.NEGATIVE_FLAG, (cpu.getRegStatus() & MOS6502Flags.NEGATIVE_FLAG));
     }
 }

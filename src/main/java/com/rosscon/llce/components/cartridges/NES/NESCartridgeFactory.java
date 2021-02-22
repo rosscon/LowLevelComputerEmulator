@@ -1,7 +1,6 @@
 package com.rosscon.llce.components.cartridges.NES;
 
-import com.rosscon.llce.components.busses.Bus;
-import com.rosscon.llce.components.cartridges.Cartridge;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.cartridges.CartridgeException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.utils.ByteUtils;
@@ -149,8 +148,8 @@ public class NESCartridgeFactory {
 
     public static NESCartridge cartridgeFromINESFile (
             String filename,
-            Bus cpuAddressBus, Bus cpuDataBus, Flag rwFlagCPU,
-            Bus ppuAddressBus, Bus ppuDataBus, Flag rwFlagPPU
+            IntegerBus cpuAddressBus, IntegerBus cpuDataBus, Flag rwFlagCPU,
+            IntegerBus ppuAddressBus, IntegerBus ppuDataBus, Flag rwFlagPPU
     ) throws IOException, CartridgeException {
 
         byte[] array = Files.readAllBytes(Paths.get(filename));

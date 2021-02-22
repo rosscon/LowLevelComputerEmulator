@@ -1,8 +1,10 @@
 package com.rosscon.llce;
 
+import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.cartridges.CartridgeException;
 import com.rosscon.llce.components.clocks.ClockException;
+import com.rosscon.llce.components.flags.FlagException;
 import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.nintendo.NES;
@@ -12,7 +14,7 @@ import java.io.IOException;
 
 public class Main {
 
-    public static void main(String[] args) throws InvalidBusWidthException, MemoryException, ClockException, ProcessorException, IOException, CartridgeException {
+    public static void main(String[] args) throws InvalidBusWidthException, MemoryException, ClockException, ProcessorException, IOException, CartridgeException, FlagException, InvalidBusDataException {
 
 
         byte a = (byte) 0xFE;

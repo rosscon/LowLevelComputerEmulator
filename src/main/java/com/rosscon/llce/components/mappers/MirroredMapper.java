@@ -1,27 +1,23 @@
 package com.rosscon.llce.components.mappers;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.FlagException;
 import com.rosscon.llce.components.memory.Memory;
-import com.rosscon.llce.components.memory.MemoryException;
-import com.rosscon.llce.utils.ByteArrayUtils;
 
-/**
- * A simple mirrored mapper to mirror addresses in memory.
- * Simple uses a bit mask to determine new address.
- */
 public class MirroredMapper extends Mapper {
 
     /**
      * Memory to be mirrored
      */
-    Memory memory;
+    protected Memory memory;
 
     /**
      * Mask to AND with requested address in order to address the memory.
      */
-    private long mask;
+    private int mask;
+
 
     /**
      * A mirrored mapper, Works by using a bitmask to determine the true memory address
@@ -33,57 +29,69 @@ public class MirroredMapper extends Mapper {
      * @param mapperHigh Highest address for the mapper
      * @param mask Mask used to determine the mirrored address.
      */
-    public MirroredMapper(Bus addressBus, Bus dataBus, Flag rwFlag, Memory memory,
-                          byte[] mapperLow, byte[] mapperHigh, byte[] mask) {
+    public MirroredMapper(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag,
+                          Memory memory, int mapperLow, int mapperHigh, int mask) {
         super(addressBus, dataBus, rwFlag);
         this.memory = memory;
 
-        this.mask = ByteArrayUtils.byteArrayToLong(mask);
+        this.mask = mask;
 
-        this.start = ByteArrayUtils.byteArrayToLong(mapperLow);
-        this.end = ByteArrayUtils.byteArrayToLong(mapperHigh);
+        this.firstAddress = mapperLow;
+        this.lastAddress  = mapperHigh;
 
     }
 
+
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
+    public void onFlagChange(boolean newValue, Flag flag) throws MapperException {
 
-        if (flag == rwFlag) {
+        if (flag == rwFlag){
+            int address = this.addressBus.readDataFromBus();
 
-            long address = ByteArrayUtils.byteArrayToLong(this.addressBus.readDataFromBus());
+            if (address >= this.firstAddress && address <= this.lastAddress){
 
-            if (address >= this.start && address <= this.end){
-                long maskedAddress = address & this.mask;
+                int maskedAddress = address & this.mask;
 
                 try {
-                    this.memory.getAddressBus().writeDataToBus(
-                            ByteArrayUtils.longToByteArray(maskedAddress, this.addressBus.readDataFromBus().length)
-                    );
-                } catch (InvalidBusDataException ex) {
-                    throw new MemoryException(ex.getMessage());
+                    this.memory.getAddressBus().writeDataToBus(maskedAddress);
+                } catch (InvalidBusDataException ex){
+                    MapperException me = new MapperException(MirroredMapperConstants.EX_INVALID_ADDRESS);
+                    me.addSuppressed(ex);
+                    throw me;
                 }
 
-                // If received flag is false (WRITE) transfer incoming data bus value
+                // If the new flag == false (write) then transfer the incoming data bus value
                 if (!newValue) {
                     try {
                         this.memory.getDataBus().writeDataToBus(this.dataBus.readDataFromBus());
                     } catch (InvalidBusDataException ex) {
-                        throw new MemoryException(ex.getMessage());
+                        MapperException me = new MapperException(MirroredMapperConstants.EX_INVALID_DATA);
+                        me.addSuppressed(ex);
+                        throw me;
                     }
                 }
 
-                this.memory.getRwFlag().setFlagValue(newValue);
+                try {
+                    this.memory.getRwFlag().setFlagValue(newValue);
+                } catch (FlagException ex){
+                    MapperException me = new MapperException(ex.getMessage());
+                    me.addSuppressed(ex);
+                    throw me;
+                }
 
+                // If the new flag == true (read) then transfer the read data back
                 if (newValue){
                     try {
                         this.dataBus.writeDataToBus(this.memory.getDataBus().readDataFromBus());
                     }
                     catch (InvalidBusDataException ex) {
-                        throw new MemoryException(ex.getMessage());
+                        MapperException me = new MapperException(MirroredMapperConstants.EX_INVALID_DATA);
+                        me.addSuppressed(ex);
+                        throw me;
                     }
                 }
+
             }
         }
-
     }
 }

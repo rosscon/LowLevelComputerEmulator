@@ -1,6 +1,6 @@
 package com.rosscon.llce.components.mappers;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.memory.Memory;
 import com.rosscon.llce.components.memory.MemoryException;
@@ -15,7 +15,7 @@ public class BankSwitchMapper extends Mapper {
      */
     private Memory[] banks;
 
-    public BankSwitchMapper(Bus addressBus, Bus dataBus, Flag rwFlag, Memory[] banks) {
+    public BankSwitchMapper(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, Memory[] banks) {
         super(addressBus, dataBus, rwFlag);
         this.banks = banks;
         //TODO establish a new bus between banks and this mapper

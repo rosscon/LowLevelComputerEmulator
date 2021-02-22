@@ -1,66 +1,54 @@
 package com.rosscon.llce.components.memory;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.utils.ByteArrayUtils;
-import com.rosscon.llce.utils.ByteArrayWrapper;
 
-import java.util.Arrays;
-
-/**
- * Emulate behaviour of random access memory
- */
 public class RandomAccessMemory extends Memory {
 
-
     /**
-     * Constructor for Random Access Memory
-     * @param addressBus Address Bus
-     * @param dataBus Data Bus
-     * @param rwFlag Read Write Flag
-     * @param startAddress First address of memory
-     * @param endAddress Last address of memory
+     * Default constructor creates Random Access Memory with the maximum possible range
+     * that can be addressed by the attached address bus starting from address 0x00000000
+     * @param addressBus Address Bus to attach to
+     * @param dataBus Data bus to attach to
+     * @param rwFlag RW Flag to attach to
+     * @throws MemoryException Thrown when any bus of flag is null
      */
-    public RandomAccessMemory(Bus addressBus, Bus dataBus, Flag rwFlag, byte[] startAddress, byte[] endAddress){
+    public RandomAccessMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag) throws MemoryException {
         super(addressBus, dataBus, rwFlag);
-
-        this.start = ByteArrayUtils.byteArrayToLong(startAddress);
-        long end = ByteArrayUtils.byteArrayToLong(endAddress);
-        int size = (int) ((end - start) + 1);
-        int dataByteWidth = dataBus.readDataFromBus().length;
-        this.contentsArr = new byte[size][dataByteWidth];
     }
 
+    /**
+     * Creates Random Access Memory with a start and end address
+     * @param addressBus Address Bus to attach to
+     * @param dataBus Data bus to attach to
+     * @param rwFlag RW Flag to attach to
+     * @param startAddress Address of the first value in memory
+     * @param lastAddress Address of the last value in memory
+     * @throws MemoryException Thrown when any bus of flag is null or an invalid address range provided
+     */
+    public RandomAccessMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, int startAddress, int lastAddress) throws MemoryException {
+        super(addressBus, dataBus, rwFlag, startAddress, lastAddress);
+    }
 
     /**
-     *
-     * @param newValue new flag value
-     * @param flag flag that fired the event
-     * @throws MemoryException can throw a memory exception if there are issues with the busses
+     * Random Access Memory can be read from and written to by setting the RW flag
+     * @param newValue new value of RW flag
+     * @param flag flag that fired event
+     * @throws MemoryException thrown when error reading memory
+     * @throws InvalidBusDataException thrown by bus
      */
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
-
+    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException, InvalidBusDataException {
         if (flag == rwFlag) {
-
-            long address = ByteArrayUtils.byteArrayToLong(this.addressBus.readDataFromBus());
-
-            if (address >= this.start && address < this.start + contentsArr.length){
-                address -= start;
-
-                if (newValue) {
-                    try {
-                        this.dataBus.writeDataToBus(this.contentsArr[(int) address]);
-                    } catch (InvalidBusDataException ex) {
-                        throw new MemoryException(ex.getMessage());
-                    }
+            int address = this.addressBus.readDataFromBus();
+            if (addressIsInRange(address)){
+                if (newValue){
+                    this.dataBus.writeDataToBus(readValueFromAddress(address));
                 } else {
-                    this.contentsArr[(int)address] = this.dataBus.readDataFromBus();
+                    writeValueToAddress(address, this.dataBus.readDataFromBus());
                 }
             }
-
         }
-
     }
 }

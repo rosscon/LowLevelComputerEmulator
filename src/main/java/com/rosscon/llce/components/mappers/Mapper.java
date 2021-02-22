@@ -1,23 +1,20 @@
 package com.rosscon.llce.components.mappers;
 
-import com.rosscon.llce.components.busses.Bus;
+import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagListener;
 
-/**
- * Generic mapper class
- */
 public abstract class Mapper implements FlagListener {
 
     /**
      * Address Bus
      */
-    protected Bus addressBus;
+    protected IntegerBus addressBus;
 
     /**
      * Data Bus
      */
-    protected Bus dataBus;
+    protected IntegerBus dataBus;
 
     /**
      * Read Write Flag
@@ -27,14 +24,14 @@ public abstract class Mapper implements FlagListener {
     /**
      * First address mapper can respond to
      */
-    protected long start;
+    protected int firstAddress;
 
     /**
      * Last address mapper can respond to
      */
-    protected long end;
+    protected long lastAddress;
 
-    public Mapper(Bus addressBus, Bus dataBus, Flag rwFlag){
+    public Mapper(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag){
         this.addressBus = addressBus;
         this.dataBus = dataBus;
         this.rwFlag = rwFlag;
