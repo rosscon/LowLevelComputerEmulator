@@ -11,11 +11,14 @@ import javafx.scene.image.PixelWriter;
 
 public class NES2C02 extends Processor implements FlagListener {
 
-    private PixelWriter pixelWriter;
+    public static PixelWriter pixelWriter;
 
     int x = 0;
     int y = 0;
     int count = 0;
+
+    private int[] screenBufferOdd;
+    private int[] screenBufferEven;
 
     /**
      * used for calculating the current framerate
@@ -46,12 +49,11 @@ public class NES2C02 extends Processor implements FlagListener {
      * @param ppuAddressBus PPU address bus
      * @param ppuDataBus PPU data bus
      * @param ppuRwFlag PPU RW flag
-     * @param pixelWriter PixelWriter to display graphics
      */
     public NES2C02(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag cpuRwFlag,
-                   IntegerBus ppuAddressBus, IntegerBus ppuDataBus, Flag ppuRwFlag, PixelWriter pixelWriter){
+                   IntegerBus ppuAddressBus, IntegerBus ppuDataBus, Flag ppuRwFlag){
         super(clock, addressBus, dataBus, cpuRwFlag);
-        this.pixelWriter = pixelWriter;
+        //this.pixelWriter = pixelWriter;
         this.rwFlag.addListener(this::onFlagChange);
         reset();
     }
@@ -64,36 +66,61 @@ public class NES2C02 extends Processor implements FlagListener {
         this.regPPUSCROLL   = 0;
         this.regPPUADDR     = 0;
         this.regOddFrame    = false;
+
+        this.screenBufferOdd = new int[NES2C02Constants.WIDTH_VISIBLE_PIXELS * NES2C02Constants.HEIGHT_VISIBLE_SCANLINES];
+        this.screenBufferEven = new int[NES2C02Constants.WIDTH_VISIBLE_PIXELS * NES2C02Constants.HEIGHT_VISIBLE_SCANLINES];
+    }
+
+    /**
+     * Used to keep graphics thread separate. Can also do rudimentary double
+     * buffering by holding two arrays
+     * @return int[] of pixel values
+     */
+    public int[] getScreenBuffer(){
+
+        int[] returnBuffer = new int[screenBufferEven.length];
+
+        if (regOddFrame){
+            synchronized (screenBufferEven){
+                System.arraycopy(this.screenBufferEven, 0, returnBuffer, 0, screenBufferEven.length);
+            }
+        } else {
+            synchronized (screenBufferOdd){
+                System.arraycopy(this.screenBufferOdd, 0, returnBuffer, 0, screenBufferOdd.length);
+            }
+        }
+
+        return returnBuffer;
     }
 
     @Override
     public void onTick() throws ProcessorException {
 
+        if (this.x == 0 && this.y == 0) {
+            this.startOfFrame = System.nanoTime();
+        }
 
-        // Null PPU behaviour just draws colours to the pixel writer
-        if (this.pixelWriter != null) {
-            if (this.x == 0 && this.y == 0) {
-                this.startOfFrame = System.nanoTime();
-            }
+        int c = NES2C02Constants.PALETTE[(this.y + this.count) % 0x40];
 
-            int c = NES2C02Constants.PALETTE[(this.y + this.count) % 0x40];
+        if (x < NES2C02Constants.WIDTH_VISIBLE_PIXELS & y < NES2C02Constants.HEIGHT_VISIBLE_SCANLINES) {
+            if (regOddFrame)
+                this.screenBufferOdd[(y * NES2C02Constants.WIDTH_VISIBLE_PIXELS) + x] = c;
+            else
+                this.screenBufferEven[(y * NES2C02Constants.WIDTH_VISIBLE_PIXELS) + x] = c;
+        }
 
-            if (x < NES2C02Constants.WIDTH_VISIBLE_PIXELS & y < NES2C02Constants.HEIGHT_VISIBLE_SCANLINES) {
-                this.pixelWriter.setArgb(this.x, this.y, c);
-            }
+        this.x++;
 
-            this.x++;
+        if (this.x > NES2C02Constants.WIDTH_TOTAL_PIXELS){
+            this.x = 0;
+            this.y++;
+        }
 
-            if (this.x > NES2C02Constants.WIDTH_TOTAL_PIXELS){
-                this.x = 0;
-                this.y++;
-            }
-
-            if (y > NES2C02Constants.HEIGHT_TOTAL_SCANLINES){
-                y = 0;
-                this.count = (this.count + 1) % 0x40;
-                this.endOfFrame = System.nanoTime();
-            }
+        if (y > NES2C02Constants.HEIGHT_TOTAL_SCANLINES){
+            y = 0;
+            this.count = (this.count + 1) % 0x40;
+            this.endOfFrame = System.nanoTime();
+            this.regOddFrame = !this.regOddFrame;
         }
     }
 

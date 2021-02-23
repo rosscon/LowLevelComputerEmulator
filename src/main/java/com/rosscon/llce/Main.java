@@ -24,7 +24,7 @@ public class Main {
         int b2 = ByteUtils.byteToIntUnsigned(b);
 
 
-        NES console = new NES(null);
+        NES console = new NES();
 
 /*
         // Test 6502

@@ -71,5 +71,7 @@
     <orderEntry type="library" name="Maven: org.bouncycastle:bcprov-jdk16:1.46" level="project" />
     <orderEntry type="library" name="Maven: org.openjfx:javafx-fxml:15" level="project" />
     <orderEntry type="library" name="Maven: org.openjfx:javafx-fxml:mac:15" level="project" />
+    <orderEntry type="library" name="Maven: org.lwjgl:lwjgl-opengl:3.2.3" level="project" />
+    <orderEntry type="library" name="Maven: org.lwjgl:lwjgl:3.2.3" level="project" />
   </component>
 </module>

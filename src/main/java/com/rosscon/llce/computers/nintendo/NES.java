@@ -132,7 +132,7 @@ public class NES extends Computer {
 
     private NES2C02 ppu;
 
-    public NES (PixelWriter pixelwriter) throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException, MemoryException, InvalidBusDataException, FlagException {
+    public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException, MemoryException, InvalidBusDataException, FlagException {
 
         /*
          * Main bus
@@ -196,7 +196,7 @@ public class NES extends Computer {
         this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, false, 0xC000);
 
         this.ppu = new NES2C02(ppuDivider, cpuAddressBus, cpuDataBus, rwFlagCpu,
-                ppuAddressBus, ppuDataBus, rwFlagPPU, pixelwriter);
+                ppuAddressBus, ppuDataBus, rwFlagPPU);
 
         /*
          * Cheating a bit with the nametable memory and assigning all 4KB,
@@ -250,6 +250,10 @@ public class NES extends Computer {
         thread.start();
 
         System.out.println("Clock Started");
+    }
+
+    public int[] getScreenBuffer(){
+        return this.ppu.getScreenBuffer();
     }
 
 }

@@ -32,7 +32,7 @@ public class NESGUI extends Application {
             }
         });
 
-        NES console = new NES(ImageController.pixelWriter);
+        //NES console = new NES();
 
         new Thread(() -> {
             try {
