@@ -25,6 +25,7 @@ public class MOS6502TestBRK {
     IntegerBus addressBus;
     IntegerBus dataBus;
     Flag rwFlag;
+    Flag nmiFlag;
     Clock clock;
     MOS6502 cpu;
     ReadOnlyMemory bootRom;
@@ -35,11 +36,12 @@ public class MOS6502TestBRK {
         addressBus = new IntegerBus(16);
         dataBus = new IntegerBus(8);
         rwFlag = new Flag();
+        nmiFlag = new Flag();
         clock = new Clock();
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
                 0xFFFC, 0xFFFF, new int[]{0, 0, 0x34, 0x12});
-        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, true);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, nmiFlag, true);
     }
 
     @Test
@@ -50,7 +52,7 @@ public class MOS6502TestBRK {
                 0x0000, 0x00001, new int[]{MOS6502Instructions.INS_BRK_IMP , 0x000});
 
         clock.tick(7);
-        Assertions.assertEquals(MOS6502Flags.BREAK_COMMAND, (byte)(cpu.getRegSP() & MOS6502Flags.BREAK_COMMAND));
-        assertEquals(0x1234, cpu.getRegPC());
+        assertEquals(MOS6502Flags.BREAK_COMMAND, (byte)(cpu.getRegSP() & MOS6502Flags.BREAK_COMMAND));
+        assertEquals(0x1234, (cpu.getRegPC() & 0xFFFF));
     }
 }

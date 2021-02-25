@@ -4,6 +4,7 @@ import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.memory.Memory;
 
 public class MirroredMapper extends Mapper {
@@ -43,7 +44,7 @@ public class MirroredMapper extends Mapper {
 
 
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MapperException {
+    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MapperException {
 
         if (flag == rwFlag){
             int address = this.addressBus.readDataFromBus();
@@ -61,7 +62,7 @@ public class MirroredMapper extends Mapper {
                 }
 
                 // If the new flag == false (write) then transfer the incoming data bus value
-                if (!newValue) {
+                if (newValue == FlagValueRW.WRITE) {
                     try {
                         this.memory.getDataBus().writeDataToBus(this.dataBus.readDataFromBus());
                     } catch (InvalidBusDataException ex) {
@@ -80,7 +81,7 @@ public class MirroredMapper extends Mapper {
                 }
 
                 // If the new flag == true (read) then transfer the read data back
-                if (newValue){
+                if (newValue == FlagValueRW.READ){
                     try {
                         this.dataBus.writeDataToBus(this.memory.getDataBus().readDataFromBus());
                     }

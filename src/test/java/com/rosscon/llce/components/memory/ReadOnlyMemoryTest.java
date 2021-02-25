@@ -7,6 +7,7 @@ import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
 
+import com.rosscon.llce.components.flags.FlagValueRW;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 
@@ -31,7 +32,7 @@ public class ReadOnlyMemoryTest {
                 0x0000, 0x0001, data);
 
         addressBus.writeDataToBus(0x00);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0xFF, dataBus.readDataFromBus());
     }
 

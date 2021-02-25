@@ -34,7 +34,7 @@ public class NESGUI extends Application {
 
         //NES console = new NES();
 
-        new Thread(() -> {
+        /*new Thread(() -> {
             try {
                 while(true) {
                     Thread.sleep(10000);
@@ -49,7 +49,7 @@ public class NESGUI extends Application {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }).start();
+        }).start();*/
     }
 
     public static void main(String[] args){

@@ -7,6 +7,7 @@ import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.memory.*;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502Instructions;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502;
@@ -26,6 +27,7 @@ public class MOS6502TestST_AXY {
     IntegerBus addressBus;
     IntegerBus dataBus;
     Flag rwFlag;
+    Flag nmiFlag;
     Clock clock;
     MOS6502 cpu;
     ReadOnlyMemory bootRom;
@@ -37,6 +39,7 @@ public class MOS6502TestST_AXY {
         addressBus = new IntegerBus(16);
         dataBus = new IntegerBus(8);
         rwFlag = new Flag();
+        nmiFlag = new Flag();
         clock = new Clock();
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -45,7 +48,7 @@ public class MOS6502TestST_AXY {
         randomAccessMemory = new RandomAccessMemory(addressBus, dataBus,rwFlag,
                 0x0010, 0x02FF);
 
-        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, true);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, nmiFlag, true);
     }
 
     @Test
@@ -63,7 +66,7 @@ public class MOS6502TestST_AXY {
         clock.tick(6);
         addressBus.writeDataToBus(0x0100);
         dataBus.writeDataToBus(0x09);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x42, dataBus.readDataFromBus());
     }
 
@@ -82,7 +85,7 @@ public class MOS6502TestST_AXY {
         clock.tick(6);
         addressBus.writeDataToBus(0x0100);
         dataBus.writeDataToBus(0x09);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x42, dataBus.readDataFromBus());
     }
 
@@ -101,7 +104,7 @@ public class MOS6502TestST_AXY {
         clock.tick(6);
         addressBus.writeDataToBus(0x0100);
         dataBus.writeDataToBus(0x09);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x42, dataBus.readDataFromBus());
     }
 }

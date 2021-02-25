@@ -6,6 +6,7 @@ import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.cartridges.CartridgeException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.memory.MemoryException;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +46,8 @@ public class NESCartridge_001Test {
         prg_rom32[16384]    = 0x44;
         prg_rom32[32767]    = 0x45;
 
+        byte[] chr_rom = new byte[8192];
+
         cart32 = new NESCartridge_001(addressBus32,
                 dataBus32,
                 rwFlag,
@@ -53,7 +56,7 @@ public class NESCartridge_001Test {
                 new Flag(),
                 prg_rom32,
                 new byte[]{},
-                new byte[]{},
+                chr_rom,
                 NESNametableMirroring.HORIZONTAL);
 
         byte[] prg_rom16 = new byte[16384];
@@ -68,7 +71,7 @@ public class NESCartridge_001Test {
                 new Flag(),
                 prg_rom16,
                 new byte[]{},
-                new byte[]{},
+                chr_rom,
                 NESNametableMirroring.HORIZONTAL);
     }
 
@@ -78,19 +81,19 @@ public class NESCartridge_001Test {
     public void TestMapperWorksNonMirroredAddress() throws InvalidBusDataException, MemoryException, FlagException {
 
         addressBus32.writeDataToBus(0x8000);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x42, dataBus32.readDataFromBus());
 
         addressBus32.writeDataToBus(0xBFFF);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x43, dataBus32.readDataFromBus());
 
         addressBus32.writeDataToBus(0xC000);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x44, dataBus32.readDataFromBus());
 
         addressBus32.writeDataToBus(0xFFFF);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x45, dataBus32.readDataFromBus());
     }
 
@@ -99,19 +102,19 @@ public class NESCartridge_001Test {
     public void TestMapperWorksMirroredAddress() throws InvalidBusDataException, MemoryException, FlagException {
 
         addressBus16.writeDataToBus(0x8000);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x42, dataBus16.readDataFromBus());
 
         addressBus16.writeDataToBus(0xBFFF);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x43, dataBus16.readDataFromBus());
 
         addressBus16.writeDataToBus(0xC000);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x42, dataBus16.readDataFromBus());
 
         addressBus16.writeDataToBus(0xFFFF);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x43, dataBus16.readDataFromBus());
     }
 

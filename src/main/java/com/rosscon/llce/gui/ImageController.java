@@ -16,11 +16,12 @@ public class ImageController implements Initializable {
     @FXML
     private ImageView imageView;
 
-    private NES console;
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        WritableImage image = new WritableImage(256, 240);
+
+        int screenScaling = 1;
+
+        WritableImage image = new WritableImage(256 * screenScaling, 240 * screenScaling);
         imageView.setImage(image);
 
         new AnimationTimer() {
@@ -39,6 +40,14 @@ public class ImageController implements Initializable {
                 int[] screenBuffer = console.getScreenBuffer();
                 for (int x = 0; x < NES2C02Constants.WIDTH_VISIBLE_PIXELS; x++){
                     for (int y = 0; y < NES2C02Constants.HEIGHT_VISIBLE_SCANLINES; y++){
+
+                        // TODO find a fast scaling algorithm
+                        //for (int dx = x * screenScaling; dx < (x * screenScaling) + screenScaling; dx++){
+                        //    for (int dy = y * screenScaling; dy < (y * screenScaling) + screenScaling; dy++){
+                        //        image.getPixelWriter().setArgb(dx, dy, screenBuffer[(y * NES2C02Constants.WIDTH_VISIBLE_PIXELS) + x]);
+                        //    }
+                        //}
+
                         image.getPixelWriter().setArgb(x, y, screenBuffer[(y * NES2C02Constants.WIDTH_VISIBLE_PIXELS) + x]);
                     }
                 }

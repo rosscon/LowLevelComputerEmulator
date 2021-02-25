@@ -3,6 +3,7 @@ package com.rosscon.llce.components.memory;
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.FlagValueRW;
 
 public class RandomAccessMemory extends Memory {
 
@@ -39,11 +40,11 @@ public class RandomAccessMemory extends Memory {
      * @throws InvalidBusDataException thrown by bus
      */
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException, InvalidBusDataException {
+    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException, InvalidBusDataException {
         if (flag == rwFlag) {
             int address = this.addressBus.readDataFromBus();
             if (addressIsInRange(address)){
-                if (newValue){
+                if (newValue == FlagValueRW.READ){
                     this.dataBus.writeDataToBus(readValueFromAddress(address));
                 } else {
                     writeValueToAddress(address, this.dataBus.readDataFromBus());

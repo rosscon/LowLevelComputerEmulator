@@ -110,7 +110,7 @@ public class NESCartridgeFactory {
      * @return NESNametableMirroring
      */
     private static NESNametableMirroring getNametableMirroring (byte flag6){
-        return (flag6 & 0b00000001) == 0b00000001 ? NESNametableMirroring.VERTICAL : NESNametableMirroring.HORIZONTAL;
+        return (flag6 & 0b00000001) != 0 ? NESNametableMirroring.VERTICAL : NESNametableMirroring.HORIZONTAL;
     }
 
     /**
@@ -170,7 +170,7 @@ public class NESCartridgeFactory {
         int prgRomStart = hasTrainer(flag6) ? (PRG_ROM_START + TRAINER_SIZE) : PRG_ROM_START;
         int prgRomEnd   = prgRomStart + (prgRomSize * PRG_ROM_UNITS);
 
-        int chrRomStart = prgRomEnd + 1;
+        int chrRomStart = prgRomEnd;
         int chrRomEnd = chrRomStart + (chrRomSize * CHR_ROM_UNITS);
 
         byte [] prgRom = Arrays.copyOfRange(array, prgRomStart, prgRomEnd);

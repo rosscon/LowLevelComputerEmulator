@@ -55,7 +55,27 @@ public class NES2C02Constants {
     public static final int REG_PPUDATA     = 0x00002007;
 
     /**
+     * Mask and min/max address for registers
+     */
+    public static final int REG_MINIMUM_ADDRESS = 0x00002000;
+    public static final int REG_MAXIMUM_ADDRESS = 0x00003FFF;
+    public static final int REG_MASK            = 0x00002007;
+
+    /**
      * Special register for DMA
      */
     public static final int REG_OAMDMA      = 0x00004014;
+
+
+    /**
+     * Exception error messages
+     */
+    public static final String EX_CPU_NMI =
+            "Error interrupting the cpu";
+
+    public static final String EX_PPU_READ_FAIL =
+            "Error reading from ppu memory";
+
+    public static final String EX_PPU_WRITE_FAIL =
+            "Error writing to ppu memory";
 }

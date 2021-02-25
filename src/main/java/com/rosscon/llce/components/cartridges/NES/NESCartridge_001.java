@@ -5,6 +5,7 @@ import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.cartridges.CartridgeException;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.ReadOnlyMemory;
 import com.rosscon.llce.components.memory.MemoryException;
@@ -18,7 +19,7 @@ public class NESCartridge_001 extends NESCartridge {
     /**
      * Mirroring mode for nametable, normally set by solder points for thus type of cart
      */
-    private NESNametableMirroring mirroring;
+    private NametableMirror nametableMirror;
 
     /**
      * In mirrored mode when cartridge only has 16KB of PRG data
@@ -38,7 +39,7 @@ public class NESCartridge_001 extends NESCartridge {
                             NESNametableMirroring mirroring) throws CartridgeException {
         super(addressBus, dataBus, rwFlagCPU, ppuAddressBus, ppuDataBus, rwFlagPPU, prgROM, prgRAM, chrROM);
 
-        this.mirroring = mirroring;
+        this.nametableMirror = new NametableMirror(mirroring);
 
         try {
 
@@ -50,18 +51,27 @@ public class NESCartridge_001 extends NESCartridge {
             /*
              * Convert program rom to int[]
              */
-            int[] convertedRom = new int[prgROM.length];
+            int[] convertedPrgRom = new int[prgROM.length];
             for (int i = 0; i < prgROM.length; i++){
-                convertedRom[i] = prgROM[i] & 0x000000FF;
+                convertedPrgRom[i] = prgROM[i] & 0x000000FF;
             }
-
 
             ReadOnlyMemory programROM = new ReadOnlyMemory(
                     new IntegerBus(16), new IntegerBus(8),
-                    new Flag(), this.PRG_ROM_START, prgEnd, convertedRom );
+                    new Flag(), this.PRG_ROM_START, prgEnd, convertedPrgRom );
 
             internalRAMMapper = new MirroredMapper(this.addressBus, this.dataBus, rwFlagCPU, programROM,
                     this.PRG_ROM_START, this.PRG_ROM_END, prgEnd);
+
+
+            int[] convertedCharacterRom = new int[chrROM.length];
+            for (int i = 0; i < chrROM.length; i++) {
+                convertedCharacterRom[i] = chrROM[i] & 0x000000FF;
+            }
+
+            ReadOnlyMemory characterRom = new ReadOnlyMemory(ppuAddressBus,
+                    ppuDataBus, rwFlagPPU, 0x0000, 0x1FFF, convertedCharacterRom);
+
 
         } catch (MemoryException | InvalidBusWidthException ex) {
             throw new CartridgeException(ex.getMessage());
@@ -69,7 +79,7 @@ public class NESCartridge_001 extends NESCartridge {
     }
 
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
+    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException {
         // This is a very simple mapper so relies on the MirroredMapper to handle the onFlagChange
     }
 
@@ -78,7 +88,7 @@ public class NESCartridge_001 extends NESCartridge {
      * @return Nametable
      */
     @Override
-    public NESNametableMirroring getNametableMapper() {
-        return mirroring;
+    public NametableMirror getNametableMirror() {
+        return nametableMirror;
     }
 }

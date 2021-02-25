@@ -7,12 +7,12 @@ import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.cartridges.CartridgeException;
 import com.rosscon.llce.components.cartridges.NES.NESCartridge;
 import com.rosscon.llce.components.cartridges.NES.NESCartridgeFactory;
-import com.rosscon.llce.components.cartridges.NES.NESNametableMirroring;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockThreaded;
 import com.rosscon.llce.components.clocks.dividers.Divider;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.graphics.NES2C02.NES2C02;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
@@ -20,7 +20,6 @@ import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.Computer;
-import javafx.scene.image.PixelWriter;
 
 import java.io.IOException;
 
@@ -124,6 +123,12 @@ public class NES extends Computer {
     private NESCartridge cartridge;
 
 
+    /**
+     * Interrupts
+     */
+    private Flag cpuNMI;
+
+
     private ClockThreaded masterClock;
     private Divider cpuDivider;
     private Divider ppuDivider;
@@ -155,7 +160,7 @@ public class NES extends Computer {
 
 
         /*
-         * Setup the PPU TODO
+         * Setup the PPU Busses
          */
         this.ppuAddressBus = new IntegerBus(16);
         this.ppuDataBus = new IntegerBus(8);
@@ -171,32 +176,53 @@ public class NES extends Computer {
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
         );*/
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/mario.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );
+        );*/
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "/Users/rossconroy/Desktop/excitebike.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+        );*/
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "/Users/rossconroy/Desktop/balloon.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+        );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/nestest.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
         );*/
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "/Users/rossconroy/Desktop/full_palette/full_palette.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+        );
 
 
         /*
          * Lastly add the CPU and PPU as they call reset() on start
          */
+        //this.masterClock = new ClockThreaded(10);
         this.masterClock = new ClockThreaded(10);
         Clock clock = new Clock();
 
         this.cpuDivider = new Divider(12, masterClock);
         this.ppuDivider = new Divider(4, masterClock);
 
-        //this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, true, 0xC000);
-        this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, false, 0xC000);
+        //this.cpuDivider = new Divider(12, clock);
+        //this.ppuDivider = new Divider(4, clock);
+
+        this.cpuNMI = new Flag();
+
+        //this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, this.cpuNMI,true, 0xC000);
+        this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, this.cpuNMI, false);
 
         this.ppu = new NES2C02(ppuDivider, cpuAddressBus, cpuDataBus, rwFlagCpu,
-                ppuAddressBus, ppuDataBus, rwFlagPPU);
+                ppuAddressBus, ppuDataBus, rwFlagPPU, cpuNMI, cartridge.getNametableMirror());
 
         /*
          * Cheating a bit with the nametable memory and assigning all 4KB,
@@ -205,15 +231,22 @@ public class NES extends Computer {
         this.nametableAddressBus = new IntegerBus(16);
         this.nametableDataBus = new IntegerBus(8);
         this.rwFlagNametableMapper = new Flag();
-        this.nameTableMemory = new RandomAccessMemory(this.nametableAddressBus, this.nametableDataBus,
-                this.rwFlagNametableMapper,0x2000, 0x2C00);
-        int mapperMask = this.cartridge.getNametableMapper() == NESNametableMirroring.VERTICAL ? (0x01 << 10) : (0x01 << 11);
-        this.nametableMapper = new MirroredMapper(ppuAddressBus, ppuDataBus, rwFlagPPU,
-                this.nameTableMemory, 0x2000, 0x2C00, mapperMask);
+
+        //this.nameTableMemory = new RandomAccessMemory(this.nametableAddressBus, this.nametableDataBus,
+        //        this.rwFlagNametableMapper,0x2000, 0x27FF);
+
+        //int mapperMask = this.cartridge.getNametableMapper() == NESNametableMirroring.VERTICAL ? (0x01 << 10) : (0x01 << 11);
+        //mapperMask = ~mapperMask;
+
+        //this.nametableMapper = new MirroredMapper(ppuAddressBus, ppuDataBus, rwFlagPPU,
+        //        this.nameTableMemory, 0x2000, 0x2C00, mapperMask);
+
+        //this.paletteMemory = new RandomAccessMemory(this.nametableAddressBus, this.nametableDataBus,
+        //        this.rwFlagPPU,0x3F00, 0x3F1F);
 
 
-        long start = System.nanoTime();
-        int cycles = 10000000;
+        /*long start = System.nanoTime();
+        int cycles = 1000000;
 
         try {
             clock.tick(cycles);
@@ -223,12 +256,12 @@ public class NES extends Computer {
 
         long end = System.nanoTime();
 
-        /*try {
+        try {
             this.cpuAddressBus.writeDataToBus(0x0002);
-            this.rwFlagCpu.setFlagValue(true);
+            this.rwFlagCpu.setFlagValue(FlagValueRW.READ);
             System.out.println("0x0002 - " + String.format("%02X", this.cpuDataBus.readDataFromBus()));
             this.cpuAddressBus.writeDataToBus(0x0003);
-            this.rwFlagCpu.setFlagValue(true);
+            this.rwFlagCpu.setFlagValue(FlagValueRW.READ);
             System.out.println("0x0003 - " + String.format("%02X", this.cpuDataBus.readDataFromBus()));
 
 
@@ -240,12 +273,6 @@ public class NES extends Computer {
         long clockDiff = end - start;
         System.out.println((cycles / (clockDiff / 1000000000.0d))/1000000.0d + "MHz");*/
 
-        /*this.nameTableMemory = new RandomAccessMemory(internalRAMAddressBus, internalRAMDataBus,
-                rwFlagPPU, new byte[] {0x20, 0x00}, new byte[] { 0x3E, (byte)0xFF});
-
-        this.ppu = new NES2C02(ppuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU, pixelwriter);*/
-
         Thread thread = new Thread(this.masterClock);
         thread.start();
 
@@ -254,6 +281,10 @@ public class NES extends Computer {
 
     public int[] getScreenBuffer(){
         return this.ppu.getScreenBuffer();
+    }
+
+    public String getNametableContents() {
+        return this.nameTableMemory.toString();
     }
 
 }

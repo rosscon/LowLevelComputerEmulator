@@ -25,6 +25,7 @@ public class MOS6502TestPHA_PLA {
     IntegerBus addressBus;
     IntegerBus dataBus;
     Flag rwFlag;
+    Flag nmiFlag;
     Clock clock;
     MOS6502 cpu;
     ReadOnlyMemory bootRom;
@@ -36,15 +37,16 @@ public class MOS6502TestPHA_PLA {
         addressBus = new IntegerBus(16);
         dataBus = new IntegerBus(8);
         rwFlag = new Flag();
+        nmiFlag = new Flag();
         clock = new Clock();
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
                 0xFFFC, 0xFFFD, new int[]{0, 0});
 
         randomAccessMemory = new RandomAccessMemory(addressBus, dataBus,rwFlag,
-                0x0110, 0x02FF);
+                0x0010, 0x02FF);
 
-        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, true);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, nmiFlag, true);
     }
 
     @Test

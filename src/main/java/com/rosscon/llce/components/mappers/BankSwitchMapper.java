@@ -2,6 +2,7 @@ package com.rosscon.llce.components.mappers;
 
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.memory.Memory;
 import com.rosscon.llce.components.memory.MemoryException;
 
@@ -22,7 +23,7 @@ public class BankSwitchMapper extends Mapper {
     }
 
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException {
+    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException {
 
     }
 }

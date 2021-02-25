@@ -3,6 +3,7 @@ package com.rosscon.llce.components.memory;
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.FlagValueRW;
 
 public class ReadOnlyMemory extends Memory {
 
@@ -63,10 +64,10 @@ public class ReadOnlyMemory extends Memory {
      * @throws InvalidBusDataException thrown by bus
      */
     @Override
-    public void onFlagChange(boolean newValue, Flag flag) throws MemoryException, InvalidBusDataException {
+    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException, InvalidBusDataException {
 
         // On R/W flag being set to true write contents at address on address bus to data bus if within range
-        if (flag == this.rwFlag && newValue){
+        if (flag == this.rwFlag && newValue == FlagValueRW.READ){
             int address = this.addressBus.readDataFromBus();
             if (addressIsInRange(address)) this.dataBus.writeDataToBus(readValueFromAddress(address));
         }

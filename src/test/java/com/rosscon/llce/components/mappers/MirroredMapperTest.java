@@ -5,6 +5,7 @@ import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.memory.ReadOnlyMemory;
 import com.rosscon.llce.components.memory.MemoryException;
 import org.junit.Before;
@@ -66,7 +67,7 @@ public class MirroredMapperTest {
     public void TestMapperWorksNonMirroredAddress() throws InvalidBusDataException, MemoryException, FlagException {
 
         addressBus.writeDataToBus(0x0001);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
 
         assertEquals(0x01, dataBus.readDataFromBus());
     }
@@ -76,7 +77,7 @@ public class MirroredMapperTest {
     public void TestMapperWorksMirroredAddress() throws InvalidBusDataException, MemoryException, FlagException {
 
         addressBus.writeDataToBus(0x0802);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
 
         assertEquals(0x02, dataBus.readDataFromBus());
     }
@@ -87,12 +88,12 @@ public class MirroredMapperTest {
 
         // Need to do an in range one first to populate the data bus with an old value
         addressBus.writeDataToBus(0x0802);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x02, dataBus.readDataFromBus());
 
         // Now the out of range
         addressBus.writeDataToBus(0x4003);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x02, dataBus.readDataFromBus());
     }
 

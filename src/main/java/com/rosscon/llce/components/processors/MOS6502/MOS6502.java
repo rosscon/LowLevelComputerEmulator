@@ -5,6 +5,10 @@ import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.FlagListener;
+import com.rosscon.llce.components.flags.FlagValueRW;
+import com.rosscon.llce.components.mappers.MapperException;
+import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 
@@ -19,7 +23,7 @@ import com.rosscon.llce.components.processors.ProcessorException;
  *
  * Emulates the functions of an MOS 6502 processor
  */
-public class MOS6502 extends Processor {
+public class MOS6502 extends Processor implements FlagListener {
 
     /**
      * Debugging
@@ -39,6 +43,11 @@ public class MOS6502 extends Processor {
     private int     regStatus;  // Processor Status [C][Z][I][D][B][V][N]
     private int     regIntAddr; // Custom register used for building addresses over multiple cycles
 
+
+    /**
+     * NMI, Non maskable interrupt
+     */
+    private boolean nmiTriggered;
 
 
     public int getRegPC() {
@@ -88,6 +97,49 @@ public class MOS6502 extends Processor {
      */
     private MOS6502AddressingMode addressingMode;
 
+    /**
+     * Interrupts
+     */
+    private Flag interruptNMI;
+
+    /**
+     * Read a value from memory. Clear the data bus before reading to prevent
+     * accidentally reading lingering data from previous cycles
+     * @param address address to request data
+     * @return the value held at the given address
+     * @throws ProcessorException Can be thrown on memory error
+     */
+    private int cpuRead(int address) throws ProcessorException {
+        try {
+            this.dataBus.writeDataToBus(0x00);
+            this.addressBus.writeDataToBus(address);
+            this.rwFlag.setFlagValue(FlagValueRW.READ);
+        } catch (InvalidBusDataException | FlagException e) {
+            ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_READING_MEMORY);
+            pe.addSuppressed(e);
+            throw pe;
+        }
+        return dataBus.readDataFromBus();
+    }
+
+    /**
+     * Write a value to memory.
+     * @param address address to write to
+     * @param data value to be written
+     * @throws ProcessorException Can be thrown on memory error
+     */
+    private void cpuWrite (int address, int data) throws ProcessorException {
+        try {
+            this.dataBus.writeDataToBus(data);
+            this.addressBus.writeDataToBus(address);
+            this.rwFlag.setFlagValue(FlagValueRW.WRITE);
+        } catch (InvalidBusDataException | FlagException e) {
+            ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_WRITING_MEMORY);
+            pe.addSuppressed(e);
+            throw pe;
+        }
+    }
+
 
     /**
      * Default constructor builds the processor, calls super to connect to busses, clock and external flags
@@ -97,22 +149,49 @@ public class MOS6502 extends Processor {
      * @param dataBus Data Bus
      * @param rwFlag External R/W Flag set by processor
      */
-    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag) throws ProcessorException {
+    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, Flag interruptNMI) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
+        this.interruptNMI = interruptNMI;
         reset();
+
+        try {
+            this.interruptNMI.addListener(this);
+        } catch (Exception ex){
+            ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_LISTENING_TO_FLAG);
+            pe.addSuppressed(ex);
+            throw pe;
+        }
     }
 
-    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, boolean printTrace) throws ProcessorException {
+    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, Flag interruptNMI, boolean printTrace) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
         this.PRINT_TRACE = printTrace;
+        this.interruptNMI = interruptNMI;
+
+        try {
+            this.interruptNMI.addListener(this);
+        } catch (Exception ex){
+            ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_LISTENING_TO_FLAG);
+            pe.addSuppressed(ex);
+            throw pe;
+        }
     }
 
-    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, boolean printTrace, int pcOverride) throws ProcessorException {
+    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, Flag interruptNMI, boolean printTrace, int pcOverride) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
         this.PRINT_TRACE = printTrace;
         this.regPC = pcOverride;
+        this.interruptNMI = interruptNMI;
+
+        try {
+            this.interruptNMI.addListener(this);
+        } catch (Exception ex){
+            ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_LISTENING_TO_FLAG);
+            pe.addSuppressed(ex);
+            throw pe;
+        }
     }
 
     /**
@@ -135,12 +214,12 @@ public class MOS6502 extends Processor {
              * TODO make this timing specific following https://www.pagetable.com/?p=410
              */
             this.addressBus.writeDataToBus(getRegPC());
-            rwFlag.setFlagValue(true);
+            rwFlag.setFlagValue(FlagValueRW.READ);
             int low = (this.dataBus.readDataFromBus());
 
             this.regPC = (this.regPC + 1) & 0xFFFF;
             this.addressBus.writeDataToBus(getRegPC());
-            rwFlag.setFlagValue(true);
+            rwFlag.setFlagValue(FlagValueRW.READ);
             int high = (dataBus.readDataFromBus());
 
             regIntAddr = low | (high << 8);
@@ -148,6 +227,8 @@ public class MOS6502 extends Processor {
         } catch (InvalidBusDataException | FlagException ex){
             throw new ProcessorException(MOS6502Constants.EX_RESET_ERROR + " : " + ex.getMessage());
         }
+
+        nmiTriggered = false;
 
         instructionMapping = new MOS6502InstructionMapping();
     }
@@ -158,7 +239,9 @@ public class MOS6502 extends Processor {
      * @return true = flag set, false = flag not set
      */
     private boolean isFlagSet(int flag){
-        return (this.regStatus & flag) != 0;
+
+        int tmp = this.regStatus & flag;
+        return tmp != 0;
     }
 
     /**
@@ -170,7 +253,7 @@ public class MOS6502 extends Processor {
             int freeAddress = (MOS6502Constants.STACK_PAGE << 8) | this.regSP;
             this.addressBus.writeDataToBus(freeAddress);
             this.dataBus.writeDataToBus(value);
-            this.rwFlag.setFlagValue(false);
+            this.rwFlag.setFlagValue(FlagValueRW.WRITE);
             this.regSP = (this.regSP - 1) & 0x000000FF; // Subtract 1 then mask
         } catch (InvalidBusDataException | FlagException e) {
             throw new ProcessorException(MOS6502Constants.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
@@ -188,7 +271,7 @@ public class MOS6502 extends Processor {
             this.regSP = (this.regSP + 1) & 0x000000FF; // Add 1 then mask
             int readAddress = (MOS6502Constants.STACK_PAGE << 8) | this.regSP;
             this.addressBus.writeDataToBus(readAddress);
-            this.rwFlag.setFlagValue(true);
+            this.rwFlag.setFlagValue(FlagValueRW.READ);
             read = this.dataBus.readDataFromBus();
         } catch (InvalidBusDataException | FlagException e) {
             throw new ProcessorException(MOS6502Constants.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
@@ -205,7 +288,7 @@ public class MOS6502 extends Processor {
 
         try{
             addressBus.writeDataToBus(getRegPC());
-            rwFlag.setFlagValue(true);
+            rwFlag.setFlagValue(FlagValueRW.READ);
             fetchedData = dataBus.readDataFromBus() & MOS6502Constants.MASK_LAST_BYTE;
             if (PRINT_TRACE)
                 System.out.print("Fetch : [" + String.format("%02X", this.regPC) + "] ");
@@ -233,31 +316,27 @@ public class MOS6502 extends Processor {
                 case ACCUMULATOR:
                     break;
                 case RELATIVE:
-                case IMMEDIATE:     // Makes cpu request next address in memory
-                    this.fetch();
+                case IMMEDIATE:
+                    this.regIntAddr = this.regPC;
+                    this.regPC = (this.regPC + 1) & 0xFFFF;
                     break;
-
                 case ZERO_PAGE:     // Move to next address in memory, read contents, build zero page address from it
                     this.regIntAddr = (this.fetch() & 0xFF);
                     addressBus.writeDataToBus(this.regIntAddr);
                     break;
-
                 case ZERO_PAGE_X:
                     this.regIntAddr = (this.fetch() + this.regX) & 0x000000FF;
                     addressBus.writeDataToBus(this.regIntAddr);
                     break;
-
                 case ZERO_PAGE_Y:
                     this.regIntAddr = (this.fetch() + this.regY) & 0x000000FF;
                     addressBus.writeDataToBus(getRegIntAddr());
                     break;
-
                 case ABSOLUTE:
                     this.regIntAddr = this.fetch();
                     this.regIntAddr = this.regIntAddr | (this.fetch() << 8);
                     addressBus.writeDataToBus(this.regIntAddr);
                     break;
-
                 case ABSOLUTE_X:
                     this.regIntAddr = (this.fetch() & 0xFF);
                     this.regIntAddr = this.regIntAddr | ((this.fetch() & 0xFF) << 8);
@@ -285,7 +364,7 @@ public class MOS6502 extends Processor {
                     this.regIntAddr = this.fetch();
                     this.regIntAddr = this.regIntAddr | (this.fetch() << 8);
                     addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(true);
+                    rwFlag.setFlagValue(FlagValueRW.READ);
 
                     // Read low byte from memory
                     int tmp = (dataBus.readDataFromBus());
@@ -293,7 +372,7 @@ public class MOS6502 extends Processor {
                     // Read high byte from memory
                     this.regIntAddr += 1;
                     addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(true);
+                    rwFlag.setFlagValue(FlagValueRW.READ);
                     this.regIntAddr = (dataBus.readDataFromBus() << 8) | tmp;
                     break;
 
@@ -302,13 +381,13 @@ public class MOS6502 extends Processor {
 
                     // Read Low byte
                     addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(true);
+                    rwFlag.setFlagValue(FlagValueRW.READ);
                     int tmpInx = dataBus.readDataFromBus();
 
                     // Read high byte
                     this.regIntAddr++;
                     addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(true);
+                    rwFlag.setFlagValue(FlagValueRW.READ);
                     this.regIntAddr = (dataBus.readDataFromBus() << 8) | tmpInx;
 
                     this.addressBus.writeDataToBus(getRegIntAddr());
@@ -320,13 +399,13 @@ public class MOS6502 extends Processor {
 
                     // Step 2, read low byte
                     addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(true);
+                    rwFlag.setFlagValue(FlagValueRW.READ);
                     int tmpIny = dataBus.readDataFromBus();
 
                     // Step 3, read high byte
                     this.regIntAddr++;
                     addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(true);
+                    rwFlag.setFlagValue(FlagValueRW.READ);
                     this.regIntAddr = (dataBus.readDataFromBus() << 8) | tmpIny;
 
                     // Step 4, add Y register
@@ -438,16 +517,16 @@ public class MOS6502 extends Processor {
 
 
             case CLC:
-                clearFlag(MOS6502Flags.CARRY_FLAG);
+                setFlag(MOS6502Flags.CARRY_FLAG, false);
                 break;
             case CLD:
-                clearFlag(MOS6502Flags.DECIMAL_MODE);
+                setFlag(MOS6502Flags.DECIMAL_MODE, false);
                 break;
             case CLI:
-                clearFlag(MOS6502Flags.INTERRUPT_DIS);
+                setFlag(MOS6502Flags.INTERRUPT_DIS, false);
                 break;
             case CLV:
-                clearFlag(MOS6502Flags.OVERFLOW_FLAG);
+                setFlag(MOS6502Flags.OVERFLOW_FLAG, false);
                 break;
 
             case CMP:
@@ -559,13 +638,13 @@ public class MOS6502 extends Processor {
                 break;
 
             case SEC:
-                enableFlag(MOS6502Flags.CARRY_FLAG);
+                setFlag(MOS6502Flags.CARRY_FLAG, true);
                 break;
             case SED:
-                enableFlag(MOS6502Flags.DECIMAL_MODE);
+                setFlag(MOS6502Flags.DECIMAL_MODE, true);
                 break;
             case SEI:
-                enableFlag(MOS6502Flags.INTERRUPT_DIS);
+                setFlag(MOS6502Flags.INTERRUPT_DIS, true);
                 break;
 
             case STA:
@@ -613,9 +692,10 @@ public class MOS6502 extends Processor {
     public void onTick() throws ProcessorException {
         if ( this.cycles == 0 ){
             try {
-                int instruction = fetch();
+                // If NMI triggered perform a BRK
+                int instruction = this.nmiTriggered ? MOS6502Instructions.INS_BRK_IMP : fetch();
                 decode(instruction);
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 ProcessorException pe = new ProcessorException(MOS6502Constants.EX_TICK_FETCH_ERROR + " " + ex.getMessage());
                 pe.addSuppressed(ex);
                 throw pe;
@@ -632,21 +712,15 @@ public class MOS6502 extends Processor {
     }
 
     /**
-     * Enables a given flag
-     * @param flag flag to enable
+     * Sets or unsets a flag given a boolean value, true = enable, false = disable
+     * @param flag flag to set
+     * @param val boolean operator
      */
-    private void enableFlag(int flag) {
-        this.regStatus = this.regStatus | flag;
-    }
-
-    /**
-     * Disables a given flag
-     * @param flag flag to disable
-     */
-    private void clearFlag(int flag) {
-        if ((this.regStatus & flag) != 0){
-            this.regStatus = this.regStatus - flag;
-        }
+    private void setFlag(int flag, boolean val){
+        if (val)
+            this.regStatus |= flag;
+        else
+            this.regStatus &= ~flag;
     }
 
     /**
@@ -657,16 +731,16 @@ public class MOS6502 extends Processor {
      * Finally the current instruction is set to NOP and addressing mode to IMPLIED
      * to prevent the program counter from also being affected.
      */
-    private void branch(boolean branchSucceeded){
+    private void branch(boolean branchSucceeded) throws ProcessorException {
         if (branchSucceeded){
             // Add a cycle just for branch occurring
             this.cycles++;
 
-            int initialAddress = this.regPC;
-            int value = dataBus.readDataFromBus();
+            int initialAddress = this.regIntAddr;
+            int value = (byte)cpuRead(this.regIntAddr);
 
             //In this scenario we want to treat the value as a signed number;
-            int newAddress = initialAddress + value;
+            int newAddress = this.regPC + value;
 
             // Detect if the page has changed
             if ((this.regIntAddr & 0x0000FF00) != (newAddress & 0x0000FF00))
@@ -693,12 +767,7 @@ public class MOS6502 extends Processor {
      */
     private void ADC() throws ProcessorException {
 
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-        int value = dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
         int result = 0x00;
 
         if ((this.regStatus & MOS6502Flags.DECIMAL_MODE) == MOS6502Flags.DECIMAL_MODE){
@@ -716,11 +785,7 @@ public class MOS6502 extends Processor {
          * Set Flags
          */
         // Carry Flag
-        if ((result & MOS6502Constants.MASK_OVERFLOWED) != 0) {
-            enableFlag(MOS6502Flags.CARRY_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.CARRY_FLAG);
-        }
+        setFlag(MOS6502Flags.CARRY_FLAG, (result & MOS6502Constants.MASK_OVERFLOWED) != 0);
 
         /*
          * Once determined carry can mask off last bit
@@ -728,10 +793,7 @@ public class MOS6502 extends Processor {
         result = result & MOS6502Constants.MASK_LAST_BYTE;
 
         // Zero Flag
-        if (result == 0)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, result == 0);
 
         /*
          * Overflow flag
@@ -744,21 +806,12 @@ public class MOS6502 extends Processor {
          * Only need to look at the MSB of the ACC, Value, Result
          * HEX 80 = BIN 10000000
          */
-        if (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)){
-            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
-        }
-        else if (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)){
-            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.OVERFLOW_FLAG);
-        }
+        setFlag(MOS6502Flags.OVERFLOW_FLAG,
+                (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)) ||
+                        (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)));
 
         // Negative Flag
-        if ((result & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else {
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
-        }
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (result & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         // Finally set accumulator with new value
         this.regACC = result;
@@ -772,28 +825,16 @@ public class MOS6502 extends Processor {
      * Sets the negative flag if bit 7 is set
      */
     private void AND() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
 
-        int value = dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
         this.regACC = this.regACC & value;
 
         // Zero Flag
-        if (this.regACC == 0x00) {
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.ZERO_FLAG);
-        }
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
 
         // Negative Flag
-        if ((this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0){
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
-        }
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0);
+
         if (PRINT_TRACE)
             System.out.println("AND : " + String.format("%02X", this.regACC));
     }
@@ -810,34 +851,24 @@ public class MOS6502 extends Processor {
         int value = this.regACC;
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                rwFlag.setFlagValue(true);
-            } catch (FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
-            value = this.dataBus.readDataFromBus();
+            value = cpuRead(this.regIntAddr);
         }
 
         // Carry Flag if bit 7 is set
-        if ((value & 0b10000000) == 0b10000000)
-            enableFlag(MOS6502Flags.CARRY_FLAG);
+        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0b10000000) == 0b10000000);
 
         value = (value << 1) & MOS6502Constants.MASK_LAST_BYTE;
 
-        // Negative Flag
-        if ((value & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
-
         // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
+
+        // Negative Flag
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
             try {
                 this.dataBus.writeDataToBus(value);
-                rwFlag.setFlagValue(false);
+                rwFlag.setFlagValue(FlagValueRW.WRITE);
             } catch (InvalidBusDataException | FlagException ex){
                 throw new ProcessorException(ex.getMessage());
             }
@@ -859,36 +890,19 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw a processor exception if there is an issue reading from memory
      */
     private void BIT() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
 
-        int value = dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
         int result = this.regACC & value;
 
         // Zero Flag
-        if (result == 0x00) {
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.ZERO_FLAG);
-        }
+        setFlag(MOS6502Flags.ZERO_FLAG, result == 0x00);
 
         // Overflow Flag based on memory value
-        if ((value & 0b01000000) == 0b01000000){
-            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.OVERFLOW_FLAG);
-        }
+        setFlag(MOS6502Flags.OVERFLOW_FLAG, (value & 0b01000000) == 0b01000000);
 
         // Negative Flag based on memory value
-        if ((value & MOS6502Constants.MASK_NEGATIVE) != 0){
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
-        }
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("BIT (Flags) : " + String.format("%02X", this.getRegStatus()));
@@ -921,8 +935,8 @@ public class MOS6502 extends Processor {
         /*
          * Set flags
          */
-        enableFlag(MOS6502Flags.BREAK_COMMAND);
-        enableFlag(MOS6502Flags.IGNORED_FLAG);
+        setFlag(MOS6502Flags.BREAK_COMMAND, !this.nmiTriggered);
+        setFlag(MOS6502Flags.IGNORED_FLAG, true);
 
         /*
          * Push flags to stack
@@ -933,9 +947,11 @@ public class MOS6502 extends Processor {
 
 
         /*
-         * Set PC to IRQ_BRK vector
+         * Set PC to IRQ_BRK or IRQ_NMI vector depending on whether a NMI was triggered
          */
-        this.regPC = MOS6502Constants.VECTOR_IRQ_BRK;
+        if (PRINT_TRACE && this.nmiTriggered)
+            System.out.println("BRK NMI");
+        this.regPC = this.nmiTriggered ? MOS6502Constants.VECTOR_NMI : MOS6502Constants.VECTOR_IRQ_BRK;
 
         /*
          * Set PC
@@ -947,8 +963,11 @@ public class MOS6502 extends Processor {
         /*
          * Clear flags
          */
-        clearFlag(MOS6502Flags.BREAK_COMMAND);
-        clearFlag(MOS6502Flags.IGNORED_FLAG);
+        setFlag(MOS6502Flags.BREAK_COMMAND, false);
+        setFlag(MOS6502Flags.IGNORED_FLAG, false);
+
+        setFlag(MOS6502Flags.INTERRUPT_DIS, this.nmiTriggered);
+        this.nmiTriggered = false;
     }
 
     /**
@@ -959,34 +978,16 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw ProcessorException on memory read error
      */
     private void CMP() throws ProcessorException {
-        try{
-            this.rwFlag.setFlagValue(true);
-            int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
-            // Zero Flag
-            if (value == this.regACC) {
-                enableFlag(MOS6502Flags.ZERO_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.ZERO_FLAG);
-            }
+        // Zero Flag
+        setFlag(MOS6502Flags.ZERO_FLAG, value == this.regACC);
 
-            // Negative Flag
-            if (value > this.regACC){
-                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.NEGATIVE_FLAG);
-            }
+        // Negative Flag
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, value > this.regACC);
 
-            // Carry Flag
-            if (value < this.regACC){
-                enableFlag(MOS6502Flags.CARRY_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.CARRY_FLAG);
-            }
-
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
+        // Carry Flag
+        setFlag(MOS6502Flags.CARRY_FLAG, value < this.regACC);
     }
 
     /**
@@ -997,34 +998,16 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw ProcessorException on memory read error
      */
     private void CPX() throws ProcessorException {
-        try{
-            this.rwFlag.setFlagValue(true);
-            int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
-            // Zero Flag
-            if (value == this.regX) {
-                enableFlag(MOS6502Flags.ZERO_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.ZERO_FLAG);
-            }
+        // Zero Flag
+        setFlag(MOS6502Flags.ZERO_FLAG, value == this.regX);
 
-            // Negative Flag
-            if (value > this.regX){
-                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.NEGATIVE_FLAG);
-            }
+        // Negative Flag
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, value > this.regX);
 
-            // Carry Flag
-            if (value < this.regX){
-                enableFlag(MOS6502Flags.CARRY_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.CARRY_FLAG);
-            }
-
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
+        // Carry Flag
+        setFlag(MOS6502Flags.CARRY_FLAG, value < this.regX);
     }
 
     /**
@@ -1035,35 +1018,16 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw ProcessorException on memory read error
      */
     private void CPY() throws ProcessorException {
+        int value = cpuRead(this.regIntAddr);
 
-        try{
-            this.rwFlag.setFlagValue(true);
-            int value = this.dataBus.readDataFromBus();
+        // Zero Flag
+        setFlag(MOS6502Flags.ZERO_FLAG, value == this.regY);
 
-            // Zero Flag
-            if (value == this.regY) {
-                enableFlag(MOS6502Flags.ZERO_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.ZERO_FLAG);
-            }
+        // Negative Flag
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, value > this.regY);
 
-            // Negative Flag
-            if (value > this.regY){
-                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.NEGATIVE_FLAG);
-            }
-
-            // Carry Flag
-            if (value < this.regY){
-                enableFlag(MOS6502Flags.CARRY_FLAG);
-            } else {
-                clearFlag(MOS6502Flags.CARRY_FLAG);
-            }
-
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
+        // Carry Flag
+        setFlag(MOS6502Flags.CARRY_FLAG, value < this.regY);
     }
 
     /**
@@ -1073,29 +1037,19 @@ public class MOS6502 extends Processor {
      * Sets NEGATIVE_FLAG if but 7 is set to a 1
      */
     private void DEC() throws ProcessorException {
-        try{
-            this.rwFlag.setFlagValue(true);
-            int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
-            value = (value - 1) & MOS6502Constants.MASK_LAST_BYTE;
-            this.dataBus.writeDataToBus(value);
-            this.rwFlag.setFlagValue(false);
+        value = (value - 1) & MOS6502Constants.MASK_LAST_BYTE;
+        cpuWrite(this.getRegIntAddr(), value);
 
-            // Zero Flag
-            if (value == 0x00)
-                enableFlag(MOS6502Flags.ZERO_FLAG);
-            else
-                clearFlag(MOS6502Flags.ZERO_FLAG);
+        // Zero Flag
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
 
-            // Negative Flag
-            if ((value & MOS6502Constants.MASK_NEGATIVE) != 0)
-                enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        // Negative Flag
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
-            if (PRINT_TRACE)
-                System.out.println("DEC : " + String.format("%02X", value));
-        } catch (InvalidBusDataException | FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
+        if (PRINT_TRACE)
+            System.out.println("DEC : " + String.format("%02X", value));
     }
 
     /**
@@ -1107,16 +1061,10 @@ public class MOS6502 extends Processor {
         this.regX = (this.regX -1) & MOS6502Constants.MASK_LAST_BYTE;
 
         // Zero Flag
-        if (this.regX == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regX == 0x00);
 
         // Negative Flag
-        if ((this.regX & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regX & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("DEX : " + String.format("%02X", this.regX));
@@ -1131,16 +1079,10 @@ public class MOS6502 extends Processor {
         this.regY = (this.regY -1) & MOS6502Constants.MASK_LAST_BYTE;
 
         // Zero Flag
-        if (this.regY == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regY == 0x00);
 
         // Negative Flag
-        if ((this.regY & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regY & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("DEY : " + String.format("%02X", this.regY));
@@ -1154,27 +1096,15 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException If there is an issue reading from memory
      */
     private void EOR() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
         this.regACC = this.regACC ^ value;
 
         // Zero Flag
-        if (this.regACC == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
 
         // Negative Flag
-        if ((this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("EOR : " + String.format("%02X", this.regACC));
@@ -1187,34 +1117,17 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw processor exception on memory errors
      */
     private void INC() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
         value = (value + 1) & MOS6502Constants.MASK_LAST_BYTE;
 
         // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
 
         // Negative Flag
-        if ((value & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
-        try {
-            dataBus.writeDataToBus(value);
-            rwFlag.setFlagValue(false);
-        } catch (InvalidBusDataException | FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
+        cpuWrite(this.regIntAddr, value);
 
         if (PRINT_TRACE)
             System.out.println("INC : " + String.format("%02X", value));
@@ -1229,16 +1142,10 @@ public class MOS6502 extends Processor {
         this.regX = (this.regX + 1) & MOS6502Constants.MASK_LAST_BYTE;
 
         // Zero Flag
-        if (this.regX == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regX == 0x00);
 
         // Negative Flag
-        if ((this.regX & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regX & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("INX : " + String.format("%02X", this.regX));
@@ -1254,16 +1161,10 @@ public class MOS6502 extends Processor {
         this.regY = (this.regY + 1) & MOS6502Constants.MASK_LAST_BYTE;
 
         // Zero Flag
-        if (this.regY == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regY == 0x00);
 
         // Negative Flag
-        if ((this.regY & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regY & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("INY : " + String.format("%02X", this.regY));
@@ -1319,25 +1220,13 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw a ProcessorException when issues reading memory
      */
     private void LDA() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
         // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
 
         // Negative Flag
-        if ((value & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         this.regACC = value;
 
@@ -1352,25 +1241,13 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw a ProcessorException when issues reading memory
      */
     private void LDX() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
         // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
 
         // Negative Flag
-        if ((value & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         this.regX = value;
 
@@ -1385,25 +1262,13 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw a ProcessorException when issues reading memory
      */
     private void LDY() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
         // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
 
         // Negative Flag
-        if ((value & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         this.regY = value;
 
@@ -1422,41 +1287,22 @@ public class MOS6502 extends Processor {
         int value = this.regACC;
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                rwFlag.setFlagValue(true);
-            } catch (FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
-            value = this.dataBus.readDataFromBus();
+            value = cpuRead(this.regIntAddr);
         }
 
+        // Zero Flag
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
+
         // Negative Flag
-        if ((value & MOS6502Flags.NEGATIVE_FLAG) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         // Carry Flag
-        if ((value & 0b00000001) != 0)
-            enableFlag(MOS6502Flags.CARRY_FLAG);
-        else
-            clearFlag(MOS6502Flags.CARRY_FLAG);
+        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0b00000001) != 0);
 
         value = (value & 0xFF) >>> 1;
 
-        // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
-
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                this.dataBus.writeDataToBus(value);
-                rwFlag.setFlagValue(false);
-            } catch (InvalidBusDataException | FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
+            cpuWrite(regIntAddr, value);
         } else {
             this.regACC = value;
         }
@@ -1473,27 +1319,15 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw a ProcessorException when issues reading memory
      */
     private void ORA() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
 
         this.regACC = this.regACC | value;
 
         // Zero Flag
-        if (this.regACC == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
 
         // Negative Flag
-        if ((this.regACC & MOS6502Constants.MASK_NEGATIVE) != 1)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0);
     }
 
     /**
@@ -1523,16 +1357,10 @@ public class MOS6502 extends Processor {
         this.regACC = pullFromStack();
 
         // Zero Flag
-        if (this.regACC == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
 
         // Negative Flag
-        if ((this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("PLA : " + String.format("%02X", this.regY));
@@ -1567,12 +1395,7 @@ public class MOS6502 extends Processor {
         int value = this.regACC;
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                rwFlag.setFlagValue(true);
-            } catch (FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
-            value = this.dataBus.readDataFromBus();
+            value = cpuRead(this.regIntAddr);
         }
 
         int tmp = 0x00;
@@ -1580,33 +1403,19 @@ public class MOS6502 extends Processor {
             tmp = 0x01;
 
         // Carry Flag
-        if ((value & 0b10000000) != 0)
-            enableFlag(MOS6502Flags.CARRY_FLAG);
-        else
-            clearFlag(MOS6502Flags.CARRY_FLAG);
+        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0b10000000) != 0);
 
         value = ((value << 1) + tmp) & MOS6502Constants.MASK_LAST_BYTE;
 
 
         // Negative Flag
-        if ((value & MOS6502Constants.MASK_NEGATIVE) != 0)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
-        else
-            clearFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                this.dataBus.writeDataToBus(value);
-                rwFlag.setFlagValue(false);
-            } catch (InvalidBusDataException | FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
+            cpuWrite(regIntAddr, value);
         } else {
             this.regACC = value;
         }
@@ -1623,12 +1432,7 @@ public class MOS6502 extends Processor {
         int value = this.regACC;
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                rwFlag.setFlagValue(true);
-            } catch (FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
-            value = this.dataBus.readDataFromBus();
+            value = cpuRead(this.regIntAddr);
         }
 
         int tmp = 0x00;
@@ -1636,30 +1440,18 @@ public class MOS6502 extends Processor {
             tmp = 0x80;
 
         // Carry Flag
-        if ((value & 0x01) != 0)
-            enableFlag(MOS6502Flags.CARRY_FLAG);
-        else
-            clearFlag(MOS6502Flags.CARRY_FLAG);
+        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0x01) != 0);
 
         value = ((value >> 1) + tmp) & MOS6502Constants.MASK_LAST_BYTE;
 
         // Negative Flag
-        if ((value & 0b10000000) == 0b10000000)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
-        else
-            clearFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & 0b10000000) == 0b10000000);
 
         // Zero Flag
-        if (value == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                this.dataBus.writeDataToBus(value);
-                rwFlag.setFlagValue(false);
-            } catch (InvalidBusDataException | FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
+            cpuWrite(regIntAddr, value);
         } else {
             this.regACC = value;
         }
@@ -1721,13 +1513,7 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw a ProcessorException if there is an issue writing to memory
      */
     private void SBC() throws ProcessorException {
-        try {
-            rwFlag.setFlagValue(true);
-        } catch (FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        int value = this.dataBus.readDataFromBus();
+        int value = cpuRead(this.regIntAddr);
         // perform 2's compliment
         value = ~value & MOS6502Constants.MASK_LAST_BYTE;
         value = (value + 0x01) & MOS6502Constants.MASK_LAST_BYTE;
@@ -1749,15 +1535,10 @@ public class MOS6502 extends Processor {
          * Set Flags
          */
         // Carry Flag
-        if ((result & MOS6502Constants.MASK_OVERFLOWED) != 0) {
-            enableFlag(MOS6502Flags.CARRY_FLAG);
-        } else {
-            clearFlag(MOS6502Flags.CARRY_FLAG);
-        }
+        setFlag(MOS6502Flags.CARRY_FLAG, (result & MOS6502Constants.MASK_OVERFLOWED) != 0);
 
         // Zero Flag
-        if (result == 0x00)
-            enableFlag(MOS6502Flags.ZERO_FLAG);
+        setFlag(MOS6502Flags.ZERO_FLAG, result == 0x00);
 
         /*
          * Overflow flag
@@ -1770,16 +1551,12 @@ public class MOS6502 extends Processor {
          * Only need to look at the MSB of the ACC, Value, Result
          * HEX 80 = BIN 10000000
          */
-        if (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)){
-            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
-        }
-        else if (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)){
-            enableFlag(MOS6502Flags.OVERFLOW_FLAG);
-        }
+        setFlag(MOS6502Flags.OVERFLOW_FLAG,
+                (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)) ||
+                    (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)));
 
         // Negative Flag
-        if ((result & 0b10000000) == 0b10000000)
-            enableFlag(MOS6502Flags.NEGATIVE_FLAG);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (result & 0b10000000) == 0b10000000);
 
         // Finally set accumulator with new value
         this.regACC = result;
@@ -1793,12 +1570,16 @@ public class MOS6502 extends Processor {
      * @throws ProcessorException Can throw a ProcessorException if there is an issue writing to memory
      */
     private void ST(int value) throws ProcessorException {
-        try {
-            this.dataBus.writeDataToBus(value & MOS6502Constants.MASK_LAST_BYTE);
-            rwFlag.setFlagValue(false);
-        } catch (InvalidBusDataException | FlagException ex){
-            throw new ProcessorException(ex.getMessage());
-        }
+        if (PRINT_TRACE)
+            System.out.println("ST : " + String.format("%02X", value));
+
+        cpuWrite(regIntAddr, value);
     }
 
+    @Override
+    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException, InvalidBusDataException, MapperException, ProcessorException {
+        if (flag == this.interruptNMI){
+            this.nmiTriggered = true;
+        }
+    }
 }

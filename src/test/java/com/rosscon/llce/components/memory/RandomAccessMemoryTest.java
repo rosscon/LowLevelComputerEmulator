@@ -5,6 +5,7 @@ import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.FlagValueRW;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +37,7 @@ public class RandomAccessMemoryTest {
     public void TestRAMInit() throws InvalidBusDataException, MemoryException, FlagException {
 
         addressBus.writeDataToBus(0x0001);
-        rwFlag.setFlagValue(false);
+        rwFlag.setFlagValue(FlagValueRW.WRITE);
         assertEquals(0x00, dataBus.readDataFromBus());
     }
 
@@ -46,13 +47,13 @@ public class RandomAccessMemoryTest {
 
         dataBus.writeDataToBus(0x42);
         addressBus.writeDataToBus(0x0000);
-        rwFlag.setFlagValue(false);
+        rwFlag.setFlagValue(FlagValueRW.WRITE);
         addressBus.writeDataToBus(0x0001);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
 
         assertEquals(0x00, dataBus.readDataFromBus());
         addressBus.writeDataToBus(0x0000);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
         assertEquals(0x42, dataBus.readDataFromBus());
     }
 
@@ -62,10 +63,10 @@ public class RandomAccessMemoryTest {
 
         dataBus.writeDataToBus(0x42);
         addressBus.writeDataToBus(0x0000);
-        rwFlag.setFlagValue(false);
+        rwFlag.setFlagValue(FlagValueRW.WRITE);
         dataBus.writeDataToBus(0x43);
         addressBus.writeDataToBus(0x0100);
-        rwFlag.setFlagValue(true);
+        rwFlag.setFlagValue(FlagValueRW.READ);
 
         assertEquals(0x43, dataBus.readDataFromBus());
     }
