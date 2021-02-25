@@ -12,6 +12,8 @@ import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 
+import javax.management.StandardEmitterMBean;
+
 
 /**
  *      __  __  ____   _____     __ _____  ___ ___
@@ -661,18 +663,26 @@ public class MOS6502 extends Processor implements FlagListener {
 
             case TAX:
                 this.regX = this.regACC;
+                setFlag(MOS6502Flags.ZERO_FLAG, this.regX == 0x00);
+                setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regX & 0x0080) != 0);
                 break;
 
             case TAY:
                 this.regY = this.regACC;
+                setFlag(MOS6502Flags.ZERO_FLAG, this.regY == 0x00);
+                setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regY & 0x0080) != 0);
                 break;
 
             case TSX:
                 this.regX = this.regSP;
+                setFlag(MOS6502Flags.ZERO_FLAG, this.regX == 0x00);
+                setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regX & 0x0080) != 0);
                 break;
 
             case TXA:
                 this.regACC = this.regX;
+                setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
+                setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regACC & 0x0080) != 0);
                 break;
 
             case TXS:
@@ -681,6 +691,8 @@ public class MOS6502 extends Processor implements FlagListener {
 
             case TYA:
                 this.regACC = this.regY;
+                setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
+                setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regACC & 0x0080) != 0);
                 break;
 
             default:
@@ -854,24 +866,16 @@ public class MOS6502 extends Processor implements FlagListener {
             value = cpuRead(this.regIntAddr);
         }
 
-        // Carry Flag if bit 7 is set
-        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0b10000000) == 0b10000000);
+        value <<= 1;
 
-        value = (value << 1) & MOS6502Constants.MASK_LAST_BYTE;
+        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0xFF00) != 0);
+        setFlag(MOS6502Flags.ZERO_FLAG, (value & 0x00FF) == 0x00);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & 0x0080) != 0);
 
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
+        value &= 0x00FF;
 
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
-
-        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            try {
-                this.dataBus.writeDataToBus(value);
-                rwFlag.setFlagValue(FlagValueRW.WRITE);
-            } catch (InvalidBusDataException | FlagException ex){
-                throw new ProcessorException(ex.getMessage());
-            }
+        if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR) {
+            cpuWrite(this.regIntAddr, value);
         } else {
             this.regACC = value;
         }
@@ -999,15 +1003,11 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private void CPX() throws ProcessorException {
         int value = cpuRead(this.regIntAddr);
+        int tmp = this.regX - value;
 
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, value == this.regX);
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, value > this.regX);
-
-        // Carry Flag
-        setFlag(MOS6502Flags.CARRY_FLAG, value < this.regX);
+        setFlag(MOS6502Flags.CARRY_FLAG, value <= this.regX);
+        setFlag(MOS6502Flags.ZERO_FLAG, (tmp & 0x00FF) == 0x00);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (tmp & 0x0080) != 0);
     }
 
     /**
@@ -1019,15 +1019,11 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private void CPY() throws ProcessorException {
         int value = cpuRead(this.regIntAddr);
+        int tmp = this.regY - value;
 
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, value == this.regY);
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, value > this.regY);
-
-        // Carry Flag
-        setFlag(MOS6502Flags.CARRY_FLAG, value < this.regY);
+        setFlag(MOS6502Flags.CARRY_FLAG, value <= this.regY);
+        setFlag(MOS6502Flags.ZERO_FLAG, (tmp & 0x00FF) == 0x00);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (tmp & 0x0080) != 0);
     }
 
     /**
@@ -1290,19 +1286,15 @@ public class MOS6502 extends Processor implements FlagListener {
             value = cpuRead(this.regIntAddr);
         }
 
-        // Zero Flag
+        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0x0001) == 0x0001);
+        value >>>= 1;
+        value = value & 0x00FF;
+
         setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
-
-        // Carry Flag
-        setFlag(MOS6502Flags.CARRY_FLAG, (value & 0b00000001) != 0);
-
-        value = (value & 0xFF) >>> 1;
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & 0x0080) !=0);
 
         if (this.addressingMode != MOS6502AddressingMode.ACCUMULATOR){
-            cpuWrite(regIntAddr, value);
+            cpuWrite(this.regIntAddr, value);
         } else {
             this.regACC = value;
         }
@@ -1514,54 +1506,19 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private void SBC() throws ProcessorException {
         int value = cpuRead(this.regIntAddr);
-        // perform 2's compliment
-        value = ~value & MOS6502Constants.MASK_LAST_BYTE;
-        value = (value + 0x01) & MOS6502Constants.MASK_LAST_BYTE;
 
-        int result = 0x00;
+        value = value ^ 0x00FF;
 
-        if ((this.regStatus & MOS6502Flags.DECIMAL_MODE) == MOS6502Flags.DECIMAL_MODE){
-            // BCD addition
-            // TODO BCD addition
-        } else {
-            // Binary addition
-            result = (value + this.regACC) & MOS6502Constants.MASK_LAST_BYTE;
+        int result = this.regACC + value;
+        if (isFlagSet(MOS6502Flags.CARRY_FLAG))
+            result ++;
 
-            if ((this.regStatus & MOS6502Flags.CARRY_FLAG) == MOS6502Flags.CARRY_FLAG)
-                result = result + 0x01;
-        }
+        setFlag(MOS6502Flags.CARRY_FLAG, (result & 0xFF0) != 0);
+        setFlag(MOS6502Flags.ZERO_FLAG, (result & 0x00FF) == 0);
+        setFlag(MOS6502Flags.OVERFLOW_FLAG, (((result ^ this.regACC) & (result ^ value)) & 0x080) != 0);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (result & 0x0080) != 0);
 
-        /*
-         * Set Flags
-         */
-        // Carry Flag
-        setFlag(MOS6502Flags.CARRY_FLAG, (result & MOS6502Constants.MASK_OVERFLOWED) != 0);
-
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, result == 0x00);
-
-        /*
-         * Overflow flag
-         * based on the following logic to detect n overflow situation
-         * Pos + Pos = Pos -> OK
-         * Pos + Pos = Neg -> FAIL Set flag
-         * Pos + Neg = OK -> Cannot overflow
-         * Neg + Neg = Neg -> OK
-         * Neg + Neg = Pos - FAIL Set flag
-         * Only need to look at the MSB of the ACC, Value, Result
-         * HEX 80 = BIN 10000000
-         */
-        setFlag(MOS6502Flags.OVERFLOW_FLAG,
-                (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)) ||
-                    (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)));
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, (result & 0b10000000) == 0b10000000);
-
-        // Finally set accumulator with new value
-        this.regACC = result;
-        if (PRINT_TRACE)
-            System.out.println("SBC : " + String.format("%02X", this.regACC));
+        this.regACC = result & 0x0FF;
     }
 
     /**

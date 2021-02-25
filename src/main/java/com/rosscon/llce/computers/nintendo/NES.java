@@ -10,6 +10,7 @@ import com.rosscon.llce.components.cartridges.NES.NESCartridgeFactory;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockThreaded;
 import com.rosscon.llce.components.clocks.dividers.Divider;
+import com.rosscon.llce.components.controllers.DummyNes;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
 import com.rosscon.llce.components.flags.FlagValueRW;
@@ -191,16 +192,16 @@ public class NES extends Computer {
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
         );*/
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/nestest.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );*/
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        );
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/full_palette/full_palette.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );
+        );*/
 
 
         /*
@@ -231,6 +232,8 @@ public class NES extends Computer {
         this.nametableAddressBus = new IntegerBus(16);
         this.nametableDataBus = new IntegerBus(8);
         this.rwFlagNametableMapper = new Flag();
+
+        DummyNes controller = new DummyNes(this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
 
         //this.nameTableMemory = new RandomAccessMemory(this.nametableAddressBus, this.nametableDataBus,
         //        this.rwFlagNametableMapper,0x2000, 0x27FF);
