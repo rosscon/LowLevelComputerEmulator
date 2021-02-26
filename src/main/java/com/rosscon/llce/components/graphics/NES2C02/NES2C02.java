@@ -399,8 +399,6 @@ public class NES2C02 extends Processor implements FlagListener {
 
     @Override
     public void onTick() throws ProcessorException {
-
-
         if (scanline >= -1 && scanline < 240) {
 
             /*

@@ -50,6 +50,27 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private boolean nmiTriggered;
 
+    /**
+     * Cycle tracking
+     */
+    private int cycles;
+
+    /**
+     * Current Instruction
+     */
+    private MOS6502Instruction instruction;
+
+    /**
+     * Addressing Mode
+     * http://www.obelisk.me.uk/6502/addressing.html#IMP
+     */
+    private MOS6502AddressingMode addressingMode;
+
+    /**
+     * Interrupts
+     */
+    private Flag interruptNMI;
+
 
     public int getRegPC() {
         return this.regPC;
@@ -81,28 +102,6 @@ public class MOS6502 extends Processor implements FlagListener {
     public int getRegStatus() {
         return regStatus;
     }
-
-    /**
-     * Cycle tracking
-     */
-    private int cycles;
-
-    /**
-     * Current Instruction
-     */
-    private MOS6502Instruction instruction;
-
-    /**
-     * Addressing Mode
-     * http://www.obelisk.me.uk/6502/addressing.html#IMP
-     */
-    private MOS6502AddressingMode addressingMode;
-
-    /**
-     * Interrupts
-     */
-    private Flag interruptNMI;
-
     /**
      * Read a value from memory. Clear the data bus before reading to prevent
      * accidentally reading lingering data from previous cycles
@@ -230,7 +229,6 @@ public class MOS6502 extends Processor implements FlagListener {
         }
 
         nmiTriggered = false;
-
         instructionMapping = new MOS6502InstructionMapping();
     }
 
@@ -678,6 +676,7 @@ public class MOS6502 extends Processor implements FlagListener {
 
     @Override
     public void onTick() throws ProcessorException {
+
         if ( this.cycles == 0 ){
             try {
                 // If NMI triggered perform a BRK

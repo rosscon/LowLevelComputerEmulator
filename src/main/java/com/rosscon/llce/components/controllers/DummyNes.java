@@ -20,6 +20,8 @@ public class DummyNes implements FlagListener {
 
     int value = 0b00001000;
 
+    int count = 0;
+
 
     public DummyNes(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag){
         this.addressBus = addressBus;
@@ -33,10 +35,13 @@ public class DummyNes implements FlagListener {
         if (flag == rwFlag){
             if (addressBus.readDataFromBus() == 0x4016 && newValue == FlagValueRW.READ){
 
-                int outputData = 0x01 & value;
+                int outputData = 0x01 & (value >>> count);
                 dataBus.writeDataToBus(outputData);
 
-                value >>>= 1;
+                if (count == 8)
+                    count = 0;
+
+                //value >>>= 1;
             }
         }
     }
