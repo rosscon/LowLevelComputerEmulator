@@ -1,7 +1,7 @@
 package com.rosscon.llce.components.cartridges;
 
 import com.rosscon.llce.components.busses.IntegerBus;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.components.flags.FlagListener;
 
 /**
@@ -22,9 +22,9 @@ public abstract class Cartridge implements FlagListener {
     /**
      * Read Write Flag
      */
-    Flag rwFlag;
+    RWFlag rwFlag;
 
-    public Cartridge(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag){
+    public Cartridge(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag){
         this.addressBus = addressBus;
         this.dataBus = dataBus;
         this.rwFlag = rwFlag;

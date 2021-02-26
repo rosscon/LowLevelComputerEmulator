@@ -3,7 +3,8 @@ package com.rosscon.llce.components.memory;
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.flags.FlagValueRW;
+import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.RWFlag;
 
 public class RandomAccessMemory extends Memory {
 
@@ -15,7 +16,7 @@ public class RandomAccessMemory extends Memory {
      * @param rwFlag RW Flag to attach to
      * @throws MemoryException Thrown when any bus of flag is null
      */
-    public RandomAccessMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag) throws MemoryException {
+    public RandomAccessMemory(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag) throws MemoryException {
         super(addressBus, dataBus, rwFlag);
     }
 
@@ -28,27 +29,34 @@ public class RandomAccessMemory extends Memory {
      * @param lastAddress Address of the last value in memory
      * @throws MemoryException Thrown when any bus of flag is null or an invalid address range provided
      */
-    public RandomAccessMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, int startAddress, int lastAddress) throws MemoryException {
+    public RandomAccessMemory(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag, int startAddress, int lastAddress) throws MemoryException {
         super(addressBus, dataBus, rwFlag, startAddress, lastAddress);
     }
 
     /**
      * Random Access Memory can be read from and written to by setting the RW flag
-     * @param newValue new value of RW flag
      * @param flag flag that fired event
      * @throws MemoryException thrown when error reading memory
      * @throws InvalidBusDataException thrown by bus
      */
     @Override
-    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException, InvalidBusDataException {
-        if (flag == rwFlag) {
+    public void onFlagChange(Flag flag) throws FlagException {
+        if (flag instanceof RWFlag){
             int address = this.addressBus.readDataFromBus();
-            if (addressIsInRange(address)){
-                if (newValue == FlagValueRW.READ){
-                    this.dataBus.writeDataToBus(readValueFromAddress(address));
-                } else {
-                    writeValueToAddress(address, this.dataBus.readDataFromBus());
+
+            if (flag.getFlagValue() == RWFlag.READ) {
+                try {
+                    if (addressIsInRange(address))
+                        this.dataBus.writeDataToBus(readValueFromAddress(address));
+                } catch (InvalidBusDataException be) {
+                    MemoryException me = new MemoryException(MemoryConstants.EX_ERROR_WRITING_TO_BUS);
+                    me.addSuppressed(be);
+                    FlagException fe = new FlagException(MemoryConstants.EX_ERROR_WRITING_TO_BUS);
+                    fe.addSuppressed(me);
+                    throw fe;
                 }
+            } else if (flag.getFlagValue() == RWFlag.WRITE) {
+                writeValueToAddress(address, this.dataBus.readDataFromBus());
             }
         }
     }

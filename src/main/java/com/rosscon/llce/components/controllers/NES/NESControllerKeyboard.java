@@ -1,7 +1,7 @@
 package com.rosscon.llce.components.controllers.NES;
 
 import com.rosscon.llce.components.busses.IntegerBus;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.RWFlag;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +37,7 @@ public class NESControllerKeyboard extends NESController {
         return buttonReleasedHandler;
     }
 
-    public NESControllerKeyboard(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, int player) {
+    public NESControllerKeyboard(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag, int player) {
         super(addressBus, dataBus, rwFlag, player);
         currentState = 0x00;
 

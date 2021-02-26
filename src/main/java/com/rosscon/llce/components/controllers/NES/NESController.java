@@ -2,12 +2,11 @@ package com.rosscon.llce.components.controllers.NES;
 
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
+import com.rosscon.llce.components.controllers.ControllerException;
 import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.components.flags.FlagListener;
-import com.rosscon.llce.components.flags.FlagValueRW;
-import com.rosscon.llce.components.mappers.MapperException;
-import com.rosscon.llce.components.memory.MemoryException;
-import com.rosscon.llce.components.processors.ProcessorException;
 
 public abstract class NESController implements FlagListener {
 
@@ -28,6 +27,11 @@ public abstract class NESController implements FlagListener {
     protected static final int BUTTON_INDEX_DOWN    = 5;
     protected static final int BUTTON_INDEX_LEFT    = 6;
     protected static final int BUTTON_INDEX_RIGHT   = 7;
+
+    /**
+     * Error Messages
+     */
+    private static final String EX_BUS_WRITE = "Controller encountered an error writing state to bus";
 
     /**
      * Player ID
@@ -60,7 +64,7 @@ public abstract class NESController implements FlagListener {
     protected final int address;
 
 
-    public NESController(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, int player){
+    public NESController(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag, int player){
         rwFlag.addListener(this);
         this.addressBus = addressBus;
         this.dataBus = dataBus;
@@ -75,18 +79,24 @@ public abstract class NESController implements FlagListener {
     }
 
     @Override
-    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException, InvalidBusDataException, MapperException, ProcessorException {
+    public void onFlagChange(Flag flag) throws FlagException {
 
-        if(addressBus.readDataFromBus() == this.address){
-            if (newValue == FlagValueRW.WRITE) {
+        try {
+            if (addressBus.readDataFromBus() == this.address && flag.getFlagValue() == RWFlag.WRITE) {
                 snapshotInput();
                 count = 0;
-            }
-            else {
+            } else if (addressBus.readDataFromBus() == this.address && flag.getFlagValue() == RWFlag.READ) {
                 dataBus.writeDataToBus((switchState >>> count) & 0x01);
                 count++;
                 if (count > 7) count = 0;
             }
+        } catch (InvalidBusDataException be) {
+            be.printStackTrace();
+            ControllerException ce = new ControllerException(EX_BUS_WRITE);
+            ce.addSuppressed(be);
+            FlagException fe = new FlagException(EX_BUS_WRITE);
+            fe.addSuppressed(be);
+            throw fe;
         }
     }
 

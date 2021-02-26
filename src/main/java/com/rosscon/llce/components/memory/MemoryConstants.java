@@ -25,4 +25,7 @@ public class MemoryConstants {
 
     public static final String EX_NULL_RW_FLAG =
             "RW flag annot be null";
+
+    public static final String EX_ERROR_WRITING_TO_BUS =
+            "Memory encountered an error when writing to the data bus";
 }

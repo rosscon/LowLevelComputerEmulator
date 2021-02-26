@@ -11,7 +11,9 @@ import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockThreaded;
 import com.rosscon.llce.components.clocks.dividers.Divider;
 import com.rosscon.llce.components.controllers.NES.NESControllerKeyboard;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.HaltFlag;
+import com.rosscon.llce.components.flags.NMIFlag;
+import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.components.flags.FlagException;
 import com.rosscon.llce.components.graphics.NES2C02.NES2C02;
 import com.rosscon.llce.components.mappers.MirroredMapper;
@@ -89,12 +91,12 @@ public class NES extends Computer {
      */
     private IntegerBus cpuAddressBus;
     private IntegerBus cpuDataBus;
-    private Flag rwFlagCpu;
+    private RWFlag rwRWFlagCpu;
 
     /**
      * Internal RAM and mapper
      */
-    private Flag rwFlagInternalRamMapper;
+    private RWFlag rwRWFlagInternalRamMapper;
     private RandomAccessMemory internalRAM;
     private IntegerBus internalRAMAddressBus;
     private IntegerBus internalRAMDataBus;
@@ -103,7 +105,7 @@ public class NES extends Computer {
     /**
      * PPU busses and flags
      */
-    private Flag rwFlagPPU;
+    private RWFlag rwRWFlagPPU;
     private IntegerBus ppuAddressBus;
     private IntegerBus ppuDataBus;
 
@@ -115,7 +117,7 @@ public class NES extends Computer {
     private MirroredMapper nametableMapper;
     private IntegerBus nametableAddressBus;
     private IntegerBus nametableDataBus;
-    private Flag rwFlagNametableMapper;
+    private RWFlag rwRWFlagNametableMapper;
 
 
     /**
@@ -127,7 +129,8 @@ public class NES extends Computer {
     /**
      * Interrupts
      */
-    private Flag cpuNMI;
+    private NMIFlag flgCpuNmi;
+    private HaltFlag flgCpuHalt;
 
 
     private ClockThreaded masterClock;
@@ -147,18 +150,18 @@ public class NES extends Computer {
          */
         this.cpuAddressBus = new IntegerBus(16);
         this.cpuDataBus = new IntegerBus(8);
-        this.rwFlagCpu = new Flag();
+        this.rwRWFlagCpu = new RWFlag();
 
         /*
          * Internal RAM and mirroring mapper
          */
         this.internalRAMAddressBus = new IntegerBus(16);
         this.internalRAMDataBus = new IntegerBus(8);
-        this.rwFlagInternalRamMapper = new Flag();
+        this.rwRWFlagInternalRamMapper = new RWFlag();
         this.internalRAM = new RandomAccessMemory(internalRAMAddressBus, internalRAMDataBus,
-                rwFlagInternalRamMapper,0x0000, 0x07FF);
+                rwRWFlagInternalRamMapper,0x0000, 0x07FF);
 
-        this.internalRAMMapper = new MirroredMapper(cpuAddressBus, cpuDataBus, rwFlagCpu,
+        this.internalRAMMapper = new MirroredMapper(cpuAddressBus, cpuDataBus, rwRWFlagCpu,
                 this.internalRAM, 0x0000, 0x1FFF, 0x07FF);
 
 
@@ -167,7 +170,7 @@ public class NES extends Computer {
          */
         this.ppuAddressBus = new IntegerBus(16);
         this.ppuDataBus = new IntegerBus(8);
-        this.rwFlagPPU = new Flag();
+        this.rwRWFlagPPU = new RWFlag();
 
 
         /*
@@ -176,8 +179,8 @@ public class NES extends Computer {
 
         this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/donkey.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/mario.nes",
@@ -229,13 +232,14 @@ public class NES extends Computer {
         //this.cpuDivider = new Divider(12, clock);
         //this.ppuDivider = new Divider(4, clock);
 
-        this.cpuNMI = new Flag();
+        this.flgCpuNmi = new NMIFlag();
+        this.flgCpuHalt = new HaltFlag();
 
-        //this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, this.cpuNMI,true, 0xC000);
-        this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, this.cpuNMI, false);
+        //this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu, this.flgCpuNmi, this.flgCpuHalt, false, 0xC000);
+        this.cpu = new MOS6502(cpuDivider, this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu, this.flgCpuNmi, this.flgCpuHalt, false);
 
-        this.ppu = new NES2C02(ppuDivider, cpuAddressBus, cpuDataBus, rwFlagCpu,
-                ppuAddressBus, ppuDataBus, rwFlagPPU, cpuNMI, cartridge.getNametableMirror());
+        this.ppu = new NES2C02(ppuDivider, cpuAddressBus, cpuDataBus, rwRWFlagCpu,
+                ppuAddressBus, ppuDataBus, rwRWFlagPPU, flgCpuNmi, flgCpuHalt, cartridge.getNametableMirror());
 
         /*
          * Cheating a bit with the nametable memory and assigning all 4KB,
@@ -243,9 +247,9 @@ public class NES extends Computer {
          */
         this.nametableAddressBus = new IntegerBus(16);
         this.nametableDataBus = new IntegerBus(8);
-        this.rwFlagNametableMapper = new Flag();
+        this.rwRWFlagNametableMapper = new RWFlag();
 
-        controller = new NESControllerKeyboard(this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, 1);
+        controller = new NESControllerKeyboard(this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu, 1);
 
 
         /*long start = System.nanoTime();

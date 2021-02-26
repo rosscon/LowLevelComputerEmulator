@@ -3,7 +3,8 @@ package com.rosscon.llce.components.memory;
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.flags.FlagValueRW;
+import com.rosscon.llce.components.flags.FlagException;
+import com.rosscon.llce.components.flags.RWFlag;
 
 public class ReadOnlyMemory extends Memory {
 
@@ -15,7 +16,7 @@ public class ReadOnlyMemory extends Memory {
      * @param rwFlag R/W flag to attach to
      * @throws MemoryException Thrown when any bus of flag is null
      */
-    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag) throws MemoryException {
+    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag) throws MemoryException {
         super(addressBus, dataBus, rwFlag);
     }
 
@@ -28,7 +29,7 @@ public class ReadOnlyMemory extends Memory {
      * @param lastAddress address of the last value in memory
      * @throws MemoryException Thrown when any bus of flag is null or an invalid address range provided
      */
-    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag,
+    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag,
                           int startAddress, int lastAddress) throws MemoryException {
         super(addressBus, dataBus, rwFlag, startAddress, lastAddress);
     }
@@ -43,7 +44,7 @@ public class ReadOnlyMemory extends Memory {
      * @param contents predefined contents of the Read Only Memory
      * @throws MemoryException Thrown when any bus of flag is null, or an invalid address range provided, or provided data size mismatches address range
      */
-    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag,
+    public ReadOnlyMemory(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag,
                           int startAddress, int lastAddress, int[] contents) throws MemoryException {
         super(addressBus, dataBus, rwFlag, startAddress, lastAddress);
 
@@ -58,18 +59,24 @@ public class ReadOnlyMemory extends Memory {
 
     /**
      * Read only memory will only respond to read flags, write flags are ignored
-     * @param newValue new value of RW flag
      * @param flag flag that fired event
-     * @throws MemoryException thrown when error reading memory
-     * @throws InvalidBusDataException thrown by bus
+     * @throws FlagException thrown when error reading memory
      */
     @Override
-    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException, InvalidBusDataException {
+    public void onFlagChange(Flag flag) throws FlagException {
 
-        // On R/W flag being set to true write contents at address on address bus to data bus if within range
-        if (flag == this.rwFlag && newValue == FlagValueRW.READ){
+        if (flag instanceof RWFlag && flag.getFlagValue() == RWFlag.READ){
             int address = this.addressBus.readDataFromBus();
-            if (addressIsInRange(address)) this.dataBus.writeDataToBus(readValueFromAddress(address));
+            try {
+                if (addressIsInRange(address))
+                    this.dataBus.writeDataToBus(readValueFromAddress(address));
+            } catch (InvalidBusDataException be) {
+                MemoryException me = new MemoryException(MemoryConstants.EX_ERROR_WRITING_TO_BUS);
+                me.addSuppressed(be);
+                FlagException fe = new FlagException(MemoryConstants.EX_ERROR_WRITING_TO_BUS);
+                fe.addSuppressed(me);
+                throw fe;
+            }
         }
     }
 }

@@ -4,10 +4,10 @@ import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.clocks.ClockException;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.components.flags.FlagException;
 
-import com.rosscon.llce.components.flags.FlagValueRW;
+import com.rosscon.llce.components.flags.RWFlagValue;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 
@@ -22,7 +22,7 @@ public class ReadOnlyMemoryTest {
 
         IntegerBus addressBus = new IntegerBus();
         IntegerBus dataBus = new IntegerBus();
-        Flag rwFlag = new Flag();
+        RWFlag rwFlag = new RWFlag();
 
         int[] data = new int[]{
                 0xFF, 0x01
@@ -32,7 +32,7 @@ public class ReadOnlyMemoryTest {
                 0x0000, 0x0001, data);
 
         addressBus.writeDataToBus(0x00);
-        rwFlag.setFlagValue(FlagValueRW.READ);
+        rwFlag.setFlagValue(RWFlag.READ);
         assertEquals(0xFF, dataBus.readDataFromBus());
     }
 
@@ -42,7 +42,7 @@ public class ReadOnlyMemoryTest {
 
         IntegerBus addressBus = new IntegerBus();
         IntegerBus dataBus = new IntegerBus(16);
-        Flag rwFlag = new Flag();
+        RWFlag rwFlag = new RWFlag();
 
         int[] data = new int[]{
                 0xFF, 0x01, 0x00, 0x00
@@ -60,7 +60,7 @@ public class ReadOnlyMemoryTest {
 
         IntegerBus addressBus = new IntegerBus();
         IntegerBus dataBus = new IntegerBus(16);
-        Flag rwFlag = new Flag();
+        RWFlag rwFlag = new RWFlag();
 
         int[] data = new int[]{
                 0xFF, 0x01, 0x00, 0x00

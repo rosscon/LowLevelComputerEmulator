@@ -5,10 +5,7 @@ import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.cartridges.NES.NESNametableMirroring;
 import com.rosscon.llce.components.cartridges.NES.NametableMirror;
 import com.rosscon.llce.components.clocks.Clock;
-import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.flags.FlagException;
-import com.rosscon.llce.components.flags.FlagListener;
-import com.rosscon.llce.components.flags.FlagValueRW;
+import com.rosscon.llce.components.flags.*;
 import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
@@ -51,7 +48,7 @@ public class NES2C02 extends Processor implements FlagListener {
      */
     private IntegerBus ppuAddressBus;
     private IntegerBus ppuDataBus;
-    private Flag ppuRwFlag;
+    private RWFlag ppuRwRWFlag;
 
 
     /**
@@ -66,9 +63,11 @@ public class NES2C02 extends Processor implements FlagListener {
 
 
     /**
-     * CPU NMI interrupt
+     * Flags
      */
-    private Flag cpuNMI;
+    private RWFlag flgCpuRW;
+    private NMIFlag flgCpuNmi;
+    private HaltFlag flgCpuHalt;
 
     /**
      * Background tile details
@@ -89,6 +88,7 @@ public class NES2C02 extends Processor implements FlagListener {
     int [][] nametable;
     int [][] patternMemory;
     int []   paletteMemory;
+    int []   oamMemory;
 
     NametableMirror nametableMirror;
 
@@ -99,21 +99,29 @@ public class NES2C02 extends Processor implements FlagListener {
      * @param clock Clock to respond to ticks
      * @param addressBus CPU address bus
      * @param dataBus CPU data bus
-     * @param cpuRwFlag CPU RW flag
+     * @param flgCpuRW CPU RW flag
      * @param ppuAddressBus PPU address bus
      * @param ppuDataBus PPU data bus
-     * @param ppuRwFlag PPU RW flag
+     * @param ppuRwRWFlag PPU RW flag
+     * @param flgCpuNmi CPU NMI flag
+     * @param flgCpuHalt CPU halt flag
+     * @param nametableMirror Nametable mirror object. Allows for cart to adjust mirroring on the fly.
      */
-    public NES2C02(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag cpuRwFlag,
-                   IntegerBus ppuAddressBus, IntegerBus ppuDataBus, Flag ppuRwFlag,
-                   Flag cpuNMI, NametableMirror nametableMirror){
-        super(clock, addressBus, dataBus, cpuRwFlag);
+    public NES2C02(Clock clock, IntegerBus addressBus, IntegerBus dataBus, RWFlag flgCpuRW,
+                   IntegerBus ppuAddressBus, IntegerBus ppuDataBus, RWFlag ppuRwRWFlag,
+                   NMIFlag flgCpuNmi, HaltFlag flgCpuHalt, NametableMirror nametableMirror){
+        super(clock, addressBus, dataBus, flgCpuRW);
+
         this.ppuAddressBus = ppuAddressBus;
         this.ppuDataBus = ppuDataBus;
-        this.ppuRwFlag = ppuRwFlag;
-        this.rwFlag.addListener(this::onFlagChange);
-        this.cpuNMI = cpuNMI;
+        this.ppuRwRWFlag = ppuRwRWFlag;
+        this.flgRW.addListener(this);
         this.nametableMirror = nametableMirror;
+
+        this.flgCpuNmi = flgCpuNmi;
+        this.flgCpuHalt = flgCpuHalt;
+        this.flgCpuRW = flgCpuRW;
+
         reset();
     }
 
@@ -150,6 +158,7 @@ public class NES2C02 extends Processor implements FlagListener {
         this.nametable      = new int[2][1024];
         this.patternMemory  = new int[2][4096];
         this.paletteMemory  = new int[32];
+        this.oamMemory      = new int[256];
         this.fineX = 0x00;
     }
 
@@ -298,7 +307,7 @@ public class NES2C02 extends Processor implements FlagListener {
              */
             try{
                 this.ppuAddressBus.writeDataToBus(address);
-                this.ppuRwFlag.setFlagValue(FlagValueRW.READ);
+                this.ppuRwRWFlag.setFlagValue(RWFlag.READ);
                 data = this.ppuDataBus.readDataFromBus();
             } catch (InvalidBusDataException | FlagException e) {
                 ProcessorException pe = new ProcessorException(NES2C02Constants.EX_PPU_READ_FAIL);
@@ -470,7 +479,7 @@ public class NES2C02 extends Processor implements FlagListener {
                 setStatusFlag(NES2C02StatusFlags.VBLANK_STARTED);
                 if (isFlagSet(regPPUCTRL, NES2C02ControllerFlags.GENERATE_NMI_START_VBLANK)) {
                     try {
-                        this.cpuNMI.setFlagValue(FlagValueRW.WRITE);
+                        this.flgCpuNmi.setFlagValue(NMIFlag.NMI);
                     } catch (FlagException e) {
                         ProcessorException pe = new ProcessorException(NES2C02Constants.EX_CPU_NMI);
                         pe.addSuppressed(e);
@@ -517,9 +526,9 @@ public class NES2C02 extends Processor implements FlagListener {
     }
 
     @Override
-    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException {
+    public void onFlagChange(Flag flag) throws FlagException {
         // Respond to CPU flags for registers
-        if (flag == this.rwFlag){
+        if (flag instanceof RWFlag){
 
             /*
              * Check in range of PPU Registers
@@ -534,7 +543,7 @@ public class NES2C02 extends Processor implements FlagListener {
                 address = address & NES2C02Constants.REG_MASK;
 
                 try {
-                    if (newValue == FlagValueRW.READ) {
+                    if (flag.getFlagValue() == RWFlag.READ) {
                         /*
                          * Reading from registers
                          */
@@ -543,6 +552,8 @@ public class NES2C02 extends Processor implements FlagListener {
                             case NES2C02Constants.REG_PPUMASK:
                             case NES2C02Constants.REG_OAMADDR:
                             case NES2C02Constants.REG_OAMDATA:
+                                this.dataBus.writeDataToBus(this.oamMemory[this.regPPUADDR]);
+                                break;
                             case NES2C02Constants.REG_PPUSCROLL:
                                 this.dataBus.writeDataToBus(0x00);
                                 break;
@@ -567,7 +578,7 @@ public class NES2C02 extends Processor implements FlagListener {
                                 break;
                         }
 
-                    } else {
+                    } else if (flag.getFlagValue() == RWFlag.WRITE) {
                         /*
                          * Writing to registers
                          */
@@ -576,7 +587,10 @@ public class NES2C02 extends Processor implements FlagListener {
                         switch (address) {
                             case NES2C02Constants.REG_PPUSTATUS:
                             case NES2C02Constants.REG_OAMADDR:
+                                this.regOAMADDR = data & 0x00FF;
+                                break;
                             case NES2C02Constants.REG_OAMDATA:
+                                oamMemory[regOAMDATA] = data;
                                 break;
                             case NES2C02Constants.REG_PPUCTRL:
                                 this.regPPUCTRL = data;
@@ -621,12 +635,20 @@ public class NES2C02 extends Processor implements FlagListener {
                     e.printStackTrace();
                     MemoryException me = new MemoryException(e.getMessage());
                     me.addSuppressed(e);
-                    throw me;
+                    FlagException fe = new FlagException(e.getMessage());
+                    fe.addSuppressed(me);
+                    throw fe;
                 }
 
             }
 
-
+            /*
+             * When writing to this register, this triggers DMA for the PPU to
+             * Start loading from the page written to this register
+             */
+            if (address == NES2C02Constants.REG_OAMDMA && flag.getFlagValue() == RWFlag.WRITE){
+                // TODO start the interrupt process
+            }
         }
     }
 }

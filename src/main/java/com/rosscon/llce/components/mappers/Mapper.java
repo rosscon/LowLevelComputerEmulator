@@ -1,7 +1,7 @@
 package com.rosscon.llce.components.mappers;
 
 import com.rosscon.llce.components.busses.IntegerBus;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.components.flags.FlagListener;
 
 public abstract class Mapper implements FlagListener {
@@ -19,7 +19,7 @@ public abstract class Mapper implements FlagListener {
     /**
      * Read Write Flag
      */
-    protected Flag rwFlag;
+    protected RWFlag rwFlag;
 
     /**
      * First address mapper can respond to
@@ -31,7 +31,7 @@ public abstract class Mapper implements FlagListener {
      */
     protected long lastAddress;
 
-    public Mapper(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag){
+    public Mapper(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag){
         this.addressBus = addressBus;
         this.dataBus = dataBus;
         this.rwFlag = rwFlag;
