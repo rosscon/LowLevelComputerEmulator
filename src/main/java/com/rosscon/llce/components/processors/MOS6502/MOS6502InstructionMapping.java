@@ -302,11 +302,11 @@ public class MOS6502InstructionMapping  {
         details[MOS6502Instructions.INS_LDX_ZP] =
                 new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ZERO_PAGE, 2, 3);
         details[MOS6502Instructions.INS_LDX_ZPY] =
-                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ZERO_PAGE_X, 2, 4);
+                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ZERO_PAGE_Y, 2, 4);
         details[MOS6502Instructions.INS_LDX_ABS] =
                 new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ABSOLUTE, 3, 4);
         details[MOS6502Instructions.INS_LDX_ABY] =
-                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ABSOLUTE_X, 3, 4);
+                new MOS6502InstructionDetails(MOS6502Instruction.LDX, MOS6502AddressingMode.ABSOLUTE_Y, 3, 4);
 
         /*
          * LDY

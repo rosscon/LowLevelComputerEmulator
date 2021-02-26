@@ -12,7 +12,6 @@ import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 
-import javax.management.StandardEmitterMBean;
 
 
 /**
@@ -317,110 +316,87 @@ public class MOS6502 extends Processor implements FlagListener {
                 case IMPLICIT:      // These modes do nothing with memory
                 case ACCUMULATOR:
                     break;
+
                 case RELATIVE:
                 case IMMEDIATE:
                     this.regIntAddr = this.regPC;
                     this.regPC = (this.regPC + 1) & 0xFFFF;
                     break;
-                case ZERO_PAGE:     // Move to next address in memory, read contents, build zero page address from it
-                    this.regIntAddr = (this.fetch() & 0xFF);
-                    addressBus.writeDataToBus(this.regIntAddr);
-                    break;
-                case ZERO_PAGE_X:
-                    this.regIntAddr = (this.fetch() + this.regX) & 0x000000FF;
-                    addressBus.writeDataToBus(this.regIntAddr);
-                    break;
-                case ZERO_PAGE_Y:
-                    this.regIntAddr = (this.fetch() + this.regY) & 0x000000FF;
-                    addressBus.writeDataToBus(getRegIntAddr());
-                    break;
-                case ABSOLUTE:
-                    this.regIntAddr = this.fetch();
-                    this.regIntAddr = this.regIntAddr | (this.fetch() << 8);
-                    addressBus.writeDataToBus(this.regIntAddr);
-                    break;
-                case ABSOLUTE_X:
-                    this.regIntAddr = (this.fetch() & 0xFF);
-                    this.regIntAddr = this.regIntAddr | ((this.fetch() & 0xFF) << 8);
-                    long tmpAbx = this.regIntAddr;
-                    this.regIntAddr = (this.regIntAddr + this.regX) & 0x0000FFFF;
 
-                    if ((this.regIntAddr & 0x0000FF00) != (tmpAbx & 0x0000FF00))
-                        cycles++;
-                    addressBus.writeDataToBus(this.regIntAddr);
+                case ZERO_PAGE:     // Move to next address in memory, read contents, build zero page address from it
+                    this.regIntAddr = cpuRead(this.regPC);
+                    this.regPC = (this.regPC + 1) & 0xFFFF;
+                    break;
+
+                case ZERO_PAGE_X:
+                    this.regIntAddr = (cpuRead(this.regPC) + this.regX) & 0x00FF;
+                    this.regPC = (this.regPC + 1) & 0xFFFF;
+                    break;
+
+                case ZERO_PAGE_Y:
+                    this.regIntAddr = (cpuRead(this.regPC) + this.regY) & 0x00FF;
+                    this.regPC = (this.regPC + 1) & 0xFFFF;
+                    break;
+
+                case ABSOLUTE:
+                    this.regIntAddr = cpuRead(this.regPC) | (cpuRead(this.regPC + 1) << 8);
+                    this.regPC = (this.regPC + 2) & 0xFFFF;
+                    break;
+
+                case ABSOLUTE_X:
+                    this.regIntAddr = cpuRead(this.regPC) | (cpuRead(this.regPC + 1) << 8);
+                    this.regPC = (this.regPC + 2) & 0xFFFF;
+                    int tmpAbx = this.regIntAddr & 0xFF00;
+                    this.regIntAddr = (this.regIntAddr + this.regX) & 0xFFFF;
+
+                    if ((tmpAbx & 0xFF00) != (this.regIntAddr & 0xFF00))
+                        this.cycles ++;
                     break;
 
                 case ABSOLUTE_Y:
-                    this.regIntAddr = (this.fetch() & 0xFF);
-                    this.regIntAddr = this.regIntAddr | ((this.fetch() & 0xFF) << 8);
-                    long tmpAby = this.regIntAddr;
-                    this.regIntAddr = (this.regIntAddr + this.regY) & 0x0000FFFF;
+                    this.regIntAddr = cpuRead(this.regPC) | (cpuRead(this.regPC + 1) << 8);
+                    this.regPC = (this.regPC + 2) & 0xFFFF;
+                    int tmpAby = this.regIntAddr & 0xFF00;
+                    this.regIntAddr = (this.regIntAddr + this.regY) & 0xFFFF;
 
-                    if ((this.regIntAddr & 0x0000FF00) != (tmpAby & 0x0000FF00))
-                        cycles++;
-                    addressBus.writeDataToBus(this.regIntAddr);
+                    if ((tmpAby & 0xFF00) != (this.regIntAddr & 0xFF00))
+                        this.cycles ++;
                     break;
 
                 case INDIRECT:
-                    // Set internal memory pointer reading from memory
-                    this.regIntAddr = this.fetch();
-                    this.regIntAddr = this.regIntAddr | (this.fetch() << 8);
-                    addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(FlagValueRW.READ);
+                    this.regIntAddr = cpuRead(this.regPC) | (cpuRead(this.regPC + 1) << 8);
 
-                    // Read low byte from memory
-                    int tmp = (dataBus.readDataFromBus());
+                    /*
+                     * Hardware bug to account for
+                     */
+                    if ((this.regIntAddr & 0x00FF) == 0x00FF){
+                        this.regIntAddr = (cpuRead(this.regIntAddr)) | (cpuRead(this.regIntAddr & 0xFF00) << 8);
+                    } else {
+                        this.regIntAddr = (cpuRead(this.regIntAddr)) | (cpuRead((this.regIntAddr) + 1 & 0xFFFF) << 8);
+                    }
 
-                    // Read high byte from memory
-                    this.regIntAddr += 1;
-                    addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(FlagValueRW.READ);
-                    this.regIntAddr = (dataBus.readDataFromBus() << 8) | tmp;
+                    this.regPC = (this.regPC + 2) & 0xFFFF;
                     break;
 
                 case INDEXED_INDIRECT_X:
-                    this.regIntAddr = (this.fetch() + this.regX) & 0x000000FF;
-
-                    // Read Low byte
-                    addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(FlagValueRW.READ);
-                    int tmpInx = dataBus.readDataFromBus();
-
-                    // Read high byte
-                    this.regIntAddr++;
-                    addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(FlagValueRW.READ);
-                    this.regIntAddr = (dataBus.readDataFromBus() << 8) | tmpInx;
-
-                    this.addressBus.writeDataToBus(getRegIntAddr());
+                    int tmpIndX = cpuRead(this.regPC);
+                    int tmpIndXLow = cpuRead((tmpIndX + this.regX) & 0x00FF);
+                    int tmpIndXHigh = cpuRead((tmpIndX + this.regX + 1) & 0x00FF);
+                    this.regIntAddr = tmpIndXLow | (tmpIndXHigh << 8);
+                    this.regPC = (this.regPC + 1) & 0xFFFF;
                     break;
 
                 case INDIRECT_INDEXED_Y:
-                    // Step 1, get zero page address
-                    this.regIntAddr = this.fetch() & 0xFF;
+                    int tmpIndY = cpuRead(this.regPC);
+                    int tmpIndYLow = cpuRead(tmpIndY & 0x00FF);
+                    int tmpIndYHigh = cpuRead((tmpIndY + 1) & 0x00FF);
+                    this.regIntAddr = tmpIndYLow | (tmpIndYHigh << 8);
+                    this.regIntAddr = (this.regIntAddr + this.regY) & 0xFFFF;
 
-                    // Step 2, read low byte
-                    addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(FlagValueRW.READ);
-                    int tmpIny = dataBus.readDataFromBus();
+                    if ((this.regIntAddr & 0xFF00) != (tmpIndYHigh << 8))
+                        this.cycles ++;
 
-                    // Step 3, read high byte
-                    this.regIntAddr++;
-                    addressBus.writeDataToBus(getRegIntAddr());
-                    rwFlag.setFlagValue(FlagValueRW.READ);
-                    this.regIntAddr = (dataBus.readDataFromBus() << 8) | tmpIny;
-
-                    // Step 4, add Y register
-                    tmpIny = this.regIntAddr;
-                    this.regIntAddr = this.regIntAddr + this.regY;
-
-                    // Step 5, increment cycle count if page crossed
-                    if ((this.regIntAddr & 0x0000FF00) != (tmpIny & 0x0000FF00))
-                        cycles++;
-
-                    this.regIntAddr = this.regIntAddr & 0x0000FFFF;
-
-                    addressBus.writeDataToBus(getRegIntAddr());
+                    this.regPC = (this.regPC + 1) & 0xFFFF;
                     break;
             }
         } catch (Exception ex){
@@ -780,53 +756,18 @@ public class MOS6502 extends Processor implements FlagListener {
     private void ADC() throws ProcessorException {
 
         int value = cpuRead(this.regIntAddr);
-        int result = 0x00;
 
-        if ((this.regStatus & MOS6502Flags.DECIMAL_MODE) == MOS6502Flags.DECIMAL_MODE){
-            // BCD addition
-            // TODO BCD addition
-        } else {
-            // Binary addition
-            result = value + this.regACC;
+        int result = value + regACC;
+        if (isFlagSet(MOS6502Flags.CARRY_FLAG))
+            result++;
 
-            if (isFlagSet(MOS6502Flags.CARRY_FLAG))
-                result++;
-        }
+        setFlag(MOS6502Flags.CARRY_FLAG, (result & 0xFF00) != 0);
+        setFlag(MOS6502Flags.ZERO_FLAG, (result & 0x00FF) == 0);
+        setFlag(MOS6502Flags.OVERFLOW_FLAG, ((result ^ this.regACC) & (result ^ value) & 0x0080) != 0);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (result & 0x0080) != 0);
 
-        /*
-         * Set Flags
-         */
-        // Carry Flag
-        setFlag(MOS6502Flags.CARRY_FLAG, (result & MOS6502Constants.MASK_OVERFLOWED) != 0);
+        this.regACC = (result & 0x00FF);
 
-        /*
-         * Once determined carry can mask off last bit
-         */
-        result = result & MOS6502Constants.MASK_LAST_BYTE;
-
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, result == 0);
-
-        /*
-         * Overflow flag
-         * based on the following logic to detect n overflow situation
-         * Pos + Pos = Pos -> OK
-         * Pos + Pos = Neg -> FAIL Set flag
-         * Pos + Neg = OK -> Cannot overflow
-         * Neg + Neg = Neg -> OK
-         * Neg + Neg = Pos - FAIL Set flag
-         * Only need to look at the MSB of the ACC, Value, Result
-         * HEX 80 = BIN 10000000
-         */
-        setFlag(MOS6502Flags.OVERFLOW_FLAG,
-                (((this.regACC & 0x80) != 0x80) && ((value & 0x80) != 0x80) && ((result & 0x80) == 0x80)) ||
-                        (((this.regACC & 0x80) == 0x80) && ((value & 0x80) == 0x80) && ((result & 0x80) != 0x80)));
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, (result & MOS6502Constants.MASK_NEGATIVE) != 0);
-
-        // Finally set accumulator with new value
-        this.regACC = result;
         if (PRINT_TRACE)
             System.out.println("ADC : " + String.format("%02X", this.regACC));
     }
@@ -841,10 +782,7 @@ public class MOS6502 extends Processor implements FlagListener {
         int value = cpuRead(this.regIntAddr);
         this.regACC = this.regACC & value;
 
-        // Zero Flag
         setFlag(MOS6502Flags.ZERO_FLAG, this.regACC == 0x00);
-
-        // Negative Flag
         setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regACC & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
@@ -983,15 +921,11 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private void CMP() throws ProcessorException {
         int value = cpuRead(this.regIntAddr);
+        int tmp = this.regACC - value;
 
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, value == this.regACC);
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, value > this.regACC);
-
-        // Carry Flag
-        setFlag(MOS6502Flags.CARRY_FLAG, value < this.regACC);
+        setFlag(MOS6502Flags.CARRY_FLAG, value <= this.regACC);
+        setFlag(MOS6502Flags.ZERO_FLAG, (tmp & 0x00FF) == 0x00);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (tmp & 0x0080) != 0);
     }
 
     /**
@@ -1238,14 +1172,10 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private void LDX() throws ProcessorException {
         int value = cpuRead(this.regIntAddr);
+        this.regX = value & 0x00FF;
 
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
-
-        this.regX = value;
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regX == 0x00);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regX & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("LDX : " + String.format("%02X", this.regX));
@@ -1259,14 +1189,10 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private void LDY() throws ProcessorException {
         int value = cpuRead(this.regIntAddr);
+        this.regY = value & 0x00FF;
 
-        // Zero Flag
-        setFlag(MOS6502Flags.ZERO_FLAG, value == 0x00);
-
-        // Negative Flag
-        setFlag(MOS6502Flags.NEGATIVE_FLAG, (value & MOS6502Constants.MASK_NEGATIVE) != 0);
-
-        this.regY = value;
+        setFlag(MOS6502Flags.ZERO_FLAG, this.regY == 0x00);
+        setFlag(MOS6502Flags.NEGATIVE_FLAG, (this.regY & MOS6502Constants.MASK_NEGATIVE) != 0);
 
         if (PRINT_TRACE)
             System.out.println("LDY : " + String.format("%02X", this.regY));
@@ -1507,18 +1433,18 @@ public class MOS6502 extends Processor implements FlagListener {
     private void SBC() throws ProcessorException {
         int value = cpuRead(this.regIntAddr);
 
-        value = value ^ 0x00FF;
+        value = (value ^ 0x00FF);
 
         int result = this.regACC + value;
         if (isFlagSet(MOS6502Flags.CARRY_FLAG))
             result ++;
 
-        setFlag(MOS6502Flags.CARRY_FLAG, (result & 0xFF0) != 0);
+        setFlag(MOS6502Flags.CARRY_FLAG, (result & 0xFF00) != 0);
         setFlag(MOS6502Flags.ZERO_FLAG, (result & 0x00FF) == 0);
-        setFlag(MOS6502Flags.OVERFLOW_FLAG, (((result ^ this.regACC) & (result ^ value)) & 0x080) != 0);
+        setFlag(MOS6502Flags.OVERFLOW_FLAG, ((result ^ this.regACC) & (result ^ value) & 0x0080) != 0);
         setFlag(MOS6502Flags.NEGATIVE_FLAG, (result & 0x0080) != 0);
 
-        this.regACC = result & 0x0FF;
+        this.regACC = (result & 0x0FF);
     }
 
     /**
