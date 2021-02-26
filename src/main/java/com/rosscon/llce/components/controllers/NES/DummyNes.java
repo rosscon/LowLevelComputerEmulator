@@ -1,4 +1,4 @@
-package com.rosscon.llce.components.controllers;
+package com.rosscon.llce.components.controllers.NES;
 
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;

@@ -10,10 +10,9 @@ import com.rosscon.llce.components.cartridges.NES.NESCartridgeFactory;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockThreaded;
 import com.rosscon.llce.components.clocks.dividers.Divider;
-import com.rosscon.llce.components.controllers.DummyNes;
+import com.rosscon.llce.components.controllers.NES.NESControllerKeyboard;
 import com.rosscon.llce.components.flags.Flag;
 import com.rosscon.llce.components.flags.FlagException;
-import com.rosscon.llce.components.flags.FlagValueRW;
 import com.rosscon.llce.components.graphics.NES2C02.NES2C02;
 import com.rosscon.llce.components.mappers.MirroredMapper;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
@@ -21,6 +20,7 @@ import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502;
 import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.Computer;
+import javafx.event.EventHandler;
 
 import java.io.IOException;
 
@@ -138,6 +138,8 @@ public class NES extends Computer {
 
     private NES2C02 ppu;
 
+    private NESControllerKeyboard controller;
+
     public NES () throws InvalidBusWidthException, IOException, CartridgeException, ProcessorException, MemoryException, InvalidBusDataException, FlagException {
 
         /*
@@ -172,11 +174,11 @@ public class NES extends Computer {
          * Setup/Add the cartridge
          */
 
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/donkey.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );*/
+        );
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/mario.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
@@ -192,11 +194,11 @@ public class NES extends Computer {
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
         );*/
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/ice.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );
+        );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/castle3.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
@@ -243,19 +245,7 @@ public class NES extends Computer {
         this.nametableDataBus = new IntegerBus(8);
         this.rwFlagNametableMapper = new Flag();
 
-        DummyNes controller = new DummyNes(this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu);
-
-        //this.nameTableMemory = new RandomAccessMemory(this.nametableAddressBus, this.nametableDataBus,
-        //        this.rwFlagNametableMapper,0x2000, 0x27FF);
-
-        //int mapperMask = this.cartridge.getNametableMapper() == NESNametableMirroring.VERTICAL ? (0x01 << 10) : (0x01 << 11);
-        //mapperMask = ~mapperMask;
-
-        //this.nametableMapper = new MirroredMapper(ppuAddressBus, ppuDataBus, rwFlagPPU,
-        //        this.nameTableMemory, 0x2000, 0x2C00, mapperMask);
-
-        //this.paletteMemory = new RandomAccessMemory(this.nametableAddressBus, this.nametableDataBus,
-        //        this.rwFlagPPU,0x3F00, 0x3F1F);
+        controller = new NESControllerKeyboard(this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu, 1);
 
 
         /*long start = System.nanoTime();
@@ -298,6 +288,18 @@ public class NES extends Computer {
 
     public String getNametableContents() {
         return this.nameTableMemory.toString();
+    }
+
+    public EventHandler getKeyPressHandler(){
+        return controller.getKeyPressHandler();
+    }
+
+    public EventHandler getKeyReleaseHandler(){
+        return controller.getKeyReleaseHandler();
+    }
+
+    public NES2C02 getGpu(){
+        return this.ppu;
     }
 
 }
