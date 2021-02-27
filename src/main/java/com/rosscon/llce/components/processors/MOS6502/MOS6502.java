@@ -3,12 +3,7 @@ package com.rosscon.llce.components.processors.MOS6502;
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.clocks.Clock;
-import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.flags.FlagException;
-import com.rosscon.llce.components.flags.FlagListener;
-import com.rosscon.llce.components.flags.FlagValueRW;
-import com.rosscon.llce.components.mappers.MapperException;
-import com.rosscon.llce.components.memory.MemoryException;
+import com.rosscon.llce.components.flags.*;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
 
@@ -50,27 +45,6 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private boolean nmiTriggered;
 
-    /**
-     * Cycle tracking
-     */
-    private int cycles;
-
-    /**
-     * Current Instruction
-     */
-    private MOS6502Instruction instruction;
-
-    /**
-     * Addressing Mode
-     * http://www.obelisk.me.uk/6502/addressing.html#IMP
-     */
-    private MOS6502AddressingMode addressingMode;
-
-    /**
-     * Interrupts
-     */
-    private Flag interruptNMI;
-
 
     public int getRegPC() {
         return this.regPC;
@@ -102,6 +76,34 @@ public class MOS6502 extends Processor implements FlagListener {
     public int getRegStatus() {
         return regStatus;
     }
+
+    /**
+     * Cycle tracking
+     */
+    private int cycles;
+
+    /**
+     * Current Instruction
+     */
+    private MOS6502Instruction instruction;
+
+    /**
+     * Addressing Mode
+     * http://www.obelisk.me.uk/6502/addressing.html#IMP
+     */
+    private MOS6502AddressingMode addressingMode;
+
+    /**
+     * 6502 Interrupts
+     */
+    private NMIFlag flgNmi;
+    private HaltFlag flgHalt;
+
+    /**
+     * Execution State
+     */
+    MOS6502ExecutionState executionState;
+
     /**
      * Read a value from memory. Clear the data bus before reading to prevent
      * accidentally reading lingering data from previous cycles
@@ -113,7 +115,7 @@ public class MOS6502 extends Processor implements FlagListener {
         try {
             this.dataBus.writeDataToBus(0x00);
             this.addressBus.writeDataToBus(address);
-            this.rwFlag.setFlagValue(FlagValueRW.READ);
+            this.flgRW.setFlagValue(RWFlag.READ);
         } catch (InvalidBusDataException | FlagException e) {
             ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_READING_MEMORY);
             pe.addSuppressed(e);
@@ -132,7 +134,7 @@ public class MOS6502 extends Processor implements FlagListener {
         try {
             this.dataBus.writeDataToBus(data);
             this.addressBus.writeDataToBus(address);
-            this.rwFlag.setFlagValue(FlagValueRW.WRITE);
+            this.flgRW.setFlagValue(RWFlag.WRITE);
         } catch (InvalidBusDataException | FlagException e) {
             ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_WRITING_MEMORY);
             pe.addSuppressed(e);
@@ -147,15 +149,17 @@ public class MOS6502 extends Processor implements FlagListener {
      * @param clock Clock
      * @param addressBus Address Bus
      * @param dataBus Data Bus
-     * @param rwFlag External R/W Flag set by processor
+     * @param flgRW External R/W Flag set by processor
      */
-    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, Flag interruptNMI) throws ProcessorException {
-        super(clock, addressBus, dataBus, rwFlag);
-        this.interruptNMI = interruptNMI;
+    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, RWFlag flgRW, NMIFlag flgNmi, HaltFlag flgHalt) throws ProcessorException {
+        super(clock, addressBus, dataBus, flgRW);
+        this.flgNmi = flgNmi;
+        this.flgHalt = flgHalt;
         reset();
 
         try {
-            this.interruptNMI.addListener(this);
+            if (flgNmi != null) this.flgNmi.addListener(this);
+            if (flgHalt != null) this.flgHalt.addListener(this);
         } catch (Exception ex){
             ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_LISTENING_TO_FLAG);
             pe.addSuppressed(ex);
@@ -163,14 +167,17 @@ public class MOS6502 extends Processor implements FlagListener {
         }
     }
 
-    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, Flag interruptNMI, boolean printTrace) throws ProcessorException {
+    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag, NMIFlag flgNmi, HaltFlag flgHalt, boolean printTrace) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
         this.PRINT_TRACE = printTrace;
-        this.interruptNMI = interruptNMI;
+
+        this.flgNmi = flgNmi;
+        this.flgHalt = flgHalt;
 
         try {
-            this.interruptNMI.addListener(this);
+            if (flgNmi != null) this.flgNmi.addListener(this);
+            if (flgHalt != null) this.flgHalt.addListener(this);
         } catch (Exception ex){
             ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_LISTENING_TO_FLAG);
             pe.addSuppressed(ex);
@@ -178,15 +185,18 @@ public class MOS6502 extends Processor implements FlagListener {
         }
     }
 
-    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, Flag interruptNMI, boolean printTrace, int pcOverride) throws ProcessorException {
+    public MOS6502(Clock clock, IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag, NMIFlag flgNmi, HaltFlag flgHalt, boolean printTrace, int pcOverride) throws ProcessorException {
         super(clock, addressBus, dataBus, rwFlag);
         reset();
         this.PRINT_TRACE = printTrace;
         this.regPC = pcOverride;
-        this.interruptNMI = interruptNMI;
+
+        this.flgNmi = flgNmi;
+        this.flgHalt = flgHalt;
 
         try {
-            this.interruptNMI.addListener(this);
+            if (flgNmi != null) this.flgNmi.addListener(this);
+            if (flgHalt != null) this.flgHalt.addListener(this);
         } catch (Exception ex){
             ProcessorException pe = new ProcessorException(MOS6502Constants.EX_ERROR_LISTENING_TO_FLAG);
             pe.addSuppressed(ex);
@@ -199,37 +209,27 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private void reset() throws ProcessorException {
 
-        try {
-            regPC       = MOS6502Constants.VECTOR_RESET;
-            regSP       = 0xFF;
-            regACC      = 0x00;
-            regX        = 0x00;
-            regY        = 0x00;
-            regStatus   = 0x00;
-            cycles      = 0;
-            regIntAddr  = 0x000;
+        regPC       = MOS6502Constants.VECTOR_RESET;
+        regSP       = 0xFF;
+        regACC      = 0x00;
+        regX        = 0x00;
+        regY        = 0x00;
+        regStatus   = 0x00;
+        cycles      = 0;
+        regIntAddr  = 0x000;
 
-            /*
-             * Read the reset vector
-             * TODO make this timing specific following https://www.pagetable.com/?p=410
-             */
-            this.addressBus.writeDataToBus(getRegPC());
-            rwFlag.setFlagValue(FlagValueRW.READ);
-            int low = (this.dataBus.readDataFromBus());
-
-            this.regPC = (this.regPC + 1) & 0xFFFF;
-            this.addressBus.writeDataToBus(getRegPC());
-            rwFlag.setFlagValue(FlagValueRW.READ);
-            int high = (dataBus.readDataFromBus());
-
-            regIntAddr = low | (high << 8);
-            this.regPC = regIntAddr;
-        } catch (InvalidBusDataException | FlagException ex){
-            throw new ProcessorException(MOS6502Constants.EX_RESET_ERROR + " : " + ex.getMessage());
-        }
+        /*
+         * Read/Follow the reset vector
+         */
+        int low = cpuRead(this.regPC);
+        int high = cpuRead(this.regPC + 1);
+        regIntAddr = low | (high << 8);
+        this.regPC = regIntAddr;
 
         nmiTriggered = false;
         instructionMapping = new MOS6502InstructionMapping();
+
+        executionState = MOS6502ExecutionState.RUNNING;
     }
 
     /**
@@ -248,15 +248,9 @@ public class MOS6502 extends Processor implements FlagListener {
      * @param value value to push to the stack
      */
     private void pushToStack(int value) throws ProcessorException {
-        try {
-            int freeAddress = (MOS6502Constants.STACK_PAGE << 8) | this.regSP;
-            this.addressBus.writeDataToBus(freeAddress);
-            this.dataBus.writeDataToBus(value);
-            this.rwFlag.setFlagValue(FlagValueRW.WRITE);
-            this.regSP = (this.regSP - 1) & 0x000000FF; // Subtract 1 then mask
-        } catch (InvalidBusDataException | FlagException e) {
-            throw new ProcessorException(MOS6502Constants.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
-        }
+        int freeAddress = (MOS6502Constants.STACK_PAGE << 8) | this.regSP;
+        cpuWrite(freeAddress, value);
+        this.regSP = (this.regSP - 1) & 0x000000FF; // Subtract 1 then mask
     }
 
     /**
@@ -265,17 +259,9 @@ public class MOS6502 extends Processor implements FlagListener {
      * @return returns the byte read from the stack
      */
     private int pullFromStack() throws ProcessorException {
-        int read;
-        try {
-            this.regSP = (this.regSP + 1) & 0x000000FF; // Add 1 then mask
-            int readAddress = (MOS6502Constants.STACK_PAGE << 8) | this.regSP;
-            this.addressBus.writeDataToBus(readAddress);
-            this.rwFlag.setFlagValue(FlagValueRW.READ);
-            read = this.dataBus.readDataFromBus();
-        } catch (InvalidBusDataException | FlagException e) {
-            throw new ProcessorException(MOS6502Constants.EX_STACK_PUSH_ERROR + " - " + e.getMessage());
-        }
-        return read;
+        this.regSP = (this.regSP + 1) & 0x000000FF; // Add 1 then mask
+        int readAddress = (MOS6502Constants.STACK_PAGE << 8) | this.regSP;
+        return cpuRead(readAddress);
     }
 
     /**
@@ -283,24 +269,15 @@ public class MOS6502 extends Processor implements FlagListener {
      */
     private int fetch() throws ProcessorException {
 
-        int fetchedData;
+        int fetchedData = cpuRead(getRegPC());
+        this.regPC = ((this.regPC + 1) & 0xFFFF);
 
-        try{
-            addressBus.writeDataToBus(getRegPC());
-            rwFlag.setFlagValue(FlagValueRW.READ);
-            fetchedData = dataBus.readDataFromBus() & MOS6502Constants.MASK_LAST_BYTE;
-            if (PRINT_TRACE)
-                System.out.print("Fetch : [" + String.format("%02X", this.regPC) + "] ");
-
-            this.regPC = ((this.regPC + 1) & 0xFFFF);
-        } catch ( Exception ex){
-            throw new ProcessorException(ex.getMessage());
-        }
-
-        if (PRINT_TRACE) {
+        if (PRINT_TRACE){
+            System.out.print("Fetch : [" + String.format("%02X", this.regPC) + "] ");
             System.out.printf("%02X", fetchedData);
             System.out.println();
         }
+
         return fetchedData;
     }
 
@@ -677,24 +654,26 @@ public class MOS6502 extends Processor implements FlagListener {
     @Override
     public void onTick() throws ProcessorException {
 
-        if ( this.cycles == 0 ){
-            try {
-                // If NMI triggered perform a BRK
-                int instruction = this.nmiTriggered ? MOS6502Instructions.INS_BRK_IMP : fetch();
-                decode(instruction);
-            } catch (Exception ex) {
-                ProcessorException pe = new ProcessorException(MOS6502Constants.EX_TICK_FETCH_ERROR + " " + ex.getMessage());
-                pe.addSuppressed(ex);
-                throw pe;
+        if (this.executionState == MOS6502ExecutionState.RUNNING){
+            if ( this.cycles == 0 ){
+                try {
+                    // If NMI triggered perform a BRK
+                    int instruction = this.nmiTriggered ? MOS6502Instructions.INS_BRK_IMP : fetch();
+                    decode(instruction);
+                } catch (Exception ex) {
+                    ProcessorException pe = new ProcessorException(MOS6502Constants.EX_TICK_FETCH_ERROR + " " + ex.getMessage());
+                    pe.addSuppressed(ex);
+                    throw pe;
+                }
             }
-        }
-        else if ( this.cycles == 1 ) {
-            addressing();
-            execute();
-            if (PRINT_TRACE)
-                System.out.println();
-        } else {
-            this.cycles--;
+            else if ( this.cycles == 1 ) {
+                addressing();
+                execute();
+                if (PRINT_TRACE)
+                    System.out.println();
+            } else {
+                this.cycles--;
+            }
         }
     }
 
@@ -1459,9 +1438,17 @@ public class MOS6502 extends Processor implements FlagListener {
     }
 
     @Override
-    public void onFlagChange(FlagValueRW newValue, Flag flag) throws MemoryException, InvalidBusDataException, MapperException, ProcessorException {
-        if (flag == this.interruptNMI){
+    public void onFlagChange(Flag flag) throws FlagException {
+        if (flag instanceof NMIFlag && flag.getFlagValue() == NMIFlag.NMI){
             this.nmiTriggered = true;
+        }
+
+        else if (flag instanceof  HaltFlag && flag.getFlagValue() == HaltFlag.HALT){
+            this.executionState = MOS6502ExecutionState.HALTED;
+        }
+
+        else if (flag instanceof HaltFlag && flag.getFlagValue() == HaltFlag.START){
+            this.executionState = MOS6502ExecutionState.RUNNING;
         }
     }
 }

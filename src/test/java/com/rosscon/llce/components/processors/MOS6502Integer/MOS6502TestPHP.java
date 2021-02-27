@@ -5,9 +5,7 @@ import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockException;
-import com.rosscon.llce.components.flags.Flag;
-import com.rosscon.llce.components.flags.FlagException;
-import com.rosscon.llce.components.flags.FlagValueRW;
+import com.rosscon.llce.components.flags.*;
 import com.rosscon.llce.components.memory.*;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502Instructions;
 import com.rosscon.llce.components.processors.MOS6502.MOS6502;
@@ -26,8 +24,9 @@ public class MOS6502TestPHP {
 
     IntegerBus addressBus;
     IntegerBus dataBus;
-    Flag rwFlag;
-    Flag nmiFlag;
+    RWFlag rwFlag;
+    NMIFlag nmiRWFlag;
+    HaltFlag haltFlag;
     Clock clock;
     MOS6502 cpu;
     ReadOnlyMemory bootRom;
@@ -38,8 +37,8 @@ public class MOS6502TestPHP {
 
         addressBus = new IntegerBus(16);
         dataBus = new IntegerBus(8);
-        rwFlag = new Flag();
-        nmiFlag = new Flag();
+        rwFlag = new RWFlag();
+        nmiRWFlag = new NMIFlag();
         clock = new Clock();
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -48,7 +47,7 @@ public class MOS6502TestPHP {
         randomAccessMemory = new RandomAccessMemory(addressBus, dataBus,rwFlag,
                 0x0010, 0x02FF);
 
-        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, nmiFlag, true);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, nmiRWFlag, haltFlag, true);
     }
 
     @Test
@@ -65,7 +64,7 @@ public class MOS6502TestPHP {
 
         // Read direct from stack
         addressBus.writeDataToBus(0x0100);
-        rwFlag.setFlagValue(FlagValueRW.READ);
+        rwFlag.setFlagValue(RWFlag.READ);
 
         clock.tick(5);
         assertEquals(0b00110001, dataBus.readDataFromBus());

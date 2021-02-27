@@ -4,7 +4,9 @@ import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
 import com.rosscon.llce.components.clocks.Clock;
 import com.rosscon.llce.components.clocks.ClockException;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.HaltFlag;
+import com.rosscon.llce.components.flags.NMIFlag;
+import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.components.memory.RandomAccessMemory;
 import com.rosscon.llce.components.memory.ReadOnlyMemory;
 import com.rosscon.llce.components.memory.MemoryException;
@@ -28,8 +30,9 @@ public class MOS6502TestLD_AXY {
 
     IntegerBus addressBus;
     IntegerBus dataBus;
-    Flag rwFlag;
-    Flag nmiFlag;
+    RWFlag rwFlag;
+    NMIFlag nmiRWFlag;
+    HaltFlag haltFlag;
     Clock clock;
     MOS6502 cpu;
     ReadOnlyMemory bootRom;
@@ -40,8 +43,8 @@ public class MOS6502TestLD_AXY {
 
         addressBus = new IntegerBus(16);
         dataBus = new IntegerBus(8);
-        rwFlag = new Flag();
-        nmiFlag = new Flag();
+        rwFlag = new RWFlag();
+        nmiRWFlag = new NMIFlag();
         clock = new Clock();
 
         bootRom = new ReadOnlyMemory(addressBus, dataBus, rwFlag,
@@ -50,7 +53,7 @@ public class MOS6502TestLD_AXY {
         randomAccessMemory = new RandomAccessMemory(addressBus, dataBus,rwFlag,
                 0x0010, 0x00FF);
 
-        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, nmiFlag, true);
+        cpu = new MOS6502(clock, addressBus, dataBus, rwFlag, nmiRWFlag, haltFlag, true);
     }
 
     @Test

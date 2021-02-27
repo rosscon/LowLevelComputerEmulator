@@ -1,9 +1,8 @@
 package com.rosscon.llce.components.cartridges.NES;
 
-import com.rosscon.llce.components.busses.Bus;
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.cartridges.Cartridge;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.RWFlag;
 
 /**
  * An abstract NES cartridge extends the Cartridge class.
@@ -61,18 +60,18 @@ public abstract class NESCartridge extends Cartridge {
      * Base constructor for an NES cartridge
      * @param addressBus Main CPU address bus
      * @param dataBus Main CPU data bus
-     * @param rwFlagCPU R/W Flag for the main CPU bus
+     * @param rwRWFlagCPU R/W Flag for the main CPU bus
      * @param ppuAddressBus PPU Address bus
      * @param ppuDataBus PPU Data Bus
-     * @param rwFlagPPU R/W Flag for PPU bus
+     * @param rwRWFlagPPU R/W Flag for PPU bus
      * @param prgROM Program rom as byte array
      * @param prgRAM Program RAM ad byte array
      * @param chrROM Character ROM
      */
-    public NESCartridge(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlagCPU,
-                        IntegerBus ppuAddressBus, IntegerBus ppuDataBus, Flag rwFlagPPU,
+    public NESCartridge(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwRWFlagCPU,
+                        IntegerBus ppuAddressBus, IntegerBus ppuDataBus, RWFlag rwRWFlagPPU,
                         byte[] prgROM, byte[] prgRAM, byte[] chrROM) {
-        super(addressBus, dataBus, rwFlagCPU);
+        super(addressBus, dataBus, rwRWFlagCPU);
         this.ppuAddressBus = ppuAddressBus;
         this.ppuDataBus = ppuDataBus;
     }

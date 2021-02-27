@@ -2,7 +2,6 @@ package com.rosscon.llce.gui;
 
 import com.rosscon.llce.computers.nintendo.NES;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,10 +11,12 @@ import javafx.stage.WindowEvent;
 
 public class NESGUI extends Application {
 
+    private NES console;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(NESGUI.class.getResource("/NES.fxml"));
+        FXMLLoader loader = new FXMLLoader(NESGUI.class.getResource("/NES.fxml"));
+        Parent root = loader.load();
         primaryStage.setTitle("NES");
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.setMaxHeight(790);
@@ -31,6 +32,14 @@ public class NESGUI extends Application {
                 System.exit(0);
             }
         });
+
+        console = new NES();
+
+        NESGraphicsController nesGraphicsController = (NESGraphicsController)loader.getController();
+        nesGraphicsController.setGpu(console.getGpu());
+
+        primaryStage.getScene().setOnKeyPressed(console.getKeyPressHandler());
+        primaryStage.getScene().setOnKeyReleased(console.getKeyReleaseHandler());
 
         //NES console = new NES();
 

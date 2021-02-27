@@ -1,7 +1,7 @@
 package com.rosscon.llce.components.memory;
 
 import com.rosscon.llce.components.busses.IntegerBus;
-import com.rosscon.llce.components.flags.Flag;
+import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.components.flags.FlagListener;
 
 /**
@@ -29,7 +29,7 @@ public abstract class Memory implements FlagListener {
     /**
      * R/W Flag high = read, low = write
      */
-    protected Flag rwFlag;
+    protected RWFlag rwFlag;
 
     /**
      * Default constructor creates memory with the maximum possible range
@@ -39,7 +39,7 @@ public abstract class Memory implements FlagListener {
      * @param rwFlag RW Flag to attach to
      * @throws MemoryException Thrown when any bus of flag is null
      */
-    public Memory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag) throws MemoryException {
+    public Memory(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag) throws MemoryException {
 
         if (addressBus == null) throw new MemoryException(MemoryConstants.EX_NULL_ADDRESS_BUS);
         if (dataBus == null) throw new MemoryException(MemoryConstants.EX_NULL_DATA_BUS);
@@ -66,7 +66,7 @@ public abstract class Memory implements FlagListener {
      * @param lastAddress Address of the last value in memory
      * @throws MemoryException Thrown when any bus of flag is null or an invalid address range provided
      */
-    public Memory(IntegerBus addressBus, IntegerBus dataBus, Flag rwFlag, int startAddress, int lastAddress) throws MemoryException {
+    public Memory(IntegerBus addressBus, IntegerBus dataBus, RWFlag rwFlag, int startAddress, int lastAddress) throws MemoryException {
 
         if (addressBus == null) throw new MemoryException(MemoryConstants.EX_NULL_ADDRESS_BUS);
         if (dataBus == null) throw new MemoryException(MemoryConstants.EX_NULL_DATA_BUS);
@@ -107,7 +107,7 @@ public abstract class Memory implements FlagListener {
      * Get the RW flag
      * @return RW flag memory is attached to
      */
-    public Flag getRwFlag(){
+    public RWFlag getRwFlag(){
         return this.rwFlag;
     }
 
