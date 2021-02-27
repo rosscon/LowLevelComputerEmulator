@@ -328,7 +328,9 @@ public class NES2C02 extends Processor implements FlagListener {
         if (isFlagSet(this.regPPUMASK, NES2C02MaskFlags.SHOW_SPRITES) && cycle >= 1 && cycle < 258){
             for(int i = 0; i < spriteCount; i++){
                 if ((scanlineSpriteAttributes[i] & 0x000000FF) != 0){
-                    scanlineSpriteAttributes[i]--;
+                    int x = scanlineSpriteAttributes[i] & 0x000000FF;
+                    x--;
+                    scanlineSpriteAttributes[i] = (scanlineSpriteAttributes[i] & 0xFFFFFF00) | (x & 0x000000FF);
                 } else {
                     spriteShifterPatternLow[i] <<= 1;
                     spriteShifterPatternHigh[i] <<= 1;
@@ -845,8 +847,8 @@ public class NES2C02 extends Processor implements FlagListener {
      */
     private void execDMA() throws ProcessorException {
 
-        if (this.regDMACount > 0 && this.regDMACount % 2 == 0){
-            int lsb = (this.regDMACount >>> 1) % 0x00FF;
+        if (this.regDMACount >= 0 && this.regDMACount % 2 == 0){
+            int lsb = (this.regDMACount >>> 1) & 0x00FF;
             int dmaAddress = (this.regDMAPage << 8) | lsb;
             oamMemory[lsb] = cpuRead(dmaAddress);
         }
