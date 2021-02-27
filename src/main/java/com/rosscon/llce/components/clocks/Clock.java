@@ -1,6 +1,5 @@
 package com.rosscon.llce.components.clocks;
 
-import com.rosscon.llce.components.busses.InvalidBusDataException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +9,7 @@ import java.util.List;
  */
 public class Clock {
 
-    private List<ClockListener> listeners = new ArrayList<ClockListener>();
+    protected List<ClockListener> listeners = new ArrayList<ClockListener>();
 
     /**
      * Add a listener to this clock

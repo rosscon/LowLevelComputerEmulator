@@ -173,6 +173,11 @@ public class NES extends Computer {
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "/Users/rossconroy/Desktop/mspacman.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+        );*/
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/mario.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
