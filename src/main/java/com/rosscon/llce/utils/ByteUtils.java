@@ -66,4 +66,17 @@ public class ByteUtils {
 
         return (c & lastBit) == lastBit;
     }
+
+    /**
+     * Very clever method of flipping a byte
+     * https://stackoverflow.com/questions/2602823/in-c-c-whats-the-simplest-way-to-reverse-the-order-of-bits-in-a-byte/2602885#2602885
+     * @param in
+     * @return flipped byte
+     */
+    public static int flipByte(int in){
+        in = (in & 0xF0) >> 4 | (in & 0x0F) << 4;
+        in = (in & 0xCC) >> 2 | (in & 0x33) << 2;
+        in = (in & 0xAA) >> 1 | (in & 0x55) << 1;
+        return in;
+    }
 }

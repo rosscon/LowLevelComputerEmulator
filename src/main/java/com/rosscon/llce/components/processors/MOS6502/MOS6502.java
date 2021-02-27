@@ -100,6 +100,11 @@ public class MOS6502 extends Processor implements FlagListener {
     private HaltFlag flgHalt;
 
     /**
+     * Execution State
+     */
+    MOS6502ExecutionState executionState;
+
+    /**
      * Read a value from memory. Clear the data bus before reading to prevent
      * accidentally reading lingering data from previous cycles
      * @param address address to request data
@@ -223,6 +228,8 @@ public class MOS6502 extends Processor implements FlagListener {
 
         nmiTriggered = false;
         instructionMapping = new MOS6502InstructionMapping();
+
+        executionState = MOS6502ExecutionState.RUNNING;
     }
 
     /**
@@ -646,24 +653,27 @@ public class MOS6502 extends Processor implements FlagListener {
 
     @Override
     public void onTick() throws ProcessorException {
-        if ( this.cycles == 0 ){
-            try {
-                // If NMI triggered perform a BRK
-                int instruction = this.nmiTriggered ? MOS6502Instructions.INS_BRK_IMP : fetch();
-                decode(instruction);
-            } catch (Exception ex) {
-                ProcessorException pe = new ProcessorException(MOS6502Constants.EX_TICK_FETCH_ERROR + " " + ex.getMessage());
-                pe.addSuppressed(ex);
-                throw pe;
+
+        if (this.executionState == MOS6502ExecutionState.RUNNING){
+            if ( this.cycles == 0 ){
+                try {
+                    // If NMI triggered perform a BRK
+                    int instruction = this.nmiTriggered ? MOS6502Instructions.INS_BRK_IMP : fetch();
+                    decode(instruction);
+                } catch (Exception ex) {
+                    ProcessorException pe = new ProcessorException(MOS6502Constants.EX_TICK_FETCH_ERROR + " " + ex.getMessage());
+                    pe.addSuppressed(ex);
+                    throw pe;
+                }
             }
-        }
-        else if ( this.cycles == 1 ) {
-            addressing();
-            execute();
-            if (PRINT_TRACE)
-                System.out.println();
-        } else {
-            this.cycles--;
+            else if ( this.cycles == 1 ) {
+                addressing();
+                execute();
+                if (PRINT_TRACE)
+                    System.out.println();
+            } else {
+                this.cycles--;
+            }
         }
     }
 
@@ -1434,11 +1444,11 @@ public class MOS6502 extends Processor implements FlagListener {
         }
 
         else if (flag instanceof  HaltFlag && flag.getFlagValue() == HaltFlag.HALT){
-            // TODO start HALT
+            this.executionState = MOS6502ExecutionState.HALTED;
         }
 
         else if (flag instanceof HaltFlag && flag.getFlagValue() == HaltFlag.START){
-            // TODO REsume CPU execution
+            this.executionState = MOS6502ExecutionState.RUNNING;
         }
     }
 }

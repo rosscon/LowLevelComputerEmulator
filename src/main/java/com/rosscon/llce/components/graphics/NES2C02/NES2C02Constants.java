@@ -71,11 +71,20 @@ public class NES2C02Constants {
      * Exception error messages
      */
     public static final String EX_CPU_NMI =
-            "Error interrupting the cpu";
+            "Error sending NMI to CPU";
+
+    public static final String EX_CPU_HALT =
+            "Error halting the CPU";
+
+    public static final String EX_CPU_START =
+            "Error starting the CPU";
 
     public static final String EX_PPU_READ_FAIL =
-            "Error reading from ppu memory";
+            "Error reading from PPU memory";
 
     public static final String EX_PPU_WRITE_FAIL =
-            "Error writing to ppu memory";
+            "Error writing to PPU memory";
+
+    public static final String EX_CPU_READ_FAIL =
+            "Error reading from CPU memory";
 }

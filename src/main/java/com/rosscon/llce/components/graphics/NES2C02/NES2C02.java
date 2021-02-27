@@ -9,6 +9,9 @@ import com.rosscon.llce.components.flags.*;
 import com.rosscon.llce.components.memory.MemoryException;
 import com.rosscon.llce.components.processors.Processor;
 import com.rosscon.llce.components.processors.ProcessorException;
+import com.rosscon.llce.utils.ByteUtils;
+
+import java.util.Arrays;
 
 
 public class NES2C02 extends Processor implements FlagListener {
@@ -34,6 +37,9 @@ public class NES2C02 extends Processor implements FlagListener {
     private int     regPPUADDR;
     private int     regPPUDATA;
     private boolean regOddFrame;
+    // Custom registers for tracking DMA reads from CPU memory
+    private int     regDMAPage;
+    private int     regDMACount;
 
 
     /**
@@ -90,7 +96,28 @@ public class NES2C02 extends Processor implements FlagListener {
     int []   paletteMemory;
     int []   oamMemory;
 
+    /**
+     * Sprite Rendering
+     * OAM entries stored as
+     * yyyyyyyyiiiiiiiiaaaaaaaaxxxxxxxx
+     * ||||||||||||||||||||||||++++++++--X Position
+     * ||||||||||||||||++++++++----------Attributes
+     * ||||||||++++++++------------------TileID
+     * ++++++++--------------------------Y Position
+     */
+    int[] scanlineSpriteAttributes;
+    int spriteCount;
+    int[] spriteShifterPatternLow;
+    int[] spriteShifterPatternHigh;
+    boolean bSpriteZeroHitPossible;
+    boolean bSpriteZeroBeingRendered;
+
     NametableMirror nametableMirror;
+
+    /**
+     * Execution State
+     */
+    NES2C02ExecutionState executionState;
 
 
     /**
@@ -160,6 +187,15 @@ public class NES2C02 extends Processor implements FlagListener {
         this.paletteMemory  = new int[32];
         this.oamMemory      = new int[256];
         this.fineX = 0x00;
+
+        this.executionState = NES2C02ExecutionState.RUNNING;
+
+        scanlineSpriteAttributes = new int[8];
+        spriteCount = 0;
+        spriteShifterPatternLow = new int[8];
+        spriteShifterPatternHigh = new int[8];
+        bSpriteZeroHitPossible = false;
+        bSpriteZeroBeingRendered = false;
     }
 
     /**
@@ -288,13 +324,24 @@ public class NES2C02 extends Processor implements FlagListener {
             bgShiftAttribLow <<= 1;
             bgShiftAttribHigh <<= 1;
         }
+
+        if (isFlagSet(this.regPPUMASK, NES2C02MaskFlags.SHOW_SPRITES) && cycle >= 1 && cycle < 258){
+            for(int i = 0; i < spriteCount; i++){
+                if ((scanlineSpriteAttributes[i] & 0x000000FF) != 0){
+                    scanlineSpriteAttributes[i]--;
+                } else {
+                    spriteShifterPatternLow[i] <<= 1;
+                    spriteShifterPatternHigh[i] <<= 1;
+                }
+            }
+        }
     }
 
 
     /**
      * Reads the memory attached to the PPU address and memory bus
-     * @param address
-     * @return
+     * @param address memory address to rad
+     * @return data containead at requested address or 0x00 if nothing to read
      */
     private int ppuRead(int address) throws ProcessorException{
 
@@ -400,16 +447,33 @@ public class NES2C02 extends Processor implements FlagListener {
         }
     }
 
+    /**
+     * Only used in DMA mode to read directly from the CPU bus
+     * @param address address to read from
+     * @return data held at that address
+     */
+    private int cpuRead (int address) throws ProcessorException{
+        try{
+            this.addressBus.writeDataToBus(address);
+            this.flgCpuRW.setFlagValue(RWFlag.READ);
+            return this.dataBus.readDataFromBus();
+        } catch (InvalidBusDataException | FlagException e) {
+            ProcessorException pe = new ProcessorException(NES2C02Constants.EX_CPU_READ_FAIL);
+            pe.addSuppressed(e);
+            throw pe;
+        }
+    }
+
     private int getColourFromPalette(int palette, int pixel) throws ProcessorException {
         int colorIndex = ppuRead(0x3F00 + (palette << 2) + pixel) & 0x3F;
         return NES2C02Constants.PALETTE[colorIndex];
     }
 
-
-    @Override
-    public void onTick() throws ProcessorException {
-
-
+    /**
+     * Execute the running state of the PPU
+     * @throws ProcessorException Can be thrown when errors reading / writing to busses
+     */
+    private void execRunning() throws ProcessorException {
         if (scanline >= -1 && scanline < 240) {
 
             /*
@@ -418,8 +482,11 @@ public class NES2C02 extends Processor implements FlagListener {
             if (scanline == 0 && cycle == 0)
                 cycle = 1;
 
-            if (scanline == -1 && cycle == 1)
+            if (scanline == -1 && cycle == 1){
                 clearStatusFlag(NES2C02StatusFlags.VBLANK_STARTED);
+                clearStatusFlag(NES2C02StatusFlags.SPRITE_ZERO_HIT);
+                clearStatusFlag(NES2C02StatusFlags.SPRITE_OVERFLOW);
+            }
 
             if ((cycle >= 2 && cycle < 258) || (cycle >= 321 && cycle < 338)) {
                 updateShifters();
@@ -441,8 +508,8 @@ public class NES2C02 extends Processor implements FlagListener {
                         break;
                     case 4:
                         bgNextTileLsb = ppuRead(((this.regPPUCTRL & NES2C02ControllerFlags.BACKGROUND_PATTERN_ADDRESS) << 8)
-                                                + ((bgNextTileId & 0x00FFF) << 4)
-                                                + (vramAddress.getFineY()));
+                                + ((bgNextTileId & 0x00FFF) << 4)
+                                + (vramAddress.getFineY()));
                         break;
                     case 6:
                         bgNextTileMsb = ppuRead(((this.regPPUCTRL & NES2C02ControllerFlags.BACKGROUND_PATTERN_ADDRESS) << 8)
@@ -468,6 +535,146 @@ public class NES2C02 extends Processor implements FlagListener {
 
             if (scanline == -1 && cycle >= 280 && cycle < 305)
                 transferAddressY();
+
+            /*
+             * FOREGROUND, End of Scanline
+             */
+            if (cycle == 257 && scanline >= 0) {
+                /*
+                 * End of scanline cleanup / prep
+                 */
+                Arrays.fill(this.scanlineSpriteAttributes, 0xFF);
+                this.spriteCount = 0;
+                Arrays.fill(spriteShifterPatternLow, 0x00);
+                Arrays.fill(spriteShifterPatternHigh, 0x00);
+
+                /*
+                 * Identify which sprites will be on the next scanline by searching through all of the OAM array
+                 */
+                int oamIndex = 0;
+
+                bSpriteZeroHitPossible = false;
+
+                while (oamIndex < 64 && this.spriteCount < 9){
+                    int yIndex = oamIndex * 4; //4 entries per attribute
+                    int spriteY = oamMemory[yIndex];
+                    int diff = scanline - spriteY;
+
+                    if (diff >= 0 && diff < (isFlagSet(this.regPPUCTRL, NES2C02ControllerFlags.SPRITE_SIZE) ? 16 : 8)){
+                        if (spriteCount < 8){
+                            if (oamIndex == 0) bSpriteZeroHitPossible = true;
+
+                            // Construct entry
+                            int entry = 0x00;
+                            for (int i = 0; i < 4; i ++){
+                                entry <<= 8;
+                                entry += oamMemory[yIndex + i];
+                            }
+
+                            scanlineSpriteAttributes[spriteCount] = entry;
+                            spriteCount++;
+                        }
+                    }
+                    oamIndex++;
+                }
+
+                if (spriteCount > 8) setStatusFlag(NES2C02StatusFlags.SPRITE_OVERFLOW);
+            }
+
+            /*
+             * Setting up the shift registers for sprite rendering
+             */
+            if (cycle == 340){
+                for(int i = 0; i < spriteCount; i++){
+
+                    int spritePatternBitsLow, spritePatternBitsHigh;
+                    int spritePatternAddressLow, spritePatternAddressHigh;
+
+                    int sprite = scanlineSpriteAttributes[i];
+                    int x = sprite & 0x000000FF;
+                    sprite >>>= 8;
+                    int attributes = sprite & 0x000000FF;
+                    sprite >>>= 8;
+                    int id = sprite & 0x000000FF;
+                    sprite >>>= 8;
+                    int y = sprite & 0x000000FF;
+
+                    if (!isFlagSet(this.regPPUCTRL, NES2C02ControllerFlags.SPRITE_SIZE)){
+                        // 8 x 8 sprites
+
+                        int patternTable = isFlagSet(this.regPPUCTRL, NES2C02ControllerFlags.SPRITE_PATTERN_ADDRESS) ? (0x01 << 12) : 0;
+                        int tileId = id << 4;
+                        int cellRow;
+
+                        if ((attributes & 0x80) == 0){
+                            //Normal
+                            cellRow = scanline - y;
+
+                        } else {
+                            // Flipped vertically
+                            cellRow = 7 - (scanline - y);
+                        }
+                        spritePatternAddressLow = patternTable + tileId + cellRow;
+                    } else {
+                        // 8 x 16 sprites
+
+                        int patternTable = ((id & 0x01) << 12);
+
+                        if ((attributes & 0x80) == 0){
+                            // Normal
+
+                            int tileId;
+                            int cellRow = (scanline - y) & 0x07;
+
+                            if (scanline - y < 8){
+                                // Top Half
+                                tileId = (id & 0xFE) << 4;
+
+                            } else {
+                                // Bottom Half
+                                tileId = ((id & 0xFE) + 1) << 4;
+                            }
+                            spritePatternAddressLow = patternTable + tileId + cellRow;
+
+                        } else {
+                            // Flipped vertically
+
+                            int tileId;
+                            int cellRow = 7 - (scanline - y) & 0x07;
+
+                            if (scanline - y < 8){
+                                // Top Half
+                                tileId = (id & 0xFE) << 4;
+
+                            } else {
+                                // Bottom Half
+                                tileId = ((id & 0xFE) + 1) << 4;
+                            }
+                            spritePatternAddressLow = patternTable + tileId + cellRow;
+                        }
+                    }
+
+                    spritePatternAddressHigh = spritePatternAddressLow + 8;
+                    spritePatternBitsLow = ppuRead(spritePatternAddressLow);
+                    spritePatternBitsHigh = ppuRead(spritePatternAddressHigh);
+
+                    /*
+                     * If horizontally flipped then need to reverse the byte;
+                     */
+                    if ((attributes & 0x40) != 0){
+                        spritePatternBitsLow = ByteUtils.flipByte(spritePatternBitsLow);
+                        spritePatternBitsHigh = ByteUtils.flipByte(spritePatternBitsHigh);
+                    }
+
+                    /*
+                     * Last step is to load the pattern into shift registers for rendering
+                     */
+                    spriteShifterPatternLow[i] = spritePatternBitsLow;
+                    spriteShifterPatternHigh[i] = spritePatternBitsHigh;
+
+                }
+            }
+
         }
 
         if (scanline == 240){
@@ -489,6 +696,10 @@ public class NES2C02 extends Processor implements FlagListener {
             }
         }
 
+        /*
+         *  BACKGROUND RENDERING
+         */
+
         int bgPixel = 0x00;
         int bgPalette = 0x00;
 
@@ -504,15 +715,118 @@ public class NES2C02 extends Processor implements FlagListener {
             bgPalette = p0Bg | p1Bg;
         }
 
+
+        /*
+         * FOREGROUND RENDERING
+         */
+        int fgPixel = 0x00;
+        int fgPalette = 0x00;
+        int fgPriority = 0x00;
+
+        if (isFlagSet(regPPUMASK, NES2C02MaskFlags.SHOW_SPRITES)){
+
+            bSpriteZeroBeingRendered = false;
+
+            for (int i = 0; i < spriteCount; i ++){
+
+                int sprite = scanlineSpriteAttributes[i];
+                int x = sprite & 0x000000FF;
+                sprite >>>= 8;
+                int attributes = sprite & 0x000000FF;
+                sprite >>>= 8;
+                int id = sprite & 0x000000FF;
+                sprite >>>= 8;
+                int y = sprite & 0x000000FF;
+
+                if (x == 0) {
+                    int fgPixelLow = ((spriteShifterPatternLow[i] & 0x80) > 0) ? 0b01 : 0b00;
+                    int fgPixelHigh = ((spriteShifterPatternHigh[i] & 0x80) > 0) ? 0b10 : 0b00;
+                    fgPixel = fgPixelHigh | fgPixelLow;
+
+                    fgPalette = (attributes & 0x03) + 0x04;
+                    fgPriority = ((attributes & 0x20) == 0) ? 0x01 : 0x00;
+
+                    if (fgPixel != 0){
+                        if (i == 0){
+                            bSpriteZeroBeingRendered = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        /*
+         * COMBINING Layers
+         */
+
+        int pixel = 0x00;
+        int palette = 0x00;
+
+        if (bgPixel == 0 && fgPixel == 0){
+            /*
+             * background and foreground transparent
+             * draw background colour
+             */
+            pixel = 0x00;
+            palette = 0x00;
+        } else if (bgPixel == 0 && fgPixel > 0) {
+            /*
+             * Background transparent, foreground is visible
+             * Draw foreground
+             */
+            pixel = fgPixel;
+            palette = fgPalette;
+        } else if (bgPixel > 0 && fgPixel == 0){
+            /*
+             * Background is visible, foreground is transparent
+             * Draw background
+             */
+            pixel = bgPixel;
+            palette = bgPalette;
+        } else if (bgPixel > 0 && fgPixel > 0){
+            /*
+             * Background visible and foreground visible
+             * Use priority to determine
+             */
+            if (fgPriority != 0){
+                pixel = fgPixel;
+                palette = fgPalette;
+            } else {
+                pixel = bgPixel;
+                palette = bgPalette;
+            }
+
+            if (bSpriteZeroHitPossible && bSpriteZeroBeingRendered){
+                if (isFlagSet(this.regPPUMASK, NES2C02MaskFlags.SHOW_BACKGROUND)
+                        && isFlagSet(this.regPPUMASK, NES2C02MaskFlags.SHOW_SPRITES)){
+
+                    if (!(isFlagSet(this.regPPUMASK, NES2C02MaskFlags.SHOW_BACKGROUND_LEFTMOST)
+                            || isFlagSet(this.regPPUMASK, NES2C02MaskFlags.SHOW_SPRITES_LEFTMOST))){
+                        if (cycle >= 9 && cycle < 258)
+                            setStatusFlag(NES2C02StatusFlags.SPRITE_ZERO_HIT);
+
+                    } else {
+                        if (cycle >= 1 && cycle < 258)
+                            setStatusFlag(NES2C02StatusFlags.SPRITE_ZERO_HIT);
+                    }
+
+                }
+            }
+        }
+
+
+
         if (cycle -1 > 0 && cycle - 1 < 256 && scanline > -1 && scanline < 240){
 
-            int c = getColourFromPalette(bgPalette, bgPixel);
+            int c = getColourFromPalette(palette, pixel);
 
             if (regOddFrame)
                 this.screenBufferOdd[(scanline * NES2C02Constants.WIDTH_VISIBLE_PIXELS) + (cycle - 1)] = c;
             else
                 this.screenBufferEven[(scanline * NES2C02Constants.WIDTH_VISIBLE_PIXELS) + (cycle - 1)] = c;
         }
+
 
         cycle++;
         if (cycle >= 341){
@@ -522,6 +836,47 @@ public class NES2C02 extends Processor implements FlagListener {
                 scanline = -1;
                 regOddFrame = !regOddFrame;
             }
+        }
+    }
+
+    /**
+     * Execute the DMA process of the PPU
+     * @throws ProcessorException Can be thrown when errors reading / writing to busses
+     */
+    private void execDMA() throws ProcessorException {
+
+        if (this.regDMACount > 0 && this.regDMACount % 2 == 0){
+            int lsb = (this.regDMACount >>> 1) % 0x00FF;
+            int dmaAddress = (this.regDMAPage << 8) | lsb;
+            oamMemory[lsb] = cpuRead(dmaAddress);
+        }
+
+        this.regDMACount++;
+
+        /*
+         * Last read occurred so now re-enable the CPU and change PPU mode back to normal
+         */
+        if (this.regDMACount == 512){
+            try {
+                this.flgCpuHalt.setFlagValue(HaltFlag.START);
+                this.executionState = NES2C02ExecutionState.RUNNING;
+            } catch (FlagException fe) {
+                fe.printStackTrace();
+                ProcessorException pe = new ProcessorException(NES2C02Constants.EX_CPU_START);
+                throw pe;
+            }
+        }
+    }
+
+    @Override
+    public void onTick() throws ProcessorException {
+        switch (this.executionState){
+            case RUNNING:
+                execRunning();
+                break;
+            case RUNNING_DMA:
+                execDMA();
+                break;
         }
     }
 
@@ -647,7 +1002,11 @@ public class NES2C02 extends Processor implements FlagListener {
              * Start loading from the page written to this register
              */
             if (address == NES2C02Constants.REG_OAMDMA && flag.getFlagValue() == RWFlag.WRITE){
-                // TODO start the interrupt process
+                int data = this.dataBus.readDataFromBus();
+                this.regDMAPage = data;
+                this.flgCpuHalt.setFlagValue(HaltFlag.HALT);
+                this.regDMACount = -8;
+                this.executionState = NES2C02ExecutionState.RUNNING_DMA;
             }
         }
     }

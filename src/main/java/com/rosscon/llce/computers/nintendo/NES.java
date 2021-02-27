@@ -109,16 +109,6 @@ public class NES extends Computer {
     private IntegerBus ppuAddressBus;
     private IntegerBus ppuDataBus;
 
-    /**
-     * VRAM, Nametables and palette memory
-     */
-    private RandomAccessMemory nameTableMemory;
-    private RandomAccessMemory paletteMemory;
-    private MirroredMapper nametableMapper;
-    private IntegerBus nametableAddressBus;
-    private IntegerBus nametableDataBus;
-    private RWFlag rwRWFlagNametableMapper;
-
 
     /**
      * Cartridge
@@ -184,13 +174,13 @@ public class NES extends Computer {
         );
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/mario.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/excitebike.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/balloon.nes",
@@ -199,8 +189,8 @@ public class NES extends Computer {
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/ice.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/castle3.nes",
@@ -209,13 +199,13 @@ public class NES extends Computer {
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/nestest.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "/Users/rossconroy/Desktop/full_palette/full_palette.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
 
 
@@ -241,57 +231,13 @@ public class NES extends Computer {
         this.ppu = new NES2C02(ppuDivider, cpuAddressBus, cpuDataBus, rwRWFlagCpu,
                 ppuAddressBus, ppuDataBus, rwRWFlagPPU, flgCpuNmi, flgCpuHalt, cartridge.getNametableMirror());
 
-        /*
-         * Cheating a bit with the nametable memory and assigning all 4KB,
-         * however will be behind a mirrored mapper so only 2KB will actually be used
-         */
-        this.nametableAddressBus = new IntegerBus(16);
-        this.nametableDataBus = new IntegerBus(8);
-        this.rwRWFlagNametableMapper = new RWFlag();
 
         controller = new NESControllerKeyboard(this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu, 1);
-
-
-        /*long start = System.nanoTime();
-        int cycles = 1000000;
-
-        try {
-            clock.tick(cycles);
-        } catch (Exception ex){
-            System.out.println(ex.getMessage());
-        }
-
-        long end = System.nanoTime();
-
-        try {
-            this.cpuAddressBus.writeDataToBus(0x0002);
-            this.rwFlagCpu.setFlagValue(FlagValueRW.READ);
-            System.out.println("0x0002 - " + String.format("%02X", this.cpuDataBus.readDataFromBus()));
-            this.cpuAddressBus.writeDataToBus(0x0003);
-            this.rwFlagCpu.setFlagValue(FlagValueRW.READ);
-            System.out.println("0x0003 - " + String.format("%02X", this.cpuDataBus.readDataFromBus()));
-
-
-
-        } catch (Exception ex){
-            System.out.println(ex.getMessage());
-        }
-
-        long clockDiff = end - start;
-        System.out.println((cycles / (clockDiff / 1000000000.0d))/1000000.0d + "MHz");*/
 
         Thread thread = new Thread(this.masterClock);
         thread.start();
 
         System.out.println("Clock Started");
-    }
-
-    public int[] getScreenBuffer(){
-        return this.ppu.getScreenBuffer();
-    }
-
-    public String getNametableContents() {
-        return this.nameTableMemory.toString();
     }
 
     public EventHandler getKeyPressHandler(){
