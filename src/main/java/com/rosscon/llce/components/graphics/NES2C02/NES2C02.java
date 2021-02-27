@@ -983,7 +983,7 @@ public class NES2C02 extends Processor implements FlagListener {
                                 ppuWrite(this.vramAddress.getValue(), data);
                                 //System.out.println("PPU WRITE TO : " + String.format("%02X", this.vramAddress.getValue()) + " " +  String.format("%02X", data));
                                 this.vramAddress = new LoopyRegister(this.vramAddress.getValue() +
-                                            (isFlagSet(this.regPPUCTRL, NES2C02ControllerFlags.VRAM_ADDR_INC_PER_RW_PPUDATA) ? 32 : 1));
+                                        (isFlagSet(this.regPPUCTRL, NES2C02ControllerFlags.VRAM_ADDR_INC_PER_RW_PPUDATA) ? 32 : 1));
                                 //System.out.println(this.vramAddress.getValue());
                                 break;
                         }
