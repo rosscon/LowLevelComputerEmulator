@@ -129,7 +129,7 @@ public class Pulse extends Channel {
     }
 
     @Override
-    public short getSample() {
+    public double getSample() {
         if (this.lengthCounter == 0) return 0;
 
         double frequency = 1789773.0 / (16.0d * (this.timer + 1.0d));
@@ -137,7 +137,8 @@ public class Pulse extends Channel {
         if (frequency == 0.0f) return 0;
 
         double angleIncrement = frequency / this.sampleRate;
-        short sample = (short)(Short.MAX_VALUE * approxsin(2*Math.PI * angle));
+        //short sample = (short)(Short.MAX_VALUE * approxsin(2*Math.PI * angle));
+        double sample = approxsin(2*Math.PI * angle);
 
         angle += angleIncrement;
         if (angle > 1.0) angle = -1.0f;

@@ -7,7 +7,7 @@ public class Noise extends Channel {
     }
 
     @Override
-    public short getSample() {
+    public double getSample() {
         return 0;
     }
 }

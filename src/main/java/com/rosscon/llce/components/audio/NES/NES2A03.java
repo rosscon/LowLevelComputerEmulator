@@ -41,16 +41,23 @@ public class NES2A03 extends AudioProcessor {
         pulse2 = new Pulse(SAMPLE_RATE);
         triangle = new Triangle(SAMPLE_RATE);
         noise = new Noise(SAMPLE_RATE);
+        dmc = new DMC(SAMPLE_RATE);
     }
 
     @Override
     public short getSample() {
 
-        int sample = (pulse1.getSample() + pulse2.getSample()) / 2;
+        double samplePulse1 = pulse1.getSample();
+        double samplePulse2 = pulse2.getSample();
+        double sampleTriangle = triangle.getSample();
+        double sampleNoise = noise.getSample();
+        double sampleDmc = dmc.getSample();
 
-        return (short)sample;
+        double tndOut = 159.0 / ((1/ (sampleTriangle / 8227d) + (sampleNoise / 12241d) + (sampleDmc / 22638d) ) + 100);
+        double pulseOut = 95.88 / ((8128d / (samplePulse1 + samplePulse2)) + 100.0d);
 
-        //return 0;
+
+        return (short)((tndOut + pulseOut) * Short.MAX_VALUE);
     }
 
     @Override

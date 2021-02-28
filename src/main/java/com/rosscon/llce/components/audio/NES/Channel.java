@@ -32,7 +32,7 @@ public abstract class Channel {
         this.sampleRate = sampleRate;
     }
 
-    public abstract short getSample();
+    public abstract double getSample();
 
     public void onFrameCounter(){
         if (this.lengthCounter > 0) this.lengthCounter--;
