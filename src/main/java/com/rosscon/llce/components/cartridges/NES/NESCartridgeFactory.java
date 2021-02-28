@@ -6,6 +6,7 @@ import com.rosscon.llce.components.flags.RWFlag;
 import com.rosscon.llce.utils.ByteUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -152,7 +153,10 @@ public class NESCartridgeFactory {
             IntegerBus ppuAddressBus, IntegerBus ppuDataBus, RWFlag rwRWFlagPPU
     ) throws IOException, CartridgeException {
 
-        byte[] array = Files.readAllBytes(Paths.get(filename));
+        InputStream is = NESCartridgeFactory.class.getClassLoader().getResourceAsStream(filename);
+        byte[] array = is.readAllBytes();
+
+        //byte[] array = Files.readAllBytes(Paths.get(filename));
 
         /*
          * Parse the 16 byte header

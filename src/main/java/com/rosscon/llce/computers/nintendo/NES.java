@@ -1,6 +1,9 @@
 package com.rosscon.llce.computers.nintendo;
 
 
+import com.rosscon.llce.components.audio.AudioProcessor;
+import com.rosscon.llce.components.audio.NES.NES2A03;
+import com.rosscon.llce.components.audio.SineWave;
 import com.rosscon.llce.components.busses.IntegerBus;
 import com.rosscon.llce.components.busses.InvalidBusDataException;
 import com.rosscon.llce.components.busses.InvalidBusWidthException;
@@ -24,6 +27,7 @@ import com.rosscon.llce.components.processors.ProcessorException;
 import com.rosscon.llce.computers.Computer;
 import javafx.event.EventHandler;
 
+import javax.sound.sampled.LineUnavailableException;
 import java.io.IOException;
 
 /**
@@ -167,48 +171,43 @@ public class NES extends Computer {
          * Setup/Add the cartridge
          */
 
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/donkey.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
-        );
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/mspacman.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );*/
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/mario.nes",
+                "donkey.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/excitebike.nes",
+                "duck.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/balloon.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );*/
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/ice.nes",
+                "mario.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/castle3.nes",
-                this.cpuAddressBus, this.cpuDataBus, this.rwFlagCpu,
-                this.ppuAddressBus, this.ppuDataBus, this.rwFlagPPU
-        );*/
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/nestest.nes",
+                "excitebike.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
-                "/Users/rossconroy/Desktop/full_palette/full_palette.nes",
+                "balloon.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
+        );*/
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "jack.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
+        );*/
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "ice.nes",
+                this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
+                this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
+        );*/
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+                "nestest.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
@@ -236,7 +235,19 @@ public class NES extends Computer {
         this.ppu = new NES2C02(ppuDivider, cpuAddressBus, cpuDataBus, rwRWFlagCpu,
                 ppuAddressBus, ppuDataBus, rwRWFlagPPU, flgCpuNmi, flgCpuHalt, cartridge.getNametableMirror());
 
+        /*
+         * Audio Processor
+         */
+        try {
+            AudioProcessor apu = new NES2A03(cpuAddressBus, cpuDataBus, rwRWFlagCpu);
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
 
+
+        /*
+         * Controllers
+         */
         controller = new NESControllerKeyboard(this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu, 1);
 
         Thread thread = new Thread(this.masterClock);
