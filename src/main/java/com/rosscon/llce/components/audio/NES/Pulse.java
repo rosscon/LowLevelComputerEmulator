@@ -28,7 +28,12 @@ public class Pulse extends Channel {
     /**
      * Keep track of sine wave angle
      */
-    private float angle;
+    private double angle;
+
+    int currentSample;
+
+    int sweepCount;
+
 
 
     public int getDuty() {
@@ -47,57 +52,35 @@ public class Pulse extends Channel {
         this.envLoopLengthCounterHalt = envLoopLengthCounterHalt;
     }
 
-    public boolean isConstantVolume() {
-        return constantVolume;
-    }
 
     public void setConstantVolume(boolean constantVolume) {
         this.constantVolume = constantVolume;
     }
 
-    public int getVolumeEnvelope() {
-        return volumeEnvelope;
-    }
 
     public void setVolumeEnvelope(int volumeEnvelope) {
         this.volumeEnvelope = volumeEnvelope;
     }
 
-    public boolean isSweepEnable() {
-        return sweepEnable;
-    }
 
     public void setSweepEnable(boolean sweepEnable) {
         this.sweepEnable = sweepEnable;
     }
 
-    public int getPeriod() {
-        return period;
-    }
 
     public void setPeriod(int period) {
-        this.period = period;
+        this.period = (period + 1) * 2;
     }
 
-    public boolean isNegate() {
-        return negate;
-    }
 
     public void setNegate(boolean negate) {
         this.negate = negate;
-    }
-
-    public int getShift() {
-        return shift;
     }
 
     public void setShift(int shift) {
         this.shift = shift;
     }
 
-    public int getEnvelope() {
-        return envelope;
-    }
 
     public void setEnvelope(int envelope) {
         this.envelope = envelope;
@@ -126,29 +109,68 @@ public class Pulse extends Channel {
 
         envelope = 0;
         sweep = 0;
+
+        currentSample = 0;
+
+        sweepCount = 0;
     }
 
     @Override
-    public double getSample() {
+    public int getSample() {
+        double dutyCycle = 0;
+        if (duty == 0) dutyCycle = 0.125;
+        if (duty == 1) dutyCycle = 0.25;
+        if (duty == 2) dutyCycle = 0.5;
+        if (duty == 3) dutyCycle = 0.75;
+
+
         if (this.lengthCounter == 0) return 0;
+        if (this.timer < 0) return 0;
 
-        double frequency = 1789773.0 / (16.0d * (this.timer + 1.0d));
+        int frequency = 1789773 / (16 * (this.timer + 1));
+        if (frequency == 0) return 0;
 
-        if (frequency == 0.0f) return 0;
-
-        double angleIncrement = frequency / this.sampleRate;
-        //short sample = (short)(Short.MAX_VALUE * approxsin(2*Math.PI * angle));
-        double sample = approxsin(2*Math.PI * angle);
-
+        double angleIncrement = (double)frequency / this.sampleRate;
         angle += angleIncrement;
-        if (angle > 1.0) angle = -1.0f;
+
+        if (angle > 1.0d) angle = -1.0d;
+
+        if (this.period >= (0x07FF * 2) || this.period < 8 )
+            return 0;
+
+        int sample;
+
+        if ((angle + 1) < (dutyCycle * 2)){
+            sample = 1;
+        } else {
+            sample = 0;
+        }
+
+        if (constantVolume){
+            sample = sample * 16;
+        } else {
+            sample = sample * volumeEnvelope;
+        }
 
         return sample;
     }
 
-    private double approxsin (double t) {
-        double j = t * 0.15915f;
-        j = j - (int)j;
-        return 20.785f * j * (j - 0.5f) * (j - 1.0f);
+    @Override
+    public void onFrameCounter(){
+        if (!isEnvLoopLengthCounterHalt()){
+            lengthCounter--;
+        }
+        if (sweepEnable){
+            sweepCount++;
+            if (sweepCount == this.period){
+
+                if (negate) {
+                    this.timer = this.timer >>> this.shift;
+                } else {
+                    this.timer = (this.timer << this.shift) & 0b011111111111;
+                }
+                sweepCount = 0;
+            }
+        }
     }
 }

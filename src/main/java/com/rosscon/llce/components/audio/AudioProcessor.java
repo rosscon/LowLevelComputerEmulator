@@ -22,7 +22,7 @@ public abstract class AudioProcessor implements Runnable, FlagListener {
     /**
      * 10 ms buffer
      */
-    protected static final double BUFFER_DURATION = 0.010;
+    protected static final double BUFFER_DURATION = 0.100;
 
     /**
      * buffer size
@@ -82,7 +82,7 @@ public abstract class AudioProcessor implements Runnable, FlagListener {
             line.write(buff.array(), 0, buff.position());
 
             try {
-                while (line.getBufferSize() - line.available() > PACKET_SIZE)
+                while ((line.getBufferSize() - line.available()) > (PACKET_SIZE * 2))
                     Thread.sleep(1);
             } catch (InterruptedException e) {
 

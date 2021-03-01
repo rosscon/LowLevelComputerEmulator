@@ -7,7 +7,7 @@ public class Triangle extends Channel{
     }
 
     @Override
-    public double getSample() {
+    public int getSample() {
         return 0;
     }
 }

@@ -171,11 +171,11 @@ public class NES extends Computer {
          * Setup/Add the cartridge
          */
 
-        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "donkey.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
-        );*/
+        );
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "duck.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
@@ -186,11 +186,11 @@ public class NES extends Computer {
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
         );*/
-        this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
+        /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "excitebike.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
                 this.ppuAddressBus, this.ppuDataBus, this.rwRWFlagPPU
-        );
+        );*/
         /*this.cartridge = NESCartridgeFactory.cartridgeFromINESFile(
                 "balloon.nes",
                 this.cpuAddressBus, this.cpuDataBus, this.rwRWFlagCpu,
@@ -216,7 +216,7 @@ public class NES extends Computer {
         /*
          * Lastly add the CPU and PPU as they call reset() on start
          */
-        //this.masterClock = new ClockThreaded(10);
+        this.masterClock = new ClockThreaded(10);
         this.masterClock = new ClockThreaded(10);
         Clock clock = new Clock();
 
@@ -239,7 +239,7 @@ public class NES extends Computer {
          * Audio Processor
          */
         try {
-            AudioProcessor apu = new NES2A03(cpuAddressBus, cpuDataBus, rwRWFlagCpu);
+            AudioProcessor apu = new NES2A03(cpuAddressBus, cpuDataBus, rwRWFlagCpu, clock);
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }

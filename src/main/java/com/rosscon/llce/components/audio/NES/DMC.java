@@ -8,7 +8,7 @@ public class DMC extends Channel{
     }
 
     @Override
-    public double getSample() {
+    public int getSample() {
         return 0;
     }
 }

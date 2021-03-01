@@ -6,13 +6,19 @@ public abstract class Channel {
     protected int timer;
     protected int lengthCounter;
 
+    protected static final int[] LENGTH_TABLE = new int[]{
+            10, 254, 20, 2, 40, 4, 80, 6,
+            160, 8, 60, 10, 14, 12, 26, 14,
+            12, 16, 24, 18, 48, 20, 96, 22,
+            192, 24, 72, 26, 16, 28, 32, 30
+    };
+
     public int getTimer() {
         return timer;
     }
 
     public void setTimer(int timer) {
         this.timer = timer;
-        //System.out.println("timer " +  timer);
     }
 
     public int getLengthCounter() {
@@ -20,8 +26,7 @@ public abstract class Channel {
     }
 
     public void setLengthCounter(int lengthCounter) {
-        this.lengthCounter = lengthCounter * 4;
-        //System.out.println("lengthCounter " +  lengthCounter);
+        this.lengthCounter = LENGTH_TABLE[lengthCounter];
     }
 
     protected final int sampleRate;
@@ -32,9 +37,8 @@ public abstract class Channel {
         this.sampleRate = sampleRate;
     }
 
-    public abstract double getSample();
+    public abstract int getSample();
 
     public void onFrameCounter(){
-        if (this.lengthCounter > 0) this.lengthCounter--;
     }
 }
